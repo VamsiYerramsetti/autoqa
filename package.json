@@ -1,0 +1,18 @@
+{
+  "name": "autoqa",
+  "private": true,
+  "version": "2.1.0",
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "concurrently -n FRONTEND,BACKEND -c cyan,orange \"npm --workspace frontend run dev\" \"npm --workspace backend run dev\"",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:backend": "npm --workspace backend run dev",
+    "build": "npm --workspace backend run build && npm --workspace frontend run build",
+    "start": "concurrently -n FRONTEND,BACKEND -c cyan,orange \"npm --workspace backend run start\" \"npm --workspace frontend run start\"",
+    "lint": "npm --workspace frontend run lint",
+    "typecheck": "npm --workspace backend run typecheck && npm --workspace frontend run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
