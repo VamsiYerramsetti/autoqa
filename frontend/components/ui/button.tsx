@@ -5,8 +5,8 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { vari
 
 const variants = {
   primary: "group relative overflow-hidden bg-gradient-to-r from-royal-500 to-royal-600 text-white shadow-royal transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_80px_rgba(29,78,216,0.32)]",
-  secondary: "border border-white/14 bg-white/6 text-white hover:bg-white/10",
-  ghost: "text-white/80 hover:bg-white/8 hover:text-white"
+  secondary: "border border-white/14 bg-white/6 text-white hover:-translate-y-0.5 hover:border-orange-400/22 hover:bg-white/10 hover:shadow-[0_18px_36px_rgba(249,115,22,0.12)]",
+  ghost: "text-white/80 hover:-translate-y-0.5 hover:bg-white/8 hover:text-white"
 };
 const sizes = { sm: "h-10 px-4 text-sm", md: "h-12 px-5 text-sm", lg: "h-14 px-6 text-[15px]" };
 
