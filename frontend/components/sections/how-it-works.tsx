@@ -1,33 +1,40 @@
-import { FileUp, Fingerprint, MessageSquareMore, QrCode, Sparkles } from "lucide-react";
+import { FileUp, Fingerprint, MessageSquareMore, QrCode, ShieldAlert, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 
 const steps = [
-  { title: "Upload material", copy: "The chatbot is trained on your raw slide deck, speaker notes, and any additional material you upload, enabling it to fully understand your content and answer audience questions on your behalf.", icon: FileUp, accent: "from-royal-500/30 to-royal-600/5", cardClass: "bg-white/[0.04]" },
-  { title: "Give clarifications", copy: "AutoQ&A will engange in a short chat with you and ask you clarifications to fill any knowledge gaps.", icon: MessageSquareMore, accent: "from-orange-500/18 to-royal-500/6", cardClass: "bg-royal-950/68" },
-  { title: "Share QR code", copy: "By scanning the QR code displayed on the slide, the audience is taken to your web-based chatbot trained on the presentation data, where they can ask presentation-related questions, anonymously if they prefer.", icon: QrCode, accent: "from-royal-400/18 to-orange-500/8", cardClass: "bg-white/[0.04]" },
+  { title: "Upload material", copy: "Bring in slides, notes, briefs, and supporting documents in one place.", icon: FileUp, accent: "from-royal-500/30 to-royal-600/5" },
+  { title: "Give clarifications", copy: "Review likely audience questions, refine them, and mark topics out of scope.", icon: MessageSquareMore, accent: "from-orange-500/26 to-orange-600/5" },
+  { title: "Share QR code", copy: "Publish one audience entry point that opens a live chatbot grounded in approved material.", icon: QrCode, accent: "from-royal-400/18 to-orange-500/8" },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="pt-14 pb-10 md:pt-16 md:pb-12">
+    <section id="how-it-works" className="py-24 md:py-32">
       <div className="container-shell">
-        <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+        <Reveal>
+          <span className="eyebrow"><Sparkles className="h-3.5 w-3.5" /> Three steps, one confident workflow</span>
+          <h2 className="section-title mt-6">A website-first product journey that starts immediately.</h2>
+          <p className="section-copy">AutoQ&A is designed to be understood in seconds and useful on first visit. No detours, no setup friction - just a clean path from source material to audience-ready Q&A.</p>
+        </Reveal>
+
+        <div className="mt-14 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <Reveal delay={0.08}>
-            <div className="glass-panel interactive-panel relative h-full overflow-hidden p-8">
+            <div className="glass-panel relative h-full overflow-hidden p-8">
               <div className="flex items-start justify-between gap-6">
                 <div>
-                  <h3 className="text-3xl font-semibold text-white">Easy three step setup</h3>
+                  <div className="text-xs uppercase tracking-[0.28em] text-orange-300">Why this structure works</div>
+                  <h3 className="mt-4 text-3xl font-semibold text-white">Every step increases trust.</h3>
                 </div>
                 <Fingerprint className="h-10 w-10 text-orange-300" />
               </div>
 
               <div className="mt-8 space-y-5">
                 {[
-                  ["Question trends", "Presenters can see aggregated insights, recurring themes, and rising audience interests as questions come in."],
+                  ["Grounded retrieval", "Answers are constrained to uploaded source material and approved clarifications."],
+                  ["Speaker control", "You decide what should be emphasized and what should be declined."],
                   ["Audience simplicity", "One QR code opens a live chatbot that answers only from your presentation."],
-                  ["Direct follow-up", "Not satisfied with the answer? Jump into the chat yourself and respond directly to the audience member."],
                 ].map(([title, copy]) => (
-                  <div key={title} className="interactive-panel rounded-[22px] border border-white/8 bg-white/5 p-5">
+                  <div key={title} className="rounded-[22px] border border-white/8 bg-white/5 p-5">
                     <div className="font-medium text-white">{title}</div>
                     <p className="mt-2 text-sm text-white/66">{copy}</p>
                   </div>
@@ -36,13 +43,13 @@ export function HowItWorks() {
             </div>
           </Reveal>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {steps.map((step, index) => {
               const Icon = step.icon;
 
               return (
                 <Reveal key={step.title} delay={0.12 + index * 0.08}>
-                  <div className={`glass-panel interactive-panel relative h-full overflow-hidden p-6 ${step.cardClass}`}>
+                  <div className="glass-panel relative h-full overflow-hidden p-6">
                     <div className={`absolute inset-0 bg-gradient-to-br ${step.accent}`} />
                     <div className="relative z-10">
                       <div className="flex items-center justify-between">
@@ -61,6 +68,32 @@ export function HowItWorks() {
             })}
           </div>
         </div>
+
+        <Reveal delay={0.25}>
+          <div className="mt-8 grid gap-4 rounded-[30px] border border-orange-400/15 bg-orange-500/8 p-4 md:grid-cols-3 md:p-6">
+            <div className="flex items-start gap-3 rounded-[22px] border border-white/8 bg-white/5 p-5">
+              <ShieldAlert className="mt-1 h-5 w-5 text-orange-300" />
+              <div>
+                <div className="font-medium text-white">No guessing</div>
+                <p className="mt-1 text-sm text-white/62">If your material does not support an answer, AutoQ&A abstains clearly.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-[22px] border border-white/8 bg-white/5 p-5">
+              <MessageSquareMore className="mt-1 h-5 w-5 text-orange-300" />
+              <div>
+                <div className="font-medium text-white">Clarifications matter</div>
+                <p className="mt-1 text-sm text-white/62">Likely questions are surfaced before the audience sees the experience.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-[22px] border border-white/8 bg-white/5 p-5">
+              <QrCode className="mt-1 h-5 w-5 text-orange-300" />
+              <div>
+                <div className="font-medium text-white">One share point</div>
+                <p className="mt-1 text-sm text-white/62">A single QR code turns your presentation into a live, guided Q&A channel.</p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

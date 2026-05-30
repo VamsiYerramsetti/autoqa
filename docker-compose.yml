@@ -10,6 +10,8 @@ services:
       NODE_ENV: production
       FRONTEND_ORIGIN: http://localhost:3000
       FRONTEND_APP_URL: http://localhost:3000
+    volumes:
+      - backend-data:/app/data
     ports:
       - "4000:4000"
 
@@ -26,3 +28,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+volumes:
+  backend-data:

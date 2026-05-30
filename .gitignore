@@ -11,3 +11,5 @@ coverage/
 .vscode/
 .idea/
 *.log
+backend/data/auth-db.json
+backend/data/presentations-db.json

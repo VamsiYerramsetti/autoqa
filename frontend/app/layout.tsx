@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Sora } from "next/font/google";
+import { AppProviders } from "./providers";
 import "./globals.css";
 
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", weight: ["400", "500", "600", "700", "800"] });
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sora.variable} ${manrope.variable}`}>
-      <body className="font-body bg-background text-white antialiased selection:bg-orange-500/40 selection:text-white">{children}</body>
+      <body className="font-body bg-background text-white antialiased selection:bg-orange-500/40 selection:text-white"><AppProviders>{children}</AppProviders></body>
     </html>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy, FileCheck2, LoaderCircle, MessageSquareQuote, QrCode, Sparkles, UploadCloud } from "lucide-react";
+import { ArrowRight, Copy, FileCheck2, LoaderCircle, LogIn, MessageSquareQuote, PlusSquare, QrCode, Sparkles, UploadCloud } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import QRCode from "react-qr-code";
+import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { generateQr, saveClarifications, uploadFiles } from "@/lib/api";
 import { ClarificationItem } from "@/lib/types";
@@ -25,11 +27,13 @@ const clarificationStatusLabels: Record<ClarificationItem["status"], string> = {
   "out-of-scope": "Skip",
 };
 
-export function AutoQAWorkspace() {
+export function AutoQAWorkspace({ embedded = false }: { embedded?: boolean }) {
+  const { isAuthenticated, requireLogin, user } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [step, setStep] = useState<FlowStep>("upload");
   const [progress, setProgress] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [presentationTitle, setPresentationTitle] = useState("");
   const [clarifications, setClarifications] = useState<ClarificationItem[]>([]);
   const [shareUrl, setShareUrl] = useState("");
   const [isBusy, setIsBusy] = useState(false);
@@ -58,8 +62,28 @@ export function AutoQAWorkspace() {
     });
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (acceptedFiles: File[]) => { setError(""); mergeFiles(acceptedFiles); },
+  const ensureAuthenticated = async (message: string) => {
+    if (isAuthenticated) return true;
+
+    setError(message);
+    const didLogin = await requireLogin();
+    if (!didLogin) {
+      setError(message);
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    onDrop: async (acceptedFiles: File[]) => {
+      setError("");
+      if (!(await ensureAuthenticated("Log in before adding presentation material."))) return;
+      mergeFiles(acceptedFiles);
+    },
     multiple: true,
     maxFiles: 8,
     accept: {
@@ -87,16 +111,22 @@ export function AutoQAWorkspace() {
     return () => clearInterval(phraseTimer);
   }, [step]);
 
+  const handleBrowseAttempt = async () => {
+    if (!(await ensureAuthenticated("Log in before adding presentation material."))) return;
+    open();
+  };
+
   const handleUpload = async () => {
     if (!files.length) { setError("Add at least one presentation asset to continue."); return; }
+    if (!(await ensureAuthenticated("Log in before activating AutoQ&A."))) return;
     try {
       setIsBusy(true); setError(""); setStep("processing"); beginProgress();
       const [payload] = await Promise.all([
-        uploadFiles(files),
+        uploadFiles(files, presentationTitle),
         new Promise((resolve) => setTimeout(resolve, MIN_PROCESSING_MS)),
       ]);
       finishProgress();
-      setSessionId(payload.sessionId); setClarifications(payload.clarifications);
+      setSessionId(payload.sessionId); setPresentationTitle(payload.title); setClarifications(payload.clarifications);
       setTimeout(() => setStep("clarify"), 640);
     } catch (err) {
       setStep("upload"); setError(err instanceof Error ? err.message : "Upload failed.");
@@ -104,17 +134,17 @@ export function AutoQAWorkspace() {
   };
 
   const updateClarification = (id: string, field: keyof ClarificationItem, value: string) => setClarifications((items) => items.map((item) => item.id === id ? { ...item, [field]: value } : item));
-  const finalize = async () => { if (!sessionId) return; try { setIsBusy(true); await saveClarifications(sessionId, clarifications); const qr = await generateQr(sessionId); setShareUrl(qr.shareUrl); setStep("share"); } catch (err) { setError(err instanceof Error ? err.message : "Unable to save clarifications."); } finally { setIsBusy(false); } };
-  const resetFlow = () => { setFiles([]); setStep("upload"); setProgress(0); setSessionId(null); setClarifications([]); setShareUrl(""); setError(""); };
+  const finalize = async () => { if (!sessionId) return; if (!(await ensureAuthenticated("Log in before finishing the AutoQ&A setup."))) return; try { setIsBusy(true); await saveClarifications(sessionId, clarifications); const qr = await generateQr(sessionId); setShareUrl(qr.shareUrl); setStep("share"); } catch (err) { setError(err instanceof Error ? err.message : "Unable to save clarifications."); } finally { setIsBusy(false); } };
+  const resetFlow = () => { setFiles([]); setStep("upload"); setProgress(0); setSessionId(null); setPresentationTitle(""); setClarifications([]); setShareUrl(""); setError(""); };
   const copyShareUrl = async () => { if (shareUrl) await navigator.clipboard.writeText(shareUrl); };
 
   return (
-    <section id="try-now" className="pt-14 pb-24 md:pt-20 md:pb-32">
-      <div className="container-shell">
+    <section id="try-now" className={cn(embedded ? "" : "pt-14 pb-24 md:pt-20 md:pb-32") }>
+      <div className={cn(embedded ? "" : "container-shell")}>
         <div className="glass-panel interactive-panel overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-[0.84fr_1.16fr]">
             <div className="border-b border-white/6 bg-gradient-to-b from-royal-700/14 via-royal-900/10 to-transparent p-8 lg:border-b-0 lg:border-r lg:p-10">
-              <h2 className="text-4xl font-semibold text-white md:text-5xl">Try AutoQ&A immediately.</h2>
+              <h2 className="text-4xl font-semibold text-white md:text-5xl">{embedded ? "Launch a new presentation." : "Try AutoQ&A immediately."}</h2>
 
               <div className="mt-10 space-y-4">
                 {[
@@ -171,10 +201,32 @@ export function AutoQAWorkspace() {
                     <div>
                       <div className="text-xs uppercase tracking-[0.28em] text-orange-300">Step 1 of 3</div>
                       <div className="mt-3 text-3xl font-semibold text-white">Upload your presentation material</div>
+                      <p className="mt-4 max-w-2xl text-sm leading-7 text-white/64">{embedded ? "Create a polished speaker session with a presentation title, source files, clarifications, and a shareable QR flow." : "AutoQ&A now requires a username/password login before any files can be added or processing can start."}</p>
                     </div>
 
+                    <div className={cn("rounded-[24px] border px-5 py-4", isAuthenticated ? "border-emerald-400/18 bg-emerald-500/8 text-emerald-50" : "border-orange-400/20 bg-orange-500/10 text-white")}>
+                      {isAuthenticated ? (
+                        <span className="text-sm">Signed in as <span className="font-semibold">{user?.displayName}</span>. Uploads and training are unlocked.</span>
+                      ) : (
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <div className="text-sm font-medium">Login required before upload</div>
+                            <div className="mt-1 text-sm text-white/70">Sign in with your workspace credentials to unlock uploads and session setup.</div>
+                          </div>
+                          <Button size="sm" className="gap-2 self-start md:self-auto" onClick={() => void requireLogin()}>
+                            <LogIn className="h-4 w-4" /> Log in
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-white">Presentation title</span>
+                      <input value={presentationTitle} onChange={(event) => setPresentationTitle(event.target.value)} placeholder="Quarterly roadmap review" className="w-full rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/28 focus:border-orange-400/30" />
+                    </label>
+
                     <div
-                      {...getRootProps()}
+                      {...getRootProps({ onClick: () => { void handleBrowseAttempt(); } })}
                       className={cn(
                         "interactive-panel group relative cursor-pointer overflow-hidden rounded-[30px] border border-dashed p-8 transition duration-300",
                         isDragActive
@@ -190,9 +242,9 @@ export function AutoQAWorkspace() {
                         <div className="mt-6 text-2xl font-semibold text-white">Drag and drop files</div>
                         <p className="mt-3 max-w-md text-sm leading-6 text-white/68">
                           <span className="block">Drop presentation decks, handouts, speaker notes or any material in the supported formats.</span>
-                          <span className="block">AutoQ&A will ingest the content and prepare for the Q&A session.</span>
+                          <span className="block">If you are not signed in yet, clicking or dropping files will open the login popup first.</span>
                         </p>
-                        <div className="interactive-chip mt-6 inline-flex rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-white/84">Browse files</div>
+                        <button type="button" onClick={(event) => { event.stopPropagation(); void handleBrowseAttempt(); }} className="interactive-chip mt-6 inline-flex rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-white/84">Browse files</button>
                       </div>
                     </div>
 
@@ -224,6 +276,8 @@ export function AutoQAWorkspace() {
                     <Button size="lg" className="w-full justify-center" onClick={handleUpload} disabled={isBusy || !files.length}>
                       Activate AutoQ&A
                     </Button>
+
+                    {!isAuthenticated ? <div className="text-sm text-white/56">This upload flow is locked until a login succeeds.</div> : null}
 
                     {error ? <div className="rounded-[20px] border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
                   </motion.div>
@@ -402,6 +456,7 @@ export function AutoQAWorkspace() {
                     <div>
                       <div className="text-xs uppercase tracking-[0.28em] text-orange-300">Step 3 of 3</div>
                       <div className="mt-3 text-3xl font-semibold text-white">QR preview is ready</div>
+                      <p className="mt-4 text-sm leading-7 text-white/62">Your speaker workspace now has a live presentation entry with a QR share link and a question inbox.</p>
                     </div>
 
                     <div className="interactive-panel mx-auto max-w-[420px] rounded-[30px] border border-white/8 bg-white/5 p-6 md:p-7">
@@ -416,6 +471,11 @@ export function AutoQAWorkspace() {
                         <Button variant="secondary" className="gap-2" onClick={copyShareUrl}>
                           <Copy className="h-4 w-4" /> Copy link
                         </Button>
+                      </div>
+
+                      <div className="mt-4 flex justify-center gap-3">
+                        {sessionId ? <Link href={`/speaker/presentations/${sessionId}`}><Button className="gap-2"><ArrowRight className="h-4 w-4" /> Open presentation</Button></Link> : null}
+                        <Button variant="ghost" className="gap-2" onClick={resetFlow}><PlusSquare className="h-4 w-4" /> New presentation</Button>
                       </div>
                     </div>
                   </motion.div>

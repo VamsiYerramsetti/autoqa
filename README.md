@@ -105,10 +105,21 @@ The intended flow is:
 
 1. land on the website
 2. understand the product immediately
-3. upload files with no sign-in
-4. see polished processing feedback
-5. review likely audience questions
-6. generate a QR-ready audience link
+3. log in with a local username and password
+4. upload files and start the grounded session
+5. see polished processing feedback
+6. review likely audience questions
+7. generate a QR-ready audience link
+
+## Local auth
+
+AutoQ&A now protects the working flow behind a local login popup.
+
+- marketing pages remain public
+- uploads, clarifications, QR generation, and session reads require login
+- the backend creates a local file-backed auth database on startup at `backend/data/auth-db.json`
+- the database is gitignored so local sessions and the locally configured login do not dirty the repository
+- a fresh setup can initialize that local login from `AUTOQA_LOCAL_USERNAME`, `AUTOQA_LOCAL_PASSWORD`, and optionally `AUTOQA_LOCAL_DISPLAY_NAME`
 
 ### Product trust model
 
