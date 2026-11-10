@@ -14,7 +14,8 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
 
 ## Next
-- [ ] After the site is live: run `SITE=<address> npm test` and a real-answer pass against it each session.
+- [ ] Make the "not covered" reply consistent: one short sentence naming what's missing, no slide description first.
+- [ ] Grow the live test's real-answer questions towards the full question set in docs/TESTING.md, on a longer test deck.
 - [ ] Email service: confirm the email address at sign-up, password reset, send the speaker's reply to the asker, digest to the speaker.
 - [ ] Account page: change name, password and LinkedIn link; delete a single talk from "Your talks".
 - [ ] Test real answers on 3 real, longer decks (20+ slides, charts, sparse text). The 6-slide sample passes; see docs/TESTING.md for the question set. Waiting on real decks: put them in samples/.

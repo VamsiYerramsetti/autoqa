@@ -1,5 +1,11 @@
 # Log (newest first)
 
+## 2026-11-10 (evening): live
+- The site is live at https://autoqa-jcol.onrender.com (Render, with the Neon database and the real API key).
+- Deploys are hands-off: each push to `main` runs the "Live site" workflow, which asks Render to deploy (repository secret `RENDER_DEPLOY_HOOK`), waits for the new version at `/healthz`, and runs the full test against the real site.
+- First full live run passed all 9 checks with real answers (right slide cited, hand-off offered for the uncovered question, two askers merged into one card, the speaker's reply answered the next asker).
+- Seen in that run: asked twice, the same uncovered question got two different wordings ("That isn't covered in the talk material." and a longer one that first described slide 3). Worth making consistent.
+
 ## 2026-11-10 (later): moved to GitHub, accounts, database, hosting set-up
 
 **Changed**
@@ -16,7 +22,6 @@
 
 **Not done**
 - No email is sent yet (no confirmation of the address, no password reset, no reply by email). Needs an email service.
-- Not yet deployed: waiting for Vamsi to connect Render (see README).
 
 **For Vamsi**
 - Connect Render and, ideally, a Neon database (README, "Put it online").
