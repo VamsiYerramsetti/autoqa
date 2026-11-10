@@ -18,6 +18,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Ask Render to deploy this version
+        # Only does something if the repository has a secret named RENDER_DEPLOY_HOOK (Render > Settings > Deploy Hook).
+        # Without it, Render's own Auto-Deploy setting has to be on.
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then curl -fsS -X POST "$HOOK&ref=$GITHUB_SHA" -o /dev/null && echo "Deploy requested."; else echo "No deploy hook set; relying on Render's Auto-Deploy."; fi
       - name: Wait for the new version to be live
         run: |
           want="${GITHUB_SHA::7}"
