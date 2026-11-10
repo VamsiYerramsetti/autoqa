@@ -1,51 +1,53 @@
 # Auto Q&A
 
-Every question at a talk gets an answer. The audience scans a code and asks from their phones;
-answers come from the speaker's own slides and show the slide they rest on; anything the slides
-can't answer goes to the speaker, who replies afterwards.
+**Every question at a talk gets an answer.**
 
-## Live site
+At most talks, some questions never get asked (people are shy) and many never get answered (there's no time).
+Auto Q&A fixes both:
 
-https://autoqa-jcol.onrender.com (hosted on Render, database on Neon). Every push to `main` redeploys it, and the
-"Live site" workflow then runs the full test against it.
+1. **The speaker** uploads their slides before the talk and answers a few quick questions about it.
+2. **The audience** scans a QR code on the screen and asks questions from their phones. No app, no sign-up.
+3. **Answers come straight away**, in plain words, taken from the speaker's own slides. Each answer shows the slide it came from.
+4. **Anything the slides don't cover** can be sent to the speaker, who replies after the talk. The reply appears in the
+   person's chat, and from then on everyone else who asks gets it straight away.
 
-## How it was put online
+Try it: **https://autoqa-jcol.onrender.com**
+(On the free hosting plan the site sleeps when nobody uses it; the first visit can take a minute.)
 
-GitHub stores the code. A hosting service runs it. The repository is set up for [Render](https://render.com):
+## Where things are, in plain words
 
-1. Sign in to Render with your GitHub account.
-2. **New > Blueprint**, choose this repository. Render reads `render.yaml`.
-3. When asked, fill in:
-   - `ANTHROPIC_API_KEY`: your Anthropic key.
-   - `DATABASE_URL`: a Postgres address. Create a free database at [neon.tech](https://neon.tech) and paste its connection string. Leave empty to try things out; data is then wiped on every deploy.
-   - `ADMIN_EMAIL`: the email you will sign up with. That account can open `/admin`.
-4. Render gives you an address like `https://autoqa.onrender.com`. Every push to `main` redeploys it.
-
-On Render's free plan the site sleeps after 15 minutes without visitors and takes about a minute to wake.
-
-## What's where
-
-| Part | File |
+| If you want to... | Look at |
 |---|---|
-| Server and all routes | `server.js` |
-| Reading PDF / PowerPoint / Word files | `lib/parse.js` |
-| Everything that talks to the model (the instructions live here) | `lib/ai.js` |
-| Storage, accounts' password hashing | `lib/store.js` |
-| Pages | `public/*.html`, `public/js/*.js`, `public/css/app.css` |
-| End-to-end test | `test/smoke.mjs` (`npm test`) |
+| Understand how it works, without code | [`docs/HOW-IT-WORKS.md`](docs/HOW-IT-WORKS.md) |
+| See what the product is meant to be and why | [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) |
+| See what's planned next | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| See what changed recently | [`docs/LOG.md`](docs/LOG.md) (newest first) |
+| See how it looks and why | [`docs/DESIGN.md`](docs/DESIGN.md) |
+| See how it's tested | [`docs/TESTING.md`](docs/TESTING.md) and [`docs/PERSONAS.md`](docs/PERSONAS.md) |
+| Give feedback that will be acted on | Write it in `docs/FEEDBACK.md` (or tell Claude in the project chat) |
+| Work on the code with an AI agent | [`AGENTS.md`](AGENTS.md) |
 
-Pages: `/` home, `/signup` and `/signin`, `/talks` your talks, `/new` set up a talk, `/s/:id` questions for
-the speaker, `/present/:id` the code for the big screen, `/j/:code` the audience chat, `/admin` numbers, `/privacy`.
+## Who works on it
 
-## Working on it
+Vamsi owns the product. Claude improves it every day in scheduled sessions: testing it with made-up speakers
+and audiences, improving the design, researching and building features. Each session writes what it did in
+`docs/LOG.md` and sends Vamsi a short message. Every change is tested automatically and then goes live.
+
+## Running it yourself (technical)
+
+You need [Node.js](https://nodejs.org) 22 or newer.
 
 ```
 npm install
-npm test          # walks the whole product: sign up, set up a talk, ask, hand off, reply
-npm start         # http://localhost:4321
+npm test     # walks through the whole product automatically: sign up, set up a talk, ask, hand off, reply
+npm start    # then open http://localhost:4321
 ```
 
-Project notes live in `docs/`: `BLUEPRINT.md` (what and why), `ROADMAP.md` (what's next),
-`LOG.md` (what was done, newest first), `TESTING.md` (how to test), `PERSONAS.md` and `persona-runs/` (testing with
-made-up speakers and audiences), `FEEDBACK.md` (Vamsi's feedback).
-`CLAUDE.md` holds the working rules for the scheduled build sessions.
+Without an Anthropic API key it runs in "practice mode": answers are simple word matches. Settings are listed in
+`.env.example`.
+
+### How the live site is set up
+- **GitHub** stores the code. **Render** runs it (settings in `render.yaml`). **Neon** stores the data (Postgres).
+- On Render the settings are `ANTHROPIC_API_KEY`, `DATABASE_URL` and `ADMIN_EMAIL` (the account that may open `/admin`).
+- Every push to `main` triggers a deploy (GitHub secret `RENDER_DEPLOY_HOOK`), then the "Live site" workflow
+  tests the real site.
