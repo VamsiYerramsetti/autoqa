@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBlobs, hashPassword, checkPassword } from './lib/store.js';
 import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
-import { prepare, answer, hasKey, overlap } from './lib/ai.js';
+import { prepare, answer, hasKey, overlap, lastModelError, noteError } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -456,7 +456,7 @@ app.post('/api/chat', async (req, res) => {
     send({ t: 'done', message: publicMessage(msg) });
   } catch (e) {
     track('answer_failed', talk.id);
-    console.error('answer failed:', e.message);
+    noteError('answer', e);
     const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: "Something went wrong on our side.", handoff: question, createdAt: Date.now() };
     db.messages.push(msg); save();
     send({ t: 'done', message: publicMessage(msg) });
@@ -553,7 +553,7 @@ app.get('/s/:id', page('speaker.html'));
 app.get('/present/:id', page('present.html'));
 app.get('/j/:code', page('join.html'));
 app.get('/admin', page('admin.html'));
-app.get('/healthz', (req, res) => res.json({ ok: true, version: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7), fullAnswers: hasKey(), durable }));
+app.get('/healthz', (req, res) => res.json({ ok: true, version: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7), fullAnswers: hasKey(), durable, lastModelError }));
 app.get('/api/info', (req, res) => res.json({ accepted: ACCEPTED, fullAnswers: hasKey(), durable }));
 app.use((req, res) => (req.path.startsWith('/api/') ? fail(res, 404, 'Not found.') : res.status(404).sendFile(path.join(ROOT, 'public', '404.html'))));
 

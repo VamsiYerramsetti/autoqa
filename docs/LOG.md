@@ -1,5 +1,11 @@
 # Log (newest first)
 
+## 2026-11-10 (night): cheapest model everywhere, setup can't dead-end
+- Vamsi asked for the cheapest model: reading the deck now uses the same cheap model as answering (`claude-haiku-5-5`). Watch in persona runs whether the questions asked of the speaker stay specific; `AUTOQA_PREP_MODEL` can raise it again.
+- The first persona run on the live site stopped at setup: reading the deck failed with "We couldn't read your material" (the model call errored; cause not visible from here, possibly two test runs hitting the key's rate limit at once). Setup now retries and, if the model still fails, continues with standard questions instead of blocking the speaker.
+- `/healthz` reports the last model error (where, status code, time; no message text) so workflows can show why a model call failed.
+- Notes and test scenarios no longer trigger a deploy.
+
 ## 2026-11-10 (evening): live
 - The site is live at https://autoqa-jcol.onrender.com (Render, with the Neon database and the real API key).
 - Deploys are hands-off: each push to `main` runs the "Live site" workflow, which asks Render to deploy (repository secret `RENDER_DEPLOY_HOOK`), waits for the new version at `/healthz`, and runs the full test against the real site.

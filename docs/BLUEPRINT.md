@@ -32,7 +32,7 @@ Conference, meetup and university speakers. (The closest competitor, PresEngage,
 There is no model training. The full text of the material, the speaker's interview answers and the speaker's
 replies so far go into the model's instructions (cached, so repeat questions are cheap). A deck is small enough
 that this beats search-based retrieval on accuracy. The model has one tool, `not_covered`, which it calls instead
-of improvising. Two models: a fast one for audience answers, a stronger one to read the deck and write the interview.
+of improvising. One model, the cheapest, for both answering and reading the deck (Vamsi's choice, Nov 2026); a stronger one can be set for reading the deck if the speaker's questions get too generic.
 
 ## Numbers and privacy
 No cookies. Page views and product events (talk started, slides added, joined, question, answered, not covered, sent to speaker, reply) are stored without names or emails; a visitor is a hash that changes daily. `/admin` shows the funnel and room numbers. `/privacy` explains this and lets anyone delete their details. A consent banner is only needed if third-party analytics are added later.

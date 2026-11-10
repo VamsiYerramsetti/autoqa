@@ -3,6 +3,8 @@ name: Live site
 on:
   push:
     branches: [main]
+    # Notes and test scenarios don't change the site, so they don't need a deploy.
+    paths-ignore: ['docs/**', 'test/scenarios/**']
   workflow_dispatch:
 concurrency:
   group: live-site

@@ -27,4 +27,4 @@ Ask at least one of each and read the answers critically:
 - after the speaker replies, ask it again as a third person (should answer from the reply)
 
 ## Known settings
-- Audience answers: `claude-haiku-5-5`. Reading the deck and writing the interview: `claude-sonnet-5-5`. Both can be changed in `.env`.
+- One model for everything: `claude-haiku-5-5`, the cheapest. `AUTOQA_CHAT_MODEL` and `AUTOQA_PREP_MODEL` (set on Render) can override it.
