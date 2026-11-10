@@ -46,5 +46,6 @@ npm start         # http://localhost:4321
 ```
 
 Project notes live in `docs/`: `BLUEPRINT.md` (what and why), `ROADMAP.md` (what's next),
-`LOG.md` (what was done, newest first), `TESTING.md` (how to test), `FEEDBACK.md` (Vamsi's feedback).
+`LOG.md` (what was done, newest first), `TESTING.md` (how to test), `PERSONAS.md` and `persona-runs/` (testing with
+made-up speakers and audiences), `FEEDBACK.md` (Vamsi's feedback).
 `CLAUDE.md` holds the working rules for the scheduled build sessions.

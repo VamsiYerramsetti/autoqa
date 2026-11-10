@@ -1,0 +1,32 @@
+name: Persona run
+# Plays a made-up talk (speaker and audience personas) on the live site and prints the transcript.
+# Start it by hand or with: gh api -X POST repos/<owner>/<repo>/actions/workflows/persona.yml/dispatches -f ref=main -f 'inputs[scenario]=test/scenarios/<name>/scenario.json'
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Path to the scenario file
+        required: true
+        default: test/scenarios/example/scenario.json
+env:
+  SITE: https://autoqa-jcol.onrender.com
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait until the live site runs this version
+        run: |
+          want="${GITHUB_SHA::7}"
+          for i in $(seq 1 60); do
+            got=$(curl -s -m 70 "$SITE/healthz" || true)
+            if echo "$got" | grep -q "\"version\":\"$want\""; then exit 0; fi
+            sleep 15
+          done
+          echo "The live site is not on version $want; running against whatever is live."
+      - name: Play the scenario
+        run: node test/persona.mjs "${{ inputs.scenario }}"

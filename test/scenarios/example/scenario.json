@@ -1,0 +1,14 @@
+{
+  "title": "Rooftop Rain: turning school roofs into water banks",
+  "speaker": { "name": "Maya Okafor", "about": "water engineer presenting a school pilot to a city audience" },
+  "deck": "deck.pptx",
+  "notes": "Maintenance is two visits a year, done by the roofing contractor.",
+  "interview": ["School boards and city water planners."],
+  "audience": [
+    { "name": "Jonas", "about": "school facilities manager, practical, short on time",
+      "asks": ["How much did peak runoff drop in the pilot?", "And what did it cost?", { "q": "Does it work on sloped tile roofs?", "send": true }] },
+    { "name": "Aisha", "about": "parent, not technical", "asks": ["What is runoff, in simple words?", { "q": "Does this work on sloped tile roofs?", "send": true }] }
+  ],
+  "replies": [{ "match": "sloped", "answer": "Not yet. It needs a flat roof, under 5 degrees." }],
+  "after": [{ "name": "Late arrival", "asks": ["Can it work on sloped tile roofs?"] }]
+}

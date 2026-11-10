@@ -3,7 +3,7 @@
 Auto Q&A is Vamsi's product. Claude maintains it in scheduled sessions; Vamsi reviews every few days.
 
 ## Before changing anything
-Read `docs/BLUEPRINT.md`, `docs/ROADMAP.md`, the top entries of `docs/LOG.md`, `docs/TESTING.md`, and `docs/FEEDBACK.md` if present.
+Read `docs/BLUEPRINT.md`, `docs/ROADMAP.md`, the top entries of `docs/LOG.md`, `docs/TESTING.md`, the newest report in `docs/persona-runs/`, and `docs/FEEDBACK.md` if present.
 Vamsi's feedback outranks the roadmap order.
 
 ## Product rules
@@ -19,6 +19,8 @@ Vamsi's feedback outranks the roadmap order.
 - Secrets (API key, database address) come from environment variables only. Never commit, print or log them.
 - `npm test` must pass before every push. Add a check to `test/smoke.mjs` for each new behaviour.
 - Look at what you built: run the app, take screenshots at 1280x860 and phone size, and read them critically.
+- Several scheduled sessions push to this repository. Always `git pull --rebase origin main` right before pushing.
+- Every push to `main` is deployed to the live site and tested there by the "Live site" workflow. Check that it passed; a red run means the live site is broken, so fix or revert in the same session.
 - Small commits with plain messages. Push to `main` only when tests pass; use a pull request for anything risky
   (storage format changes, sign-in, deleting data) and say so in the log.
 - Never delete user data formats without a migration: existing talks and accounts must keep working.
