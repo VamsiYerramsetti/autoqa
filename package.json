@@ -1,18 +1,26 @@
 {
-  "name": "autoqa",
+  "name": "auto-qa",
+  "version": "0.1.0",
   "private": true,
-  "version": "2.1.0",
-  "workspaces": ["frontend", "backend"],
+  "type": "module",
+  "description": "Auto Q&A - every question at a talk gets an answer",
   "scripts": {
-    "dev": "concurrently -n FRONTEND,BACKEND -c cyan,orange \"npm --workspace frontend run dev\" \"npm --workspace backend run dev\"",
-    "dev:frontend": "npm --workspace frontend run dev",
-    "dev:backend": "npm --workspace backend run dev",
-    "build": "npm --workspace backend run build && npm --workspace frontend run build",
-    "start": "concurrently -n FRONTEND,BACKEND -c cyan,orange \"npm --workspace backend run start\" \"npm --workspace frontend run start\"",
-    "lint": "npm --workspace frontend run lint",
-    "typecheck": "npm --workspace backend run typecheck && npm --workspace frontend run typecheck"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/smoke.mjs"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "jszip": "^3.10.2",
+    "mammoth": "^1.13.0",
+    "multer": "^2.5.0",
+    "pdfjs-dist": "^6.5.438",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

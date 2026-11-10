@@ -1,0 +1,40 @@
+# Roadmap
+
+Work top to bottom. Tick items off and note them in LOG.md.
+
+## Done
+- [x] Accounts (email + password), "Your talks", close account.
+- [x] Database storage (Postgres) and hosting set-up for Render; test suite and GitHub workflow.
+- [x] Answers show the slide they rest on (real picture for PDFs, laid-out text for PowerPoint), tap to enlarge.
+- [x] Answers explain in plain words instead of quoting the slide; facts about the talk still only come from the material.
+- [x] Numbers: page views and product events without cookies, /admin page, per-talk summary for the speaker.
+- [x] Privacy page with delete-my-details, not-found page, search/preview tags, basic protection headers and question rate limit.
+- [x] "Try it as the audience" button on the speaker page.
+- [x] Visual polish pass at phone and desktop sizes: long titles, speaker page order on phones, replies shown under the asker's own question, wrong-code page.
+- [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
+
+## Next
+- [ ] After the site is live: run `SITE=<address> npm test` and a real-answer pass against it each session.
+- [ ] Email service: confirm the email address at sign-up, password reset, send the speaker's reply to the asker, digest to the speaker.
+- [ ] Account page: change name, password and LinkedIn link; delete a single talk from "Your talks".
+- [ ] Test real answers on 3 real, longer decks (20+ slides, charts, sparse text). The 6-slide sample passes; see docs/TESTING.md for the question set. Waiting on real decks: put them in samples/.
+- [ ] Read slides as images too (charts, diagrams, image-only decks), not just their text.
+- [ ] Real slide pictures for PowerPoint uploads (now PDF only) and thumbnails during upload.
+- [ ] Email: send the speaker's reply to the asker; one digest to the speaker after the talk.
+- [ ] Group similar hand-off questions by meaning (currently by shared words).
+- [ ] Follow-up suggestions after each answer.
+- [ ] Speaker can edit their interview answers and add material after setup; "My talks" list.
+- [ ] Automatic deletion of audience data after 60 days. Legal review of the privacy page.
+- [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
+
+## Before going online
+- [ ] Move from one saved document to proper database tables before real traffic.
+- [ ] Hosting in the EU, a domain, a short join address (autoqa.app/ABCDE).
+- [ ] Limits per talk to control model cost; abuse protection.
+- [ ] Try it at one real talk and count: questions asked, answered instantly, handed off, replied.
+
+## Later
+- [ ] Organiser view: all sessions of an event, what audiences didn't understand.
+- [ ] After-talk summary for the speaker: top questions, gaps in the deck.
+- [ ] Voice questions; more languages on the interface.
+- [ ] Pricing and payments.

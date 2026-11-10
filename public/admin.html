@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2711%27 cy=%2716%27 r=%279%27 fill=%27%23ffc83d%27/%3E%3Ccircle cx=%2721%27 cy=%2716%27 r=%279%27 fill=%27%232f3ced%27/%3E%3C/svg%3E">
+<meta name="robots" content="noindex">
+<title>Numbers · Auto Q&amp;A</title>
+</head>
+<body>
+<div class="page">
+  <div class="top"><a class="mark" href="/"><i></i>Auto Q&amp;A</a><span class="small muted" id="range"></span></div>
+  <main id="view"></main>
+</div>
+<script type="module">
+import { el, api } from '/js/common.js';
+const view = document.getElementById('view');
+const key = new URLSearchParams(location.search).get('key') || '';
+try {
+  const m = await api('/api/admin/metrics?days=14' + (key ? '&key=' + encodeURIComponent(key) : ''));
+  document.getElementById('range').textContent = 'Last ' + m.days + ' days';
+  const top = Math.max(1, ...m.funnel.map((f) => f[1]));
+  const a = m.audience, show = (v, unit = '') => (v == null ? '–' : v + unit);
+  const peak = Math.max(1, ...m.perDay.map((d) => d.questions));
+  view.append(
+    el('h1', {}, 'Numbers'),
+    el('h2', {}, 'From visitor to live talk'),
+    el('div', { class: 'bars' }, m.funnel.map(([name, n]) => el('div', {}, el('span', {}, name), el('i', { style: 'width:' + (n / top) * 100 + '%' }), el('b', {}, n)))),
+    el('h2', {}, 'In the room'),
+    el('div', { class: 'tiles' },
+      [[a.joined, 'people joined'], [a.questions, 'questions asked'], [show(a.straightAway, '%'), 'answered straight away'], [a.sent, 'sent to a speaker'],
+       [a.replies, 'speaker replies'], [show(a.medianAnswerSeconds, 's'), 'typical answer time'], [show(a.medianReplyMinutes, ' min'), 'typical speaker reply time'],
+       [a.slidesOpened, 'slides opened'], [a.connects, 'LinkedIn taps'], [a.failed, 'failed answers']]
+        .map(([n, label]) => el('div', {}, el('b', {}, n), el('span', {}, label)))),
+    el('h2', {}, 'Questions per day'),
+    el('div', { class: 'days', role: 'img', 'aria-label': 'Questions per day' }, m.perDay.map((d) => el('i', { title: d.day + ': ' + d.questions, style: 'height:' + (d.questions / peak) * 100 + '%' }))),
+    el('h2', {}, 'Recent talks'),
+    el('table', { class: 'plain' },
+      el('tr', {}, ['Talk', 'People', 'Questions', 'Status'].map((h) => el('th', {}, h))),
+      m.talks.map((t) => el('tr', {}, el('td', {}, t.title), el('td', {}, t.people), el('td', {}, t.questions), el('td', {}, t.status === 'ready' ? 'Live' : 'Setting up')))),
+  );
+} catch (x) {
+  view.append(el('h1', {}, 'Numbers'), el('p', {}, x.message));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2711%27 cy=%2716%27 r=%279%27 fill=%27%23ffc83d%27/%3E%3Ccircle cx=%2721%27 cy=%2716%27 r=%279%27 fill=%27%232f3ced%27/%3E%3C/svg%3E">
+<title>Privacy · Auto Q&amp;A</title>
+</head>
+<body>
+<div class="page">
+  <div class="top"><a class="mark" href="/"><i></i>Auto Q&amp;A</a></div>
+  <h1>Privacy</h1>
+  <p class="small muted">Draft for testing. Needs a legal review before the product goes public.</p>
+
+  <h2>If you ask a question</h2>
+  <ul>
+    <li>You can ask without giving your name.</li>
+    <li>Answers are written by an automated assistant using the speaker's slides. Your question is sent to Anthropic, the company whose model writes the answer.</li>
+    <li>If you send a question to the speaker, they get your name, email, your LinkedIn link if you add one, and the question. Nothing else.</li>
+  </ul>
+
+  <h2>If you give a talk</h2>
+  <ul>
+    <li>We keep your name, email, your slides and your replies so the service can work.</li>
+    <li>Your slides are only used to answer your audience.</li>
+  </ul>
+
+  <h2>Cookies and tracking</h2>
+  <ul>
+    <li>No advertising or tracking cookies.</li>
+    <li>Your browser remembers your place in a talk, so a refresh doesn't lose your questions.</li>
+    <li>We count visits and questions to improve the product. The counts hold no names or emails and can't follow you from one day to the next.</li>
+  </ul>
+
+  <h2>Delete your details</h2>
+  <p>This removes your name, email and questions for every talk you joined from this browser.</p>
+  <p style="margin-top:16px"><button class="btn quiet" id="forget">Delete my details</button> <span class="small muted" id="done" role="status"></span></p>
+</div>
+<script type="module">
+document.getElementById('forget').addEventListener('click', async () => {
+  let n = 0;
+  for (const k of Object.keys(localStorage).filter((k) => k.startsWith('autoqa:seat:'))) {
+    await fetch('/api/forget', { method: 'POST', headers: { 'x-token': localStorage.getItem(k) } }).catch(() => {});
+    localStorage.removeItem(k); n++;
+  }
+  document.getElementById('done').textContent = n ? 'Deleted.' : 'Nothing is stored for this browser.';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2711%27 cy=%2716%27 r=%279%27 fill=%27%23ffc83d%27/%3E%3Ccircle cx=%2721%27 cy=%2716%27 r=%279%27 fill=%27%232f3ced%27/%3E%3C/svg%3E">
+<meta name="robots" content="noindex">
+<title>Ask anything · Auto Q&amp;A</title>
+</head>
+<body>
+<main class="present">
+  <div class="code"><img id="qr" alt="Scan to ask a question"></div>
+  <div>
+    <h1>Ask me anything.</h1>
+    <p class="url" id="url"></p>
+    <p class="live" id="live" hidden><i></i><span></span></p>
+  </div>
+</main>
+<script type="module">
+import { api, keys } from '/js/common.js';
+const id = location.pathname.split('/').pop();
+const key = keys.get(id);
+document.getElementById('qr').src = '/api/talks/' + id + '/qr.svg';
+const talk = await api('/api/talks/' + id, { headers: { 'x-key': key || '' } });
+keys.set(id, talk.key);
+const u = new URL(talk.joinUrl);
+document.getElementById('url').innerHTML = u.host + '/j/<b>' + talk.code + '</b>';
+const live = document.getElementById('live');
+async function tick() {
+  try {
+    const { stats } = await api('/api/talks/' + id + '/inbox', { headers: { 'x-key': key } });
+    if (stats.people) { live.hidden = false; live.lastElementChild.textContent = stats.people === 1 ? '1 person is here' : stats.people + ' people are here'; }
+  } catch {}
+}
+tick(); setInterval(tick, 4000);
+</script>
+</body>
+</html>

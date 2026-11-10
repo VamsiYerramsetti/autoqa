@@ -1,0 +1,20 @@
+# One-click hosting on Render (render.com). New > Blueprint > pick this repository.
+# Every push to main redeploys the site.
+services:
+  - type: web
+    name: autoqa
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: ANTHROPIC_API_KEY   # paste yours when Render asks; without it answers are simple word matches
+        sync: false
+      - key: DATABASE_URL        # a Postgres address (for example from neon.tech); without it data is wiped on every deploy
+        sync: false
+      - key: ADMIN_EMAIL         # the account that may open /admin
+        sync: false
