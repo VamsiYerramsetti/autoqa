@@ -1,0 +1,32 @@
+name: Live site
+# After a push to main, wait until the hosting service is running the new version, then test the real site.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: live-site
+  cancel-in-progress: true
+env:
+  SITE: https://autoqa-jcol.onrender.com
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for the new version to be live
+        run: |
+          want="${GITHUB_SHA::7}"
+          for i in $(seq 1 60); do
+            got=$(curl -s -m 70 "$SITE/healthz" || true)
+            echo "$got"
+            if echo "$got" | grep -q "\"version\":\"$want\""; then exit 0; fi
+            sleep 15
+          done
+          echo "The live site never reported version $want. The deploy may have failed."; exit 1
+      - name: Test the live site
+        run: npm test

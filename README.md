@@ -4,7 +4,12 @@ Every question at a talk gets an answer. The audience scans a code and asks from
 answers come from the speaker's own slides and show the slide they rest on; anything the slides
 can't answer goes to the speaker, who replies afterwards.
 
-## Put it online (about ten minutes, once)
+## Live site
+
+https://autoqa-jcol.onrender.com (hosted on Render, database on Neon). Every push to `main` redeploys it, and the
+"Live site" workflow then runs the full test against it.
+
+## How it was put online
 
 GitHub stores the code. A hosting service runs it. The repository is set up for [Render](https://render.com):
 

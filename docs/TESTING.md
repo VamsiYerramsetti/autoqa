@@ -8,10 +8,11 @@
 2. Walk through both journeys in a real browser (Playwright): set up a talk with `samples/rooftop-rain.pdf` and again with the `.pptx`, join as the audience at phone size, ask, hand off, reply as the speaker, check the reply arrives.
 3. Take screenshots at 1280x860 and iPhone size and look at them. Check `/admin`, `/privacy` and a made-up address (not-found page).
 
-## Real answers
-- The API key is set on the hosting service, never in the repository. Do not ask for it, print it or commit it.
-- To judge real answers, use the live site: sign up a test account there (address ending in `@autoqa.example`), set up a talk with a test deck, ask the question set below through the audience page or `/api/chat`, then close the test account. Keep a run to about 20 questions.
-- If the live site address is not yet in `docs/LOG.md` or the README, real-answer testing is not possible; say so in the log.
+## The live site
+- Address: https://autoqa-jcol.onrender.com. The API key and database address are set on Render, never in the repository.
+- Claude's workspaces cannot open the live site directly (the network blocks it). GitHub can. So the live site is tested by the "Live site" workflow (`.github/workflows/live.yml`): after every push to `main` it waits for the new version to be deployed, then runs `SITE=<address> npm test` and prints every question and real answer in its log.
+- To see the result: `gh api repos/VamsiYerramsetti/autoqa/actions/runs` for the status, and the job log for the answers. A failed "Live site" run after your push means the live site is broken: fix or revert in the same session.
+- For a deeper real-answer pass, add questions or a new test deck to `test/` and let the workflow run them; read the answers in the log and judge them against the question set below. Keep a run to about 20 questions.
 
 ## Question set for any deck
 Ask at least one of each and read the answers critically:

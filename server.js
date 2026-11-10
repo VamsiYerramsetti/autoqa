@@ -553,7 +553,7 @@ app.get('/s/:id', page('speaker.html'));
 app.get('/present/:id', page('present.html'));
 app.get('/j/:code', page('join.html'));
 app.get('/admin', page('admin.html'));
-app.get('/healthz', (req, res) => res.json({ ok: true }));
+app.get('/healthz', (req, res) => res.json({ ok: true, version: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7), fullAnswers: hasKey(), durable }));
 app.get('/api/info', (req, res) => res.json({ accepted: ACCEPTED, fullAnswers: hasKey(), durable }));
 app.use((req, res) => (req.path.startsWith('/api/') ? fail(res, 404, 'Not found.') : res.status(404).sendFile(path.join(ROOT, 'public', '404.html'))));
 
