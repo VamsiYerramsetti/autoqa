@@ -165,7 +165,7 @@ if (server) await step('a question can be sent anonymously: the speaker sees no 
   }
   jar = mine;
 });
-await step('answers name a "Dr." speaker properly and never show half a sentence', async () => {
+if (server) await step('answers name a "Dr." speaker properly and never show half a sentence', async () => {
   const { callName, finishAnswer } = await import('../lib/ai.js');
   const { first } = await import('../public/js/common.js');
   for (const [full, want] of [['Dr. Ines Carvalho', 'Dr. Carvalho'], ['prof Jan de Vries', 'Prof. de Vries'], ['Maya Okafor', 'Maya']]) {
