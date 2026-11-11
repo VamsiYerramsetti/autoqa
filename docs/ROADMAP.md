@@ -13,6 +13,9 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] Visual polish pass at phone and desktop sizes: long titles, speaker page order on phones, replies shown under the asker's own question, wrong-code page.
 - [x] Answers no longer stop mid-sentence or come back as a wrong "not covered" (the model's thinking used up the answer allowance); a cut-off answer keeps whole sentences and offers the speaker hand-off.
 - [x] Speakers with a title are named "Dr. Carvalho", not "Dr.", in answers and on the hand-off card.
+- [x] Answers answer what was asked and stop: no warnings or gaps the person didn't raise; the question offered to the speaker keeps the person's real worry.
+- [x] A question asked in another language shows on the speaker's card as asked and in the language of the slides.
+- [x] In other languages, "Marta says" is said in that language ("Según Marta").
 - [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
 - [x] The slide under an answer opens from its place and closes back (tap, button, Escape, drag down); text slides open too.
 
@@ -32,10 +35,16 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Automatic deletion of audience data after 60 days. Legal review of the privacy page.
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
 
-- [ ] In other languages, say "Dr. Carvalho says" in that language too (seen: "Dr. Carvalho says que sim").
 - [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
 - [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); strip or move them to the front server-side.
 - [ ] "Me too" for the audience: let people back a question already sent to the speaker, so the speaker sees real demand (event organisers' top Q&A complaint is duplicates with no sense of how many care).
+- [ ] Stop adding a nearby fact after the answer is complete (seen: the 23:42 train offered to someone who finishes work at 00:45; Aldercote added to "how late on a Saturday?").
+- [ ] Use a second slide when it qualifies the first (the 85% test against the "9 in 10" aim; a comment deadline for someone told "not decided yet").
+- [ ] Match the asker's register: a casual one-line question gets a casual one-line answer; off-topic gets one line, not two sentences.
+- [ ] Setup questions should aim at what a room really asks (jobs, late hours, what you can bring, what if it fails); in the Route 4 run three of four missed.
+- [ ] Translate the speaker's reply for an asker who wrote in another language (the question now reaches the speaker in both; the reply still goes back as written).
+- [ ] On a phone, show a long question smaller or folded, so the answer is on screen without scrolling.
+- [ ] Decide whether the LinkedIn field belongs on every hand-off form (odd at a town meeting); maybe only when the speaker added their own link.
 - [ ] Save each persona run's transcript as a report in docs/persona-runs automatically (the 2026-11-10 run only lived in the workflow log).
 
 ## Before going online

@@ -1,5 +1,36 @@
 # Log (newest first)
 
+## 2026-11-11 (morning): Persona test, "Route 4 after dark"
+**Run.** A town meeting about an evening bus becoming bookable minibuses: 18-slide PDF, six made-up people (an anxious
+78-year-old without a smartphone, a transport planner, a hospital cleaner writing in Spanish, a sceptic who misheard,
+a bored teenager, a latecomer), 16 questions on the live site, scored by the answer-judge. Report:
+docs/persona-runs/2026-11-11-route-4-after-dark.md.
+
+**Found.** 77 of 88 points (87.5%). No wrong facts, no wrong slides, no guesses. The weak spot was what followed the
+right answer: unasked warnings ("it's worth asking when you book"), a hand-off that swapped the person's worry for a
+side question, and a Spanish question that reached an English-speaking speaker in Spanish only.
+
+**Changed.**
+- Answering instructions: yes or no first, answer what was asked and stop, lead with what the person can act on, keep
+  the real worry in the question for the speaker.
+- The speaker's card shows a question asked in another language twice: as asked, and in the language of the slides.
+  The model must now always supply that second wording (left optional, it was skipped in the first re-run).
+- A persona run no longer waits 15 minutes when the last commit only added notes or a scenario.
+- New smoke check for the two-language hand-off (code-level, local copy only).
+
+**Tested.** `npm test` passes (11 checks with the design session's addition). Screens walked in a browser at 1280x860
+and 390 wide with today's deck and names (sign-up, setup, chat, hand-off, inbox, the new card). "Live site" passed
+after each push. Same scenario re-run: 80 of 89 (89.9%); the anxious rider's three answers went from 11/16 to 15/16.
+Three other answers lost a point each (see the report), so the change is kept but the habit of adding a nearby fact
+is not gone. One extra live question confirmed the two-language card. 33 live questions; all test accounts closed.
+
+**Unfinished.** Seven new roadmap lines (nearby-fact filler, second slides, register, setup questions, translating the
+speaker's reply, long questions on a phone, the LinkedIn field).
+
+### For Vamsi
+- The hand-off form asks everyone for a LinkedIn link. At a town meeting that reads oddly. Keep it everywhere, or show
+  it only when the speaker has added their own link? Nothing changed until you say.
+
 ## 2026-11-11 (morning): Design: the slide opens from its place and goes back
 **Changed**
 - Audience chat: the slide under an answer has a small corner mark and opens by growing out of where it sits, edge to
