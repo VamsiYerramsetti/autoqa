@@ -1,0 +1,67 @@
+{
+ "title": "Route 4 after dark: what changes on 10 January, and what doesn't",
+ "speaker": {
+  "name": "Marta Lindqvist",
+  "about": "one-question check: a Spanish question sent to an English-speaking speaker"
+ },
+ "deck": "deck.pdf",
+ "notes": "Regular trips: you can make a standing booking, for example the same pick-up every weekday after a shift. Set it up once by phone or in the app and it repeats until you cancel it.",
+ "interview": [
+  "The drivers who work evening Route 4 today are being offered the Hop driving jobs with Tarn Mobility on the same pay. Nobody is being made redundant.",
+  "The booking phone line is answered by real people from 08:00 to 01:30 every day, with two call handlers in the evening. You do not need a smartphone or an email address to book.",
+  "Aldercote is left out because it is in the neighbouring district and Northfell District Council has not agreed to pay its share. We are still talking to them.",
+  "On bank holidays Hop runs to the Sunday hours."
+ ],
+ "audience": [
+  {
+   "name": "Lucía Fernández",
+   "about": "34, hospital cleaner on late shifts that end at 00:45; types fast in Spanish with typos and abbreviations",
+   "email": "lucia@autoqa.example",
+   "asks": [
+    {
+     "q": "si el servicio acaba a las 00:30, q hacen los q salimos a esa hora?? lo van a ampliar??",
+     "send": true
+    }
+   ]
+  }
+ ],
+ "replies": [
+  {
+   "match": "bike",
+   "answer": "Folding bikes, folded up, yes. Full-size bikes, no: the minibuses have no rack."
+  },
+  {
+   "match": "penalt",
+   "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top."
+  },
+  {
+   "match": "contract",
+   "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top."
+  },
+  {
+   "match": "KPI",
+   "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top."
+  },
+  {
+   "match": "00:30",
+   "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July."
+  },
+  {
+   "match": "00:45",
+   "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July."
+  },
+  {
+   "match": "ampl",
+   "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July."
+  },
+  {
+   "match": "hora",
+   "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July."
+  },
+  {
+   "match": "extend",
+   "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July."
+  }
+ ],
+ "after": []
+}
