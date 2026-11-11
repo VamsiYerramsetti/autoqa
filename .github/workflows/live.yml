@@ -26,7 +26,7 @@ jobs:
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          if [ -n "$HOOK" ]; then curl -fsS -m 30 --retry 3 --retry-delay 5 -X POST "$HOOK&ref=$GITHUB_SHA" -o /dev/null && echo "Deploy requested."; else echo "No deploy hook set; relying on Render's Auto-Deploy."; fi
+          if [ -n "$HOOK" ]; then curl -fsS -m 30 --retry 3 --retry-delay 5 -X POST "$HOOK&ref=$GITHUB_SHA" -o /dev/null && echo "Deploy requested." || echo "The deploy request did not get through; waiting to see whether the new version arrives anyway."; else echo "No deploy hook set; relying on Render's Auto-Deploy."; fi
       - name: Wait for the new version to be live
         run: |
           want="${GITHUB_SHA::7}"
