@@ -11,6 +11,8 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] Privacy page with delete-my-details, not-found page, search/preview tags, basic protection headers and question rate limit.
 - [x] "Try it as the audience" button on the speaker page.
 - [x] Visual polish pass at phone and desktop sizes: long titles, speaker page order on phones, replies shown under the asker's own question, wrong-code page.
+- [x] Answers no longer stop mid-sentence or come back as a wrong "not covered" (the model's thinking used up the answer allowance); a cut-off answer keeps whole sentences and offers the speaker hand-off.
+- [x] Speakers with a title are named "Dr. Carvalho", not "Dr.", in answers and on the hand-off card.
 - [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
 
 ## Next
@@ -27,6 +29,12 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Speaker can edit their interview answers and add material after setup; "My talks" list.
 - [ ] Automatic deletion of audience data after 60 days. Legal review of the privacy page.
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
+
+- [ ] Watch the next persona run: answers to hard questions should now be complete, and the 36%-vs-39% style question answered from the slides.
+- [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
+- [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); strip or move them to the front server-side.
+- [ ] "Me too" for the audience: let people back a question already sent to the speaker, so the speaker sees real demand (event organisers' top Q&A complaint is duplicates with no sense of how many care).
+- [ ] Save each persona run's transcript as a report in docs/persona-runs automatically (the 2026-11-10 run only lived in the workflow log).
 
 ## Before going online
 - [ ] Move from one saved document to proper database tables before real traffic.

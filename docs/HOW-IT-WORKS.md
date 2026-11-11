@@ -24,6 +24,13 @@ and any replies the speaker already gave. The answer streams back word by word, 
 send the question to the speaker. Only then do we ask for their name and email, and we say exactly who receives them.
 Questions that mean the same thing are grouped into one card for the speaker.
 
+**Something goes wrong mid-answer.** The model thinks before it writes, and if it ever runs out of room the person
+sees only the whole sentences it managed, plus the offer to send the question to the speaker. We never show half a
+sentence, and we never say "the talk doesn't cover that" just because the model said nothing.
+
+**How answers name the speaker.** By first name ("Maya says"), or by title and surname when the speaker signed up
+with a title ("Dr. Carvalho says").
+
 **The speaker replies.** The reply appears in each asker's chat. It's also added to what the model knows, so the
 next person who asks gets the speaker's own answer straight away.
 

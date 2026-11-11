@@ -1,5 +1,33 @@
 # Log (newest first)
 
+## 2026-11-11 (night): no more half answers; "Dr. Carvalho", not "Dr."
+**Changed**
+- Answers no longer stop mid-sentence. The 2026-11-10 persona run (Quiet Hours, read from the workflow log; report
+  now in docs/persona-runs/) had 3 of 16 answers cut off and one hard question wrongly told "The talk doesn't cover that."
+  Cause: the answering model thinks before writing by default, and thinking counts against the 600-token allowance.
+  Raised to 4000 for answers and 8000 for reading the deck (we pay only for what's used). If an answer still runs out,
+  only whole sentences are shown and the speaker hand-off is offered; an empty reply is never passed off as "not covered".
+  A run-out is reported on /healthz as the last model error.
+- Speakers who sign up with a title ("Dr. Ines Carvalho") are now "Dr. Carvalho" in answers and on the hand-off card
+  ("Send this to Dr. Carvalho?"), instead of "Dr.". Same rule in the browser and the answering instructions.
+- New smoke check for both (runs on a local copy only; it checks the code directly).
+
+**Tested**
+- `npm test` 10/10. Browser in practice mode with a speaker named "Dr. Ines Carvalho" at 390 wide and 1280x860:
+  hand-off card reads "Send this to Dr. Carvalho?". The real-model effect can only be seen on the live site
+  (no key in this workspace): check the "Live site" log and the next persona run.
+
+**Sources**
+- Thinking counts toward max_tokens; Haiku 5.5 thinks by default: https://platform.claude.com/docs/en/build-with-claude/thinking
+- Handling `max_tokens` stop reason: https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons
+- Slido AI 2.0 (polls from slides, "Question AI" rewording; still nothing that answers questions): https://community.slido.com/product-news-announcements-108/slido-ai-2-0-work-smarter-than-ever-7896
+- Why event Q&A fails (duplicates, no sense of demand): https://oneask-site.pages.dev/blog/why-most-event-qa-fail-and-how-to-fix-them
+
+**Unfinished**
+- The persona test and design session said to run before this one left nothing in the repository (no report,
+  no design log entry); the persona run itself is in the workflow log and is now written up.
+- Slide labels mid-answer; "me too" for the audience; lower thinking effort for speed: on the roadmap.
+
 ## 2026-11-10 (night): cheapest model everywhere, setup can't dead-end
 - Vamsi asked for the cheapest model: reading the deck now uses the same cheap model as answering (`claude-haiku-5-5`). Watch in persona runs whether the questions asked of the speaker stay specific; `AUTOQA_PREP_MODEL` can raise it again.
 - The first persona run on the live site stopped at setup: reading the deck failed with "We couldn't read your material" (the model call errored; cause not visible from here, possibly two test runs hitting the key's rate limit at once). Setup now retries and, if the model still fails, continues with standard questions instead of blocking the speaker.

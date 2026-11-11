@@ -109,6 +109,22 @@ await step('speaker replies; askers see it; the next person gets it straight awa
   assert.match(again.text, /flat/i); assert.ok(!again.handoff);
   jar = mine;
 });
+// Checks the code directly rather than the site, so it runs only on a local copy (the live check has no packages installed).
+if (server) await step('answers name a "Dr." speaker properly and never show half a sentence', async () => {
+  const { callName, finishAnswer } = await import('../lib/ai.js');
+  const { first } = await import('../public/js/common.js');
+  for (const [full, want] of [['Dr. Ines Carvalho', 'Dr. Carvalho'], ['prof Jan de Vries', 'Prof. de Vries'], ['Maya Okafor', 'Maya']]) {
+    assert.equal(callName(full), want); assert.equal(first(full), want);
+  }
+  // The model ran out of room mid-sentence: keep whole sentences and offer the question to the speaker.
+  const cut = finishAnswer({ stop_reason: 'max_tokens', content: [] }, '[Slide 5] Rounds are at 23:00. For the 03:00 round the', 'What about 3am?');
+  assert.equal(cut.text, '[Slide 5] Rounds are at 23:00.'); assert.equal(cut.handoff.question, 'What about 3am?');
+  // Nothing written at all: do not claim the talk is silent; offer it to the speaker.
+  const empty = finishAnswer({ stop_reason: 'end_turn', content: [] }, '', 'Which figure is right?');
+  assert.doesNotMatch(empty.text, /doesn't cover|isn't covered/); assert.ok(empty.handoff);
+  const fine = finishAnswer({ stop_reason: 'end_turn', content: [] }, '[Slide 2] Yes, 40%.', 'q');
+  assert.equal(fine.text, '[Slide 2] Yes, 40%.'); assert.equal(fine.handoff, null);
+});
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password } })).status, 200);

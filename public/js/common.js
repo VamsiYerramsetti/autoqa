@@ -21,7 +21,17 @@ export async function api(path, { method = 'GET', body, headers = {}, form } = {
   return data;
 }
 
-export const first = (name) => (name || '').trim().split(/\s+/)[0] || '';
+// How we address someone: "Maya Okafor" -> "Maya", "Dr. Ines Carvalho" -> "Dr. Carvalho" (never just "Dr.").
+// Same rule as callName() in lib/ai.js, so the chat and the answers name the speaker the same way.
+const TITLES = /^(dr|prof|professor|mr|mrs|ms|mx|sir|dame|rev)\.?$/i;
+export const first = (name) => {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length > 1 && TITLES.test(parts[0])) {
+    const title = /^professor/i.test(parts[0]) ? 'Professor' : parts[0][0].toUpperCase() + parts[0].slice(1).replace(/\.?$/, '.');
+    return `${title} ${parts.length > 2 ? parts.slice(2).join(' ') : parts[1]}`;
+  }
+  return parts[0] || '';
+};
 
 // Where the speaker's private link lives on this device.
 export const keys = {
