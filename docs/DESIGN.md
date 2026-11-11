@@ -22,6 +22,8 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
 - **Signature:** the room of dots: curved rows facing a stage, filling as people join; cobalt when answered, yellow when
   waiting.
 - **Chat:** reads like a transcript (bold question, plain answer), not speech bubbles. The slide sits above the answer.
+- **Motion:** things travel from where they are to where they go, on one curve: `cubic-bezier(.2, 0, 0, 1)`.
+  Arriving takes 300ms, leaving 250ms, small settles 200ms. With "reduce motion" on, a 120ms fade replaces the travel.
 
 ## How the look may change
 The design session may evolve colour, type, logo and motion, but:
@@ -33,4 +35,29 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+- 2026-11-11, interaction: **opening and closing the slide under an answer.**
+  - Before: tapping a slide faded the whole screen to dark and showed the slide in the middle, on a phone hardly
+    bigger than it already was. Nothing said the slide could be tapped. PowerPoint slides (shown as laid-out text)
+    could not be opened at all. Focus stayed behind the dark layer; only a tap or Escape closed it.
+  - Now: every slide carries a small corner mark. Tapped, it grows out of its own place in the chat (300ms) to the
+    full width of the phone, and its place stays behind as an empty frame; closing sends it back there (250ms).
+    Close by tapping anywhere, the Close button, Escape, or dragging the slide down (past 90px it goes away, less and
+    it settles back). Text slides open too, scaled up with their layout intact. It is a proper dialog: focus moves to
+    Close, Tab stays there, focus returns to the slide. Pinch-zoom still works, and while zoomed in the drag is off
+    so a finger can move around the slide. Proof: `docs/design-2026-11-11-slide-open.jpg`.
+  - Why: the slide is the explanation (principle 2), so opening it should feel like picking up the same object,
+    not going to another screen. Sources: Material motion (container transform: 300ms in, 250ms back, standard curve
+    `cubic-bezier(.2,0,0,1)`) https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md ;
+    PhotoSwipe (zoom from the thumbnail by default, fade only when there is none, ~333ms, no animation under reduced
+    motion) https://photoswipe.com/opening-or-closing-transition ; WAI-ARIA modal dialog (focus in, Tab kept inside,
+    Escape, focus back to the opener) https://www.w3.org/WAI/ARIA/apg/patterns/dialogmodal/
+  - Also fixed on the way: an upload problem on the "Add your slides" step showed as `[object HTMLParagraphElement]`
+    instead of its message.
+  - Rejected: a visible "Slide 3" caption and a hint line in the open view (more words, and the label is on the slide
+    they just tapped); a double-tap zoom of our own (the phone's pinch already does it); turning the slide sideways
+    automatically to fill a phone held upright (would surprise people; see next).
+  - Next candidates: (interaction) a "turn" control or auto-fill in landscape so a 16:9 slide really gets bigger on
+    a phone, since held upright it only grows from about 350 to 390 wide; how the answer's first word and its slide
+    arrive together; swiping between slides when an answer has two. (screen) the audience's empty first screen;
+    the upload step, whose error text is small and whose drop area has no progress. (identity) not touched yet.
 - 2026-11-10: system as above (first version).

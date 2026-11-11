@@ -1,5 +1,25 @@
 # Log (newest first)
 
+## 2026-11-11 (morning): Design: the slide opens from its place and goes back
+**Changed**
+- Audience chat: the slide under an answer has a small corner mark and opens by growing out of where it sits, edge to
+  edge on a phone; it closes back into the same spot. Close with a tap, the button, Escape or by dragging it down.
+  PowerPoint (text) slides can now be opened large too. Keyboard and screen-reader behaviour is that of a proper dialog.
+  "Reduce motion" gets a short fade instead.
+- Bug: an upload problem during setup (for example a file type we can't read) showed `[object HTMLParagraphElement]`.
+  It now shows the message.
+- Details, sources and rejected ideas: docs/DESIGN.md (design log). Before/after: docs/design-2026-11-11-slide-open.jpg.
+
+**Tested**
+- `npm test` 11/11 (new check: the slide viewer is a dialog, closes on Escape, respects reduce motion).
+- Playwright at 390 wide, 844x390 landscape and 1280x860, PDF and PowerPoint talks: open/close by tap, keyboard and
+  drag; a short drag settles back, a long one closes; focus returns to the slide; reduced motion; no page errors.
+  Whole journey screenshotted before and after; other screens unchanged.
+
+**Unfinished**
+- Held upright, a 16:9 slide only grows from about 350 to 390 pixels wide. Filling the screen sideways is the next step.
+
+
 ## 2026-11-11 (night): no more half answers; "Dr. Carvalho", not "Dr."
 **Changed**
 - Answers no longer stop mid-sentence. The 2026-11-10 persona run (Quiet Hours, read from the workflow log; report

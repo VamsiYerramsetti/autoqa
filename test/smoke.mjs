@@ -38,6 +38,13 @@ await step('pages load', async () => {
   for (const p of ['/', '/signup', '/signin', '/privacy', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
 });
+// The browser side has no test of its own here, so at least make sure the slide viewer's promises are in the page script.
+await step('a slide opens large as a proper dialog and respects "reduce motion"', async () => {
+  const script = (await call('/js/join.js')).data;
+  assert.match(script, /'aria-modal': 'true'/, 'dialog');
+  assert.match(script, /prefers-reduced-motion/, 'reduce motion');
+  assert.match(script, /key === 'Escape'/, 'Escape closes');
+});
 await step('cannot start a talk without an account', async () => {
   assert.equal((await call('/api/talks', { method: 'POST', body: { title: 'x' } })).status, 401);
 });

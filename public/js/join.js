@@ -101,31 +101,117 @@ function slide(parts, label, reveal) {
       if (!src) return fig.remove();
       const frame = fig.firstElementChild;
       if (src.image) {
-        const img = el('img', { src: src.image, alt: `${src.label}: ${src.title}`, loading: 'lazy' });
+        const img = el('img', { src: src.image, alt: '', loading: 'lazy' });
         img.addEventListener('load', () => frame.classList.add('ready'));
         frame.append(img);
-        frame.setAttribute('role', 'button'); frame.tabIndex = 0;
-        const open = () => zoom(src);
-        frame.addEventListener('click', open);
-        frame.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); });
       } else {
         frame.classList.add('ready', 'text');
         frame.append(el('strong', {}, src.title), el('ul', {}, src.lines.map((l) => el('li', {}, l))));
       }
+      // Every slide opens larger, whether it is a picture (PDF) or laid-out text (PowerPoint).
+      frame.append(el('span', { class: 'cue', 'aria-hidden': 'true' }));
+      frame.setAttribute('role', 'button'); frame.tabIndex = 0;
+      frame.setAttribute('aria-label', `${src.label}: ${src.title}. Open larger`);
+      frame.addEventListener('click', () => zoom(src, frame));
+      frame.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); zoom(src, frame); } });
     });
   }
   if (reveal) fig.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
-function zoom(src) {
+// Where the slide itself sits inside its frame (a picture may be narrower than the 16:9 frame).
+function slideBox(frame, ratio) {
+  const r = frame.getBoundingClientRect();
+  const width = Math.min(r.width, r.height * ratio), height = width / ratio;
+  return { left: r.left + (r.width - width) / 2, top: r.top + (r.height - height) / 2, width, height };
+}
+
+// Open a slide large. It grows out of its place in the chat and goes back there when closed, so it is
+// plainly the same slide, not a new screen. Close by tapping anywhere, the button, Escape or dragging it down.
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+const EASE = 'cubic-bezier(.2, 0, 0, 1)';
+function zoom(src, frame) {
   api('/api/event', { method: 'POST', headers: auth, body: { name: 'slide_opened' } }).catch(() => {});
-  const close = () => { box.remove(); removeEventListener('keydown', esc); };
-  const esc = (e) => { if (e.key === 'Escape') close(); };
-  const box = el('div', { class: 'zoom', role: 'dialog', 'aria-label': src.label, onclick: close },
-    el('img', { src: src.image, alt: `${src.label}: ${src.title}` }),
-    el('button', { class: 'btn', type: 'button' }, 'Close'));
-  addEventListener('keydown', esc);
+  const picture = frame.querySelector('img');
+  const ratio = picture ? picture.naturalWidth / picture.naturalHeight || 16 / 9 : 16 / 9;
+  // A picture is simply shown bigger. A text slide is a copy of the small one, scaled up so it keeps its layout.
+  const big = picture ? el('img', { src: src.image, alt: `${src.label}: ${src.title}` }) : frame.cloneNode(true);
+  const small = frame.offsetWidth;
+  if (!picture) {
+    for (const name of ['role', 'tabindex', 'aria-label']) big.removeAttribute(name);
+    big.style.width = small + 'px'; big.style.height = frame.offsetHeight + 'px';
+  }
+  const stage = el('div', { class: 'stage' }, big);
+  const shade = el('div', { class: 'shade' });
+  const shut = el('button', { class: 'btn', type: 'button' }, 'Close');
+  const box = el('div', { class: 'zoom', role: 'dialog', 'aria-modal': 'true', 'aria-label': src.label }, shade, stage, shut);
+
+  // The largest size that fits the screen, leaving room for the Close button. Edge to edge on a phone.
+  let home;
+  function place() {
+    const edge = innerWidth > 620 ? 24 : 0;
+    const width = Math.min(innerWidth - 2 * edge, (innerHeight - 136) * ratio), height = width / ratio;
+    home = { left: (innerWidth - width) / 2, top: Math.max(12, (innerHeight - 76 - height) / 2), width, height };
+    for (const side in home) stage.style[side] = home[side] + 'px';
+    if (!picture) big.style.transform = `scale(${width / small})`;
+  }
+  // The move that puts the large slide exactly over the small one.
+  function toSmall() {
+    const t = slideBox(frame, ratio);
+    return `translate(${t.left - home.left}px, ${t.top - home.top}px) scale(${t.width / home.width})`;
+  }
+  const fade = (node, from, to, ms) => node.animate([{ opacity: from }, { opacity: to }], { duration: ms, fill: 'forwards' });
+
+  let closing = false;
+  function close() {
+    if (closing) return;
+    closing = true;
+    removeEventListener('keydown', keys); removeEventListener('resize', place);
+    // Going back is a little quicker than arriving (250ms against 300ms), as leaving should be.
+    const ms = calm.matches ? 120 : 250;
+    fade(shade, getComputedStyle(shade).opacity, 0, ms); fade(shut, 1, 0, ms);
+    const back = calm.matches ? fade(stage, 1, 0, ms)
+      : stage.animate([{ transform: stage.style.transform || 'none' }, { transform: toSmall() }], { duration: ms, easing: EASE, fill: 'forwards' });
+    back.finished.then(() => { box.remove(); frame.classList.remove('away'); frame.focus({ preventScroll: true }); });
+  }
+  // Keyboard: Escape closes; Tab stays on the one button there is.
+  function keys(e) {
+    if (e.key === 'Escape') close();
+    if (e.key === 'Tab') { e.preventDefault(); shut.focus(); }
+  }
+
+  // Drag down to put the slide away, like a photo in a messaging app. If the person has pinched to zoom
+  // in, we leave their finger alone so they can move around the slide.
+  const pinched = () => (window.visualViewport?.scale || 1) > 1.01;
+  let startY = null, pulled = 0, dragged = false;
+  box.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse' && e.isPrimary && !pinched()) { startY = e.clientY; pulled = 0; dragged = false; } });
+  box.addEventListener('pointermove', (e) => {
+    if (startY == null) return;
+    pulled = Math.max(0, e.clientY - startY);
+    if (pulled > 6) dragged = true;
+    stage.style.transform = `translate(0px, ${pulled}px) scale(1)`;
+    shade.style.opacity = 1 - Math.min(pulled / 400, 0.6);
+  });
+  const release = () => {
+    if (startY == null) return;
+    startY = null;
+    if (pulled > 90) return close();
+    if (pulled) stage.animate([{ transform: stage.style.transform }, { transform: 'none' }], { duration: 200, easing: EASE });
+    stage.style.transform = ''; shade.style.opacity = '';
+  };
+  box.addEventListener('pointerup', release);
+  box.addEventListener('pointercancel', release);
+  box.addEventListener('click', () => { if (dragged) dragged = false; else close(); });
+  window.visualViewport?.addEventListener('resize', () => { box.style.touchAction = pinched() ? 'auto' : ''; });
+
+  addEventListener('keydown', keys); addEventListener('resize', place);
   document.body.append(box);
+  place();
+  frame.classList.add('away'); // the small slide has "left" its place while the large one is open
+  fade(shade, 0, 1, calm.matches ? 120 : 200); fade(shut, 0, 1, calm.matches ? 120 : 200);
+  if (calm.matches) fade(stage, 0, 1, 120);
+  else stage.animate([{ transform: toSmall() }, { transform: 'none' }], { duration: 300, easing: EASE });
+  shut.focus({ preventScroll: true });
 }
 
 function turn(question) {

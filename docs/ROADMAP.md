@@ -14,8 +14,10 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] Answers no longer stop mid-sentence or come back as a wrong "not covered" (the model's thinking used up the answer allowance); a cut-off answer keeps whole sentences and offers the speaker hand-off.
 - [x] Speakers with a title are named "Dr. Carvalho", not "Dr.", in answers and on the hand-off card.
 - [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
+- [x] The slide under an answer opens from its place and closes back (tap, button, Escape, drag down); text slides open too.
 
 ## Next
+- [ ] Let an opened slide fill a phone sideways (upright, a 16:9 slide barely grows); swipe between slides when an answer has two.
 - [ ] Make the "not covered" reply consistent: one short sentence naming what's missing, no slide description first.
 - [ ] Grow the live test's real-answer questions towards the full question set in docs/TESTING.md, on a longer test deck.
 - [ ] Email service: confirm the email address at sign-up, password reset, send the speaker's reply to the asker, digest to the speaker.

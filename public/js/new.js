@@ -7,7 +7,8 @@ function dots(step) {
   document.querySelectorAll('.dots i').forEach((d, i) => { d.className = i < step ? 'on' : i === step ? 'now' : ''; });
 }
 const auth = () => ({ 'x-key': key });
-const show = (...nodes) => { view.replaceChildren(...nodes); window.scrollTo(0, 0); };
+// flat(): a step may pass a list (for example several upload problems) among its parts.
+const show = (...nodes) => { view.replaceChildren(...nodes.flat()); window.scrollTo(0, 0); };
 
 /* 1. Who and what */
 function details() {
