@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBlobs, hashPassword, checkPassword } from './lib/store.js';
 import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
-import { prepare, answer, hasKey, overlap, lastModelError, noteError } from './lib/ai.js';
+import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -301,9 +301,9 @@ app.post('/api/talks/:id/prepare', async (req, res) => {
   if (!talk.sources.length) return fail(res, 400, 'Add your slides first.');
   try {
     const prep = await prepare(talk);
-    const old = new Map((talk.interview || []).map((x) => [x.q, x.a]));
     talk.summary = prep.summary;
-    talk.interview = prep.interview.map((x) => ({ q: x.q, a: old.get(x.q) || '' }));
+    // The questions for the speaker now come one at a time from /interview; keep any real answers already given.
+    talk.interview = (talk.interview || []).filter((x) => x.a?.trim());
     talk.suggested = prep.suggested;
     save(); res.json(speakerView(talk));
   } catch (e) {
@@ -312,10 +312,32 @@ app.post('/api/talks/:id/prepare', async (req, res) => {
   }
 });
 
+// The setup conversation. The browser sends the speaker's answer to the question on screen (or nothing, to start);
+// we keep the pair and come back with the next question, or done. Stored in talk.interview as { q, a } pairs,
+// the same shape the answering instructions already read as the speaker's notes.
+app.post('/api/talks/:id/interview', async (req, res) => {
+  const talk = speakerTalk(req, res); if (!talk) return;
+  talk.interview ||= [];
+  if (req.body.restart) talk.interview = [];
+  const pending = talk.interview.at(-1);
+  if (pending && pending.a == null && 'answer' in req.body) {
+    pending.a = text(req.body.answer, 4000);
+    if (req.body.voice) pending.voice = true;
+  }
+  // Drop a question left unanswered (for example after a reload) so it can be asked again cleanly.
+  if (talk.interview.at(-1)?.a == null) talk.interview.pop();
+  const next = await nextQuestion(talk);
+  if (!next.done) talk.interview.push({ q: next.question, a: null });
+  save();
+  res.json({ question: next.question, note: next.note, done: next.done, asked: talk.interview.filter((x) => x.a != null).length });
+});
+
 app.post('/api/talks/:id/ready', (req, res) => {
   const talk = speakerTalk(req, res); if (!talk) return;
   const answers = Array.isArray(req.body.answers) ? req.body.answers : [];
   talk.interview.forEach((x, i) => { if (answers[i] != null) x.a = text(answers[i], 1200); });
+  // A question still open when the speaker pressed "That's enough" is not part of the notes.
+  talk.interview = talk.interview.filter((x) => x.a != null);
   if (talk.status !== 'ready') track('talk_ready', talk.id, { answered: talk.interview.filter((x) => x.a).length, asked: talk.interview.length });
   talk.status = 'ready'; save();
   res.json(speakerView(talk));
@@ -358,7 +380,9 @@ app.get('/api/talks/:id/inbox', (req, res) => {
     items: escalations.sort((a, b) => b.createdAt - a.createdAt).map((e) => ({
       id: e.id, question: e.question, translated: e.translated || '', status: e.status, answer: e.answer || '', createdAt: e.createdAt,
       backers: (e.backers || []).length,
-      people: e.askers.map((aid) => byId.get(aid)).filter(Boolean).map((a) => ({ name: a.name, email: a.email, linkedin: a.linkedin })),
+      people: e.askers.map((aid) => byId.get(aid)).filter(Boolean).map((a) => (e.anonymous || []).includes(a.id)
+        ? { name: 'Someone', anonymous: true, email: '', linkedin: '' }
+        : { name: a.name, email: a.email, linkedin: a.linkedin }),
     })),
   });
 });
@@ -405,7 +429,7 @@ app.get('/api/join/:code', (req, res) => {
   });
 });
 
-const publicMessage = (m) => ({ id: m.id, role: m.role, text: m.text, about: m.about, replyTo: m.replyTo, handoff: m.handoff, sent: m.sent, createdAt: m.createdAt });
+const publicMessage = (m) => ({ id: m.id, role: m.role, text: m.text, about: m.about, replyTo: m.replyTo, handoff: m.handoff, alsoAnswered: m.alsoAnswered, sent: m.sent, createdAt: m.createdAt });
 
 app.get('/api/thread', (req, res) => {
   const { asker, talk } = askerFrom(req.get('x-token'));
@@ -486,7 +510,7 @@ app.post('/api/chat', async (req, res) => {
   track('question', talk.id);
   try {
     const out = await answer(talk, talkEscalations(talk), history, (d) => send({ t: 'delta', text: d }));
-    const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: out.text, handoff: out.handoff?.question, handoffForSpeaker: out.handoff?.forSpeaker || undefined, createdAt: Date.now() };
+    const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: out.text, handoff: out.handoff?.question, handoffForSpeaker: out.handoff?.forSpeaker || undefined, alsoAnswered: out.handoff?.general || undefined, createdAt: Date.now() };
     db.messages.push(msg); save();
     track(out.handoff ? 'not_covered' : 'answered', talk.id, { ms: Date.now() - started });
     // If others already sent the same question, say so: it is a reason to add yours.
@@ -508,25 +532,31 @@ app.post('/api/handoff', (req, res) => {
   if (!asker) return fail(res, 404, 'Scan the code again to rejoin.');
   const msg = db.messages.find((m) => m.id === req.body.messageId && m.askerId === asker.id && m.handoff);
   if (!msg) return fail(res, 400, "We can't find that question.");
-  const name = text(req.body.name, 80) || asker.name, email = text(req.body.email, 160) || asker.email;
-  if (!name) return fail(res, 400, 'Add your name.');
-  if (!isEmail(email)) return fail(res, 400, "That email doesn't look right.");
-  Object.assign(asker, { name, email });
-  if ('linkedin' in req.body) asker.linkedin = linkedin(req.body.linkedin);
+  // Anonymous: the speaker sees the question but no name or email. The reply still reaches this person,
+  // because it appears in their own chat on this phone.
+  const anonymous = req.body.anonymous === true;
+  if (!anonymous) {
+    const name = text(req.body.name, 80) || asker.name, email = text(req.body.email, 160) || asker.email;
+    if (!name) return fail(res, 400, 'Add your name.');
+    if (!isEmail(email)) return fail(res, 400, "That email doesn't look right.");
+    Object.assign(asker, { name, email });
+    if ('linkedin' in req.body) asker.linkedin = linkedin(req.body.linkedin);
+  }
 
   if (!msg.sent) {
     const twin = twinOf(talk, msg);
     if (twin) {
       if (!twin.askers.includes(asker.id)) twin.askers.push(asker.id);
+      if (anonymous) twin.anonymous = [...new Set([...(twin.anonymous || []), asker.id])];
       if (twin.backers) twin.backers = twin.backers.filter((a) => a !== asker.id); // sent it themselves now
       msg.escalationId = twin.id;
     } else {
       // shared: the form now says others here see the question (never the name), so the room can back it.
-      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], backers: [], shared: true, status: 'open', createdAt: Date.now() };
+      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], shared: true, status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
     }
     msg.sent = true;
-    track('sent_to_speaker', talk.id, { merged: Boolean(twin) });
+    track('sent_to_speaker', talk.id, { merged: Boolean(twin), anonymous });
   }
   save();
   res.json({ ok: true, me: { name: asker.name, email: asker.email, linkedin: asker.linkedin } });

@@ -68,12 +68,12 @@ function phone() {
 const also = (item) => item.translated && el('p', { class: 'also' }, item.translated);
 
 function card(item) {
-  const names = item.people.map((p) => p.name);
+  const names = item.people.map((p) => p.name); // anonymous askers arrive as "Someone"
   const who = names.length > 2 ? `${names[0]}, ${names[1]} and ${names.length - 2} more asked` : names.join(' and ') + ' asked';
   // People who tapped "Me too" in the room: no name, but the speaker should see how many want this answered.
   const more = item.backers > 0 && el('span', { class: 'metoos' }, item.backers === 1 ? '+1 wants this too' : `+${item.backers} want this too`);
   if (item.status === 'open') {
-    const box = el('textarea', { placeholder: `Reply to ${first(names[0])}${names.length > 1 ? ' and the others' : ''}…`, 'aria-label': 'Your reply' });
+    const box = el('textarea', { placeholder: names[0] === 'Someone' && names.length === 1 ? 'Your reply…' : `Reply to ${first(names[0])}${names.length > 1 ? ' and the others' : ''}…`, 'aria-label': 'Your reply' });
     box.value = drafts[item.id] || '';
     box.addEventListener('input', () => { drafts[item.id] = box.value; });
     const send = el('button', { class: 'btn', onclick: async () => {
@@ -90,7 +90,7 @@ function card(item) {
     el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who, more),
     el('p', { class: 'reply' }, item.answer),
     el('div', { class: 'people' }, item.people.map((p) => el('span', { class: 'person' }, p.name,
-      el('a', { href: `mailto:${p.email}?subject=${encodeURIComponent('Your question at ' + talk.title)}` }, 'Email'),
+      p.email && el('a', { href: `mailto:${p.email}?subject=${encodeURIComponent('Your question at ' + talk.title)}` }, 'Email'),
       p.linkedin && el('a', { class: 'in', href: p.linkedin, target: '_blank', rel: 'noopener' }, 'LinkedIn')))));
 }
 

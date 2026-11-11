@@ -1,7 +1,7 @@
 import { $, el, api, keys } from '/js/common.js';
 
 const view = $('#view'), picker = $('#picker');
-let talk = null, key = null, answers = [];
+let talk = null, key = null;
 
 function dots(step) {
   document.querySelectorAll('.dots i').forEach((d, i) => { d.className = i < step ? 'on' : i === step ? 'now' : ''; });
@@ -120,40 +120,134 @@ addEventListener('dragover', (e) => { e.preventDefault(); $('.drop')?.classList.
 addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('.drop')?.classList.remove('over'); });
 addEventListener('drop', (e) => { e.preventDefault(); $('.drop')?.classList.remove('over'); uploadFiles(e.dataTransfer.files); });
 
-/* 3. A few quick questions */
+/* 3. Getting to know the talk: a short back-and-forth with the speaker, by typing or by voice */
 async function prepare() {
   dots(2);
   const count = talk.sources.reduce((n, s) => n + s.count, 0);
   show(el('div', { class: 'reading' }, el('div', { class: 'flip' }), el('h2', { style: 'font-size:30px' }, `Reading ${count} ${count === 1 ? 'page' : 'pages'}…`)));
   try {
     talk = await api(`/api/talks/${talk.id}/prepare`, { method: 'POST', headers: auth() });
-    answers = talk.interview.map((x) => x.a || '');
-    interview(0);
+    conversation();
   } catch (x) { files([x.message]); }
 }
 
-function interview(i) {
+// Long pasted text (a transcript, a script, notes) is kept as material the answers can quote, not just as a reply.
+const LONG_PASTE = 700;
+
+function conversation() {
   dots(2);
-  const total = talk.interview.length;
-  if (i >= total) return finish();
-  const box = el('textarea', { placeholder: 'A sentence or two is plenty.', 'aria-label': talk.interview[i].q });
-  box.value = answers[i];
-  const go = (keep) => { answers[i] = keep ? box.value.trim() : ''; interview(i + 1); };
+  const thread = el('div', { class: 'chat', 'aria-live': 'polite' });
+  const box = el('textarea', { rows: 1, placeholder: 'Type or speak your answer', 'aria-label': 'Your answer' });
+  const send = el('button', { class: 'send', type: 'submit', 'aria-label': 'Send answer' });
+  send.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 18V4m0 0-6 6m6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const mic = voiceButton(box);
+  const attach = el('button', { class: 'tool', type: 'button', 'aria-label': 'Add a file: transcript, notes, paper', title: 'Add a file', onclick: () => more.click() });
+  attach.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M15.5 10.5 10 16a3.5 3.5 0 0 1-5-5l6.5-6.5a2.3 2.3 0 0 1 3.3 3.3L8.6 14a1.1 1.1 0 0 1-1.6-1.6l5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const more = el('input', { type: 'file', multiple: true, hidden: true, accept: '.pdf,.pptx,.docx,.txt,.md' });
+  const err = el('p', { class: 'error', role: 'alert' });
+  const done = el('button', { class: 'btn', type: 'button', onclick: finish }, 'Finish');
+  const skip = el('button', { class: 'btn plain', type: 'button', onclick: () => reply('') }, 'Skip');
+  let waiting = false, voiceUsed = false;
+  mic?.addEventListener('voice', () => { voiceUsed = true; });
+
+  const form = el('form', { class: 'composer talkback', onsubmit: (e) => { e.preventDefault(); reply(box.value); } },
+    el('div', { class: 'line' }, attach, box, mic, send));
+  box.addEventListener('input', () => { box.style.height = 'auto'; box.style.height = Math.min(box.scrollHeight, 220) + 'px'; });
+  box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !matchMedia('(pointer: coarse)').matches) { e.preventDefault(); reply(box.value); } });
+  more.addEventListener('change', () => { addFiles([...more.files]); more.value = ''; });
+
   show(
-    el('p', { class: 'count' }, `${i + 1} of ${total}`),
-    el('h1', { class: 'question' }, talk.interview[i].q),
-    el('label', { class: 'field' }, box),
-    el('div', { class: 'row' },
-      el('button', { class: 'btn plain', style: 'padding-left:0', onclick: () => (i ? interview(i - 1) : files()) }, 'Back'),
-      el('div', { style: 'display:flex;gap:6px' },
-        el('button', { class: 'btn plain', onclick: () => go(false) }, 'Skip'),
-        el('button', { class: 'btn', onclick: () => go(true) }, i === total - 1 ? 'Finish' : 'Next'))),
-  );
-  box.focus();
+    el('h1', { class: 'question', style: 'margin-bottom:8px' }, 'Tell us about your talk'),
+    el('p', { class: 'sub' }, 'A few questions, one at a time, so answers go beyond the slides. Type or speak. Stop whenever you like.'),
+    thread, err, form, more,
+    el('div', { class: 'row', style: 'margin-top:14px' }, skip, done));
+
+  const say = (text, kind) => { const p = el('p', { class: 'turn-' + kind }, text); thread.append(p); p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return p; };
+  const thinking = () => say('', 'thinking');
+
+  async function step(body) {
+    waiting = true; send.disabled = skip.disabled = true;
+    const dotsLine = thinking();
+    try {
+      const out = await api(`/api/talks/${talk.id}/interview`, { method: 'POST', headers: auth(), body });
+      dotsLine.remove();
+      if (out.note) say(out.note, 'note');
+      if (out.done) { say("That's what we needed. Your talk is ready.", 'site'); done.textContent = 'Open my talk'; form.hidden = skip.hidden = true; done.focus(); return; }
+      say(out.question, 'site');
+      box.focus();
+    } catch (x) { dotsLine.remove(); err.textContent = x.message; }
+    waiting = false; send.disabled = skip.disabled = false;
+  }
+
+  async function reply(text) {
+    if (waiting) return;
+    text = text.trim();
+    err.textContent = '';
+    mic?.stop?.();
+    box.value = ''; box.style.height = 'auto';
+    let answer = text;
+    if (text.length > LONG_PASTE) {
+      // Keep the whole paste as material; the conversation records a short pointer to it.
+      try { talk = await api(`/api/talks/${talk.id}/notes`, { method: 'POST', headers: auth(), body: { text } }); answer = `(Added ${text.split(/\s+/).length} words of notes as material.)`; }
+      catch (x) { err.textContent = x.message; box.value = text; return; }
+    }
+    say(text ? (text.length > LONG_PASTE ? answer : text) : 'Skipped', text ? 'me' : 'skip');
+    await step({ answer, voice: voiceUsed });
+    voiceUsed = false;
+  }
+
+  async function addFiles(list) {
+    for (const file of list) {
+      if (file.size > 50 * 1024 * 1024) { err.textContent = `${file.name} is too big. The limit is 50 MB.`; continue; }
+      const line = say(`Adding ${file.name}…`, 'me');
+      const form = new FormData(); form.append('files', file);
+      try {
+        const before = new Set(talk.sources.map((s) => s.id));
+        talk = await api(`/api/talks/${talk.id}/files`, { method: 'POST', headers: auth(), form });
+        const added = talk.sources.find((s) => !before.has(s.id));
+        if (talk.problems?.length) err.textContent = talk.problems.join(' ');
+        line.textContent = added ? `Added ${file.name}` : `Couldn't add ${file.name}`;
+        if (added?.pdf) pictures(file, added, []);
+      } catch (x) { line.textContent = `Couldn't add ${file.name}`; err.textContent = x.message; }
+    }
+  }
+
+  // Coming back to an unfinished setup: show what was already said, then carry on from there.
+  for (const x of (talk.interview || []).filter((x) => x.a != null)) { say(x.q, 'site'); say(x.a || 'Skipped', x.a ? 'me' : 'skip'); }
+  step({});
+}
+
+// Speaking instead of typing. Uses the browser's own speech recognition (Chrome, Edge, Safari); the button
+// is left out where the browser has none. Words appear in the box as they are heard, so they can be corrected.
+function voiceButton(box) {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) return null;
+  const b = el('button', { class: 'tool mic', type: 'button', 'aria-label': 'Speak your answer', 'aria-pressed': 'false', title: 'Speak' });
+  b.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="8" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 10.5a6 6 0 0 0 12 0M11 16.5V19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  let rec = null, base = '';
+  const stop = () => { rec?.stop(); };
+  b.stop = stop;
+  b.addEventListener('click', () => {
+    if (rec) return stop();
+    rec = new Recognition();
+    rec.lang = document.documentElement.lang === 'en' ? (navigator.language || 'en-US') : document.documentElement.lang;
+    rec.continuous = true; rec.interimResults = true;
+    base = box.value ? box.value.replace(/\s*$/, ' ') : '';
+    rec.onresult = (e) => {
+      let heard = '';
+      for (let i = 0; i < e.results.length; i++) heard += e.results[i][0].transcript;
+      box.value = base + heard.trimStart();
+      box.dispatchEvent(new Event('input'));
+    };
+    rec.onstart = () => { b.setAttribute('aria-pressed', 'true'); b.dispatchEvent(new Event('voice')); };
+    rec.onend = rec.onerror = () => { b.setAttribute('aria-pressed', 'false'); rec = null; box.focus(); };
+    try { rec.start(); } catch { rec = null; }
+  });
+  return b;
 }
 
 async function finish() {
-  await api(`/api/talks/${talk.id}/ready`, { method: 'POST', headers: auth(), body: { answers } });
+  await api(`/api/talks/${talk.id}/ready`, { method: 'POST', headers: auth(), body: {} });
   location.href = '/s/' + talk.id;
 }
 

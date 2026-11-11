@@ -111,9 +111,18 @@ try {
   let t0 = Date.now();
   const prep = await call(`/api/talks/${made.id}/prepare`, { method: 'POST' });
   say(`Reading took ${((Date.now() - t0) / 1000).toFixed(1)}s. The site's one-line summary: ${prep.summary || '(none)'}`);
-  say('Questions the site asked the speaker:');
-  prep.interview.forEach((x, i) => say(`  ${i + 1}. ${x.q}\n     ${scenario.interview?.[i] ? 'Speaker: ' + scenario.interview[i] : '(skipped)'}`));
-  talk = await call(`/api/talks/${made.id}/ready`, { method: 'POST', body: { answers: prep.interview.map((_, i) => scenario.interview?.[i] || '') } });
+  // The setup is a conversation: the site asks, the speaker persona answers (scenario.interview, in order), the
+  // site follows up. A missing answer is a skip. Stops when the site is done or the scripted answers run out (+1 skip).
+  say('The setup conversation:');
+  let step = await call(`/api/talks/${made.id}/interview`, { method: 'POST', body: {} });
+  for (let i = 0; !step.done && i <= (scenario.interview?.length || 0); i++) {
+    const reply = scenario.interview?.[i] || '';
+    say(`  Site: ${step.question}\n  Speaker: ${reply || '(skipped)'}`);
+    step = await call(`/api/talks/${made.id}/interview`, { method: 'POST', body: { answer: reply } });
+    if (step.note) say(`  Site: (${step.note})`);
+  }
+  say(step.done ? '  (the site said it knew enough)' : '  (the speaker stopped here)');
+  talk = await call(`/api/talks/${made.id}/ready`, { method: 'POST', body: {} });
 
   await audience(scenario.audience, 'The audience asks');
 

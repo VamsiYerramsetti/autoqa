@@ -1,5 +1,21 @@
 # Log (newest first)
 
+## 2026-11-11 (evening): dark mode, anonymous questions, a real conversation at setup, general answers
+Asked for by Vamsi on 2026-11-11 (in the project chat).
+- Dark mode: follows the phone or computer setting; a moon/sun button in the top bar (and in the audience header) switches it and is remembered on that device. Every colour now comes from a theme variable; yellow keeps dark text, slides stay white, the big-screen code always stays light.
+- Ask anonymously: a switch on the yellow "Send this to..." card, off by default. On: no name or email asked, the speaker's card says "Someone asked" with no contact links, and the reply still appears in the asker's chat.
+- Setup is now a conversation instead of four fixed questions: the site asks one question at a time, built on the last answer and the slides, for up to 8 turns, and early on asks for a transcript, script, notes or paper. The speaker can type, speak (browser speech-to-text, where the browser has it: Chrome, Edge, Safari) or attach files mid-conversation; a long paste is kept as notes material. "Skip" and "Finish" any time; an interrupted setup carries on where it stopped.
+- Answers may use general knowledge for general questions about the subject (what a term means, how a method works), clearly marked as not from the talk; talk-specific facts that are missing are still handed to the speaker. After a general answer the person gets a quiet "Ask Dr. X too" button instead of the big yellow card.
+
+**Tested**
+- `npm test` 13/13 (new: the setup conversation gives a first and a different follow-up question; anonymous hand-off hides name and email and the reply still arrives; the general-answer flag).
+- Browser, practice mode, light and dark, 1280x860 and iPhone size: setup conversation, hand-off card with the switch off and on, speaker page with "Someone asked", home page, theme switch.
+
+**Not yet tested with the real model**: how good the follow-up questions are, and whether it judges "general" vs "talk-specific" well. The live-site check after this push runs the conversation once; the next persona run should look at both.
+
+**For Vamsi**
+- Voice uses the browser's own speech recognition (free, nothing to set up), so it works in Chrome, Edge and Safari but not Firefox. Better accuracy would need a paid speech service; say if you want that.
+
 ## 2026-11-11 (day): "Me too" for the room
 **Changed**
 - Audience chat: when questions are waiting for the speaker, a yellow "2 waiting for Marta" sits under the talk title.

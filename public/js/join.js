@@ -44,7 +44,7 @@ const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'ar
 let waiting = [];
 
 app.append(el('div', { class: 'ask' },
-  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, el('p', {}, talk.speaker.name), waitBtn)),
+  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, el('p', {}, talk.speaker.name), waitBtn, window.themeSwitch?.())),
   thread,
   el('div', { class: 'composer' }, suggest, form)));
 thread.append(welcome);
@@ -228,26 +228,47 @@ function turn(question) {
 }
 
 const asked = new Map(); // message id of an unanswered question -> its place in the chat
-function handoff(node, msg, others = 0) {
+function handoff(node, msg, others = 0, open = false) {
   asked.set(msg.id, node);
   if (msg.sent) return node.append(sentNote());
+  // When the answer already helped in general terms, offer the speaker as a small extra, not a big yellow card.
+  if (msg.alsoAnswered && !open) {
+    const more = el('button', { class: 'also', type: 'button', onclick: () => { more.remove(); handoff(node, msg, others, true); } }, `Ask ${speaker} too`);
+    return node.append(more);
+  }
   const err = el('p', { class: 'error', role: 'alert' });
   const name = el('input', { placeholder: 'Your name', autocomplete: 'name', value: me.name, 'aria-label': 'Your name' });
   const email = el('input', { placeholder: 'Email', type: 'email', autocomplete: 'email', inputmode: 'email', value: me.email, 'aria-label': 'Email' });
   const link = el('input', { placeholder: 'LinkedIn link (optional)', value: me.linkedin, 'aria-label': 'LinkedIn link, optional', inputmode: 'url' });
   const known = me.name && me.email;
+  // Ask with your name (the default, so the speaker can reply and connect) or without it.
+  const anon = el('input', { type: 'checkbox', role: 'switch', class: 'switch' });
+  const details = el('div', { class: 'details' }, !known && name, !known && email, !known && link);
+  const fine = el('p', { class: 'fine' });
+  const send = el('button', { class: 'btn' }, `Send to ${speaker}`);
+  const paint = () => {
+    details.hidden = anon.checked || known;
+    fine.replaceChildren(anon.checked
+      ? `${speaker} sees the question, not who asked. The reply still shows up here. `
+      : known ? '' : `${speaker} gets your name, email and question, so they can reply. Others here see the question, never your name. `,
+      (anon.checked || !known) ? el('a', { href: '/privacy', target: '_blank' }, 'Privacy') : '');
+    send.textContent = anon.checked ? `Send without my name` : `Send to ${speaker}`;
+  };
+  anon.addEventListener('change', paint);
   const box = el('form', { class: 'hand', novalidate: true, onsubmit: async (e) => {
     e.preventDefault();
     try {
-      const out = await api('/api/handoff', { method: 'POST', headers: auth, body: { messageId: msg.id, name: name.value, email: email.value, linkedin: link.value } });
+      const body = anon.checked ? { messageId: msg.id, anonymous: true } : { messageId: msg.id, name: name.value, email: email.value, linkedin: link.value };
+      const out = await api('/api/handoff', { method: 'POST', headers: auth, body });
       me = out.me; box.replaceWith(sentNote());
     } catch (x) { err.textContent = x.message; }
   } },
-    el('h3', {}, `Send this to ${speaker}?`),
+    // Already answered in general terms: the card is an extra, not a dead end.
+    el('h3', {}, msg.alsoAnswered ? `Ask ${speaker} too?` : `Send this to ${speaker}?`),
     others > 0 && el('p', { class: 'others' }, others === 1 ? 'Someone here already asked this.' : `${others} people here already asked this.`),
-    !known && name, !known && email, !known && link, err,
-    el('button', { class: 'btn' }, `Send to ${speaker}`),
-    !known && el('p', { class: 'fine' }, `${speaker} gets your name, email and question, so they can reply. Others here see the question, never your name. `, el('a', { href: '/privacy', target: '_blank' }, 'Privacy')));
+    el('label', { class: 'anon' }, anon, el('span', {}, 'Ask anonymously')),
+    details, err, send, fine);
+  paint();
   node.append(box);
 }
 const sentNote = () => el('div', { class: 'hand sent' }, `Sent to ${speaker}. The reply will show up here.`);

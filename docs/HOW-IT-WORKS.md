@@ -12,16 +12,23 @@
 ## What happens when...
 
 **A speaker sets up a talk.** They sign up, give the talk a title and drop in their slides. The website pulls the
-text out of every slide (and, for PDFs, takes a picture of each slide). The model reads it all once and writes three
-or four short questions about things the audience will likely ask that the slides don't say. The speaker's answers
-are kept as extra notes.
+text out of every slide (and, for PDFs, takes a picture of each slide). Then it has a short conversation with the
+speaker: one question at a time, each one built on the last answer, about what the slides can't say (where a number
+comes from, the method, the limits, what's next). Early on it asks for anything else useful: a transcript, a script,
+notes, a paper. The speaker can type, speak (the browser turns speech into text) or attach a file, and can stop at any
+point. Everything they say is kept as extra notes the answers can draw on.
 
 **Someone in the audience asks.** Their phone sends the question to the website. The website gives the model: the
 rules (answer briefly, in plain words, only from this material, say which slide), the slide text, the speaker's notes,
 and any replies the speaker already gave. The answer streams back word by word, and the phone shows the slide it names.
 
-**The slides don't cover it.** The model says so instead of guessing. The person sees a yellow card asking whether to
-send the question to the speaker. Only then do we ask for their name and email, and we say exactly who receives them.
+**It's a general question.** If someone asks what a term means or how something works in general, the answer can
+come from general knowledge, and it says so ("This isn't in the slides, but in general..."). A small "Ask the
+speaker too" button lets the person get the speaker's own take as well.
+
+**The slides don't cover a fact about the talk.** The model says so instead of guessing. The person sees a yellow card asking whether to
+send the question to the speaker. Only then do we ask for their name and email, and we say exactly who receives them. They can also switch on "Ask
+anonymously": the speaker then sees the question but not who asked, and the reply still appears in the person's chat.
 Questions that mean the same thing are grouped into one card for the speaker.
 
 **"Me too".** Questions waiting for the speaker show at the top of everyone's chat ("2 waiting for Maya"), without
@@ -55,6 +62,7 @@ leak into another's.
   and checks the fix helped. Reports are in `docs/persona-runs/`.
 
 ## Privacy, briefly
+Light and dark mode follow the phone's setting; a moon/sun button switches them, remembered on that device only.
 No tracking cookies and no outside trackers. The only cookie keeps a speaker signed in. Visitor counts use a
 daily-changing scrambled code, never names or emails. Audience members stay anonymous unless they choose to send a
 question to the speaker. Speakers can close their account and everything in it is deleted.

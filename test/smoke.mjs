@@ -68,8 +68,14 @@ await step('set up a talk from a PowerPoint file', async () => {
   const up = await call(`/api/talks/${made.data.id}/files`, { method: 'POST', form });
   assert.equal(up.data.sources[0].count, 6);
   const prep = await call(`/api/talks/${made.data.id}/prepare`, { method: 'POST' });
-  assert.ok(prep.data.interview.length >= 3, 'interview questions');
-  const ready = await call(`/api/talks/${made.data.id}/ready`, { method: 'POST', body: { answers: ['School boards.'] } });
+  assert.equal(prep.status, 200);
+  // The setup conversation: a first question, the speaker answers, a follow-up comes back, then they stop.
+  const q1 = (await call(`/api/talks/${made.data.id}/interview`, { method: 'POST', body: {} })).data;
+  assert.ok(q1.question && !q1.done, 'first question');
+  const q2 = (await call(`/api/talks/${made.data.id}/interview`, { method: 'POST', body: { answer: 'School boards and city water planners.', voice: true } })).data;
+  assert.ok(q2.question && q2.question !== q1.question, 'a different next question');
+  assert.equal(q2.asked, 1);
+  const ready = await call(`/api/talks/${made.data.id}/ready`, { method: 'POST', body: {} });
   assert.equal(ready.data.status, 'ready'); talk = ready.data;
   assert.equal((await call('/api/me')).data.talks.length, 1);
   assert.match((await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).headers.get('content-type'), /svg/);
@@ -140,7 +146,26 @@ await step('speaker replies; askers see it; the next person gets it straight awa
   jar = mine;
 });
 // Checks the code directly rather than the site, so it runs only on a local copy (the live check has no packages installed).
-if (server) await step('answers name a "Dr." speaker properly and never show half a sentence', async () => {
+if (server) await step('a question can be sent anonymously: the speaker sees no name or email, the reply still arrives', async () => {
+  const mine = jar; jar = '';
+  const seat = (await call('/api/join/' + talk.code)).data;
+  const m = await ask(seat.token, 'Who designed the poster for the event?');
+  assert.ok(m.handoff, 'offered to the speaker');
+  {
+    assert.equal((await call('/api/handoff', { method: 'POST', headers: { 'x-token': seat.token }, body: { messageId: m.id, anonymous: true } })).status, 200);
+    jar = mine;
+    const card = (await call(`/api/talks/${talk.id}/inbox`)).data.items.find((i) => i.people.some((p) => p.anonymous));
+    assert.ok(card, 'anonymous card in the inbox');
+    const anonPerson = card.people.find((p) => p.anonymous);
+    assert.equal(anonPerson.email, ''); assert.equal(anonPerson.name, 'Someone');
+    await call(`/api/talks/${talk.id}/inbox/${card.id}`, { method: 'POST', body: { answer: 'The city paid.' } });
+    jar = '';
+    const thread = (await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.messages;
+    assert.ok(thread.some((x) => x.role === 'speaker' && /city paid/.test(x.text)), 'reply reaches the anonymous asker');
+  }
+  jar = mine;
+});
+await step('answers name a "Dr." speaker properly and never show half a sentence', async () => {
   const { callName, finishAnswer } = await import('../lib/ai.js');
   const { first } = await import('../public/js/common.js');
   for (const [full, want] of [['Dr. Ines Carvalho', 'Dr. Carvalho'], ['prof Jan de Vries', 'Prof. de Vries'], ['Maya Okafor', 'Maya']]) {
@@ -156,7 +181,9 @@ if (server) await step('answers name a "Dr." speaker properly and never show hal
   assert.equal(fine.text, '[Slide 2] Yes, 40%.'); assert.equal(fine.handoff, null);
   // Asked in Spanish at an English talk: the speaker also gets the question in the talk's language.
   const flag = (input) => finishAnswer({ stop_reason: 'end_turn', content: [{ type: 'tool_use', name: 'not_covered', input }] }, 'La charla no lo dice.', 'q');
-  assert.deepEqual(flag({ question: '¿Van a ampliar el horario?', for_speaker: 'Will the hours be extended?' }).handoff, { question: '¿Van a ampliar el horario?', forSpeaker: 'Will the hours be extended?' });
+  assert.deepEqual(flag({ question: '¿Van a ampliar el horario?', for_speaker: 'Will the hours be extended?', in_general: false }).handoff, { question: '¿Van a ampliar el horario?', forSpeaker: 'Will the hours be extended?', general: false });
+  // Answered from general knowledge: the speaker is offered as an extra ("Ask ... too"), not as the only way out.
+  assert.equal(flag({ question: 'What is a p-value?', for_speaker: 'What is a p-value?', in_general: true }).handoff.general, true);
   assert.equal(flag({ question: 'Can I bring my bike?' }).handoff.forSpeaker, '');
 });
 await step('close the account and everything in it', async () => {

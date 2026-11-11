@@ -39,6 +39,7 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+- 2026-11-11 (evening, built in the project chat at Vamsi's request): **dark theme** (follows the device, moon/sun switch, every colour now a variable: `--surface`, `--ring`, `--deep` for text on yellow, `--slide` for white slides), **"Ask anonymously" switch** on the yellow card, **setup as a conversation** (transcript layout like the audience chat; attach, microphone and send in one row; the mic turns yellow while listening), and a quiet **"Ask X too"** pill after general answers.
 - 2026-11-11 (2), screen and motion: **a craft pass with the two outside skills** (Vamsi's request).
   Audit of the stylesheet and the main screens against both skills:
 
