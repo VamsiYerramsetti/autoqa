@@ -20,7 +20,10 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] The slide under an answer opens from its place and closes back (tap, button, Escape, drag down); text slides open too.
 - [x] "Me too": the room sees questions waiting for the speaker (no names) and can back them without giving details; the speaker sees how many want each one, most-wanted first, and backers get the reply.
 
+- [x] The "send to the speaker" card: labels always in view, a problem shown at its own field, "Sending…", one open card at a time.
+
 ## Next
+- [ ] Phone: the top bar of the speaker's page and of "Your talks" overlaps the logo; the light/dark switch in the audience header wraps under the "waiting" pill; the setup hint text is cut off.
 - [ ] Let an opened slide fill a phone sideways (upright, a 16:9 slide barely grows); swipe between slides when an answer has two.
 - [ ] Make the "not covered" reply consistent: one short sentence naming what's missing, no slide description first.
 - [ ] Grow the live test's real-answer questions towards the full question set in docs/TESTING.md, on a longer test deck.

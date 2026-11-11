@@ -29,7 +29,9 @@ speaker too" button lets the person get the speaker's own take as well.
 **The slides don't cover a fact about the talk.** The model says so instead of guessing. The person sees a yellow card asking whether to
 send the question to the speaker. Only then do we ask for their name and email, and we say exactly who receives them. They can also switch on "Ask
 anonymously": the speaker then sees the question but not who asked, and the reply still appears in the person's chat.
-Questions that mean the same thing are grouped into one card for the speaker.
+Questions that mean the same thing are grouped into one card for the speaker. Only one yellow card is open at a time: an older
+question that was not sent folds to a small "Send to ..." button, and a missing name or wrong email is pointed out at
+the field itself.
 
 **"Me too".** Questions waiting for the speaker show at the top of everyone's chat ("2 waiting for Maya"), without
 the askers' names. Anyone can tap "Me too" on one, with no name or email: the speaker's card then says "+3 want this

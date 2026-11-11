@@ -291,12 +291,29 @@ button, input, textarea { font: inherit; color: inherit; }
 @media (min-width: 621px) { .zoom .stage { border-radius: 10px; } }
 .hand { margin-top: 16px; padding: 18px; border-radius: 22px; background: var(--signal); color: var(--deep); display: grid; gap: 10px; }
 .hand h3 { font-size: 22px; }
-.hand input { width: 100%; min-height: 50px; padding: 0 14px; border: 0; border-radius: 12px; background: #fff; color: var(--deep); font-size: 16px; }
+.hand { animation: settle 300ms var(--ease-out) both; }
+/* A field on the yellow card: a white box with its label always in view above what is typed. The card is
+   yellow in both themes, so its colours are fixed, not theme variables. */
+.hand .slot { display: block; padding: 8px 14px 6px; border-radius: 12px; background: #fff; color: var(--deep); cursor: text; }
+.hand .slot span { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; color: #5b5970; }
+.hand .slot input { display: block; width: 100%; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font-size: 17px; outline: none; }
+.hand .slot:focus-within { box-shadow: 0 0 0 3px var(--deep); }
+/* A problem is marked on its own field and written under it in dark ink: red text on yellow is too faint (4.4:1). */
+.hand .slot.bad { box-shadow: inset 0 0 0 2.5px #b3261e; }
+.hand .slot.bad:focus-within { box-shadow: inset 0 0 0 2.5px #b3261e, 0 0 0 3px var(--deep); }
+.hand .problem { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.hand .problem:empty { display: none; }
+.hand .details .problem { margin: -4px 0 2px 14px; }
 .hand .btn { background: var(--deep); color: #fff; width: 100%; }
-.hand .fine { font-size: 13px; line-height: 1.35; opacity: .8; }
+.hand .btn[disabled] { opacity: .7; }
+.hand .fine { font-size: 14px; line-height: 1.35; opacity: .85; }
+.hand .fine:empty { display: none; }
 .hand .fine a { font-weight: 600; }
 .hand.sent { background: var(--tint); color: var(--ink); display: flex; align-items: center; gap: 12px; font-weight: 600; }
 .hand.sent::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--signal); flex: none; }
+/* Just sent: the yellow dot lands, once. After a reload the note is simply there. */
+.hand.sent.now::before { animation: land 400ms var(--ease-out) 120ms both; }
+@keyframes land { from { transform: scale(.4); opacity: 0; } }
 .from { margin-top: 16px; padding: 16px 18px; border-radius: 22px; background: var(--cobalt); color: #fff; }
 .from b { display: block; font-size: 13px; opacity: .8; margin-bottom: 4px; font-weight: 600; }
 .from a { display: inline-flex; margin-top: 12px; min-height: 40px; align-items: center; padding: 0 16px; border-radius: 99px; background: #fff; color: var(--cobalt); font-weight: 600; font-size: 15px; text-decoration: none; }
@@ -356,7 +373,8 @@ button, input, textarea { font: inherit; color: inherit; }
 /* Reduce motion: keep the short fades (they say "this is new"), drop everything that travels, grows or loops. */
 @media (prefers-reduced-motion: reduce) {
   @keyframes settle { from { opacity: 0; } }
-  .turn, .slide, .card, .files li { animation-duration: 120ms; }
+  .turn, .slide, .card, .files li, .hand { animation-duration: 120ms; }
+  .hand.sent.now::before { animation: none; }
   .flip { animation: pulse 1s ease infinite alternate; }
   .caret::after, .turn .a:empty::after { animation: none; }
   .btn, .send, .chip, .drop, .dots i, .meter i, .files button, .person a, .suggest button, .slide .frame[role=button] { transition-property: background-color, color, border-color, opacity; }

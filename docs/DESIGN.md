@@ -22,6 +22,8 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
 - **Signature:** the room of dots: curved rows facing a stage, filling as people join; cobalt when answered, yellow when
   waiting.
 - **Chat:** reads like a transcript (bold question, plain answer), not speech bubbles. The slide sits above the answer.
+- **Forms:** a field's label is always in view (never a placeholder); a problem is written under the field it belongs
+  to, in ink, with the field outlined; on yellow, red is never used for text.
 - **Motion:** a thing that moves across the screen (the slide opening) travels on `cubic-bezier(.2, 0, 0, 1)`;
   a thing that arrives or answers a press uses `--ease-out: cubic-bezier(.23, 1, .32, 1)`. Press 140ms, arriving
   300ms, leaving 250ms. Everything pressable gives a little under the finger (`scale(.97)`). Hover looks are for a
@@ -39,6 +41,37 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+- 2026-11-12, interaction and screen: **sending a question to the speaker** (the yellow card on the phone).
+  Audited against both skills; candidates carried over from the craft pass ("placeholders as labels", "the card
+  arriving and the Sent confirmation").
+
+  | Before | After | Why |
+  |---|---|---|
+  | "Your name", "Email" and "LinkedIn link (optional)" were grey placeholders that vanished with the first letter; a field holding "tomas" said nothing about what it was | Each field carries its label, always in view, inside the white box above what is typed | Taste: a control explains itself by its form, its label and its place. NN/g: placeholders as labels are harmful |
+  | A problem ("That email doesn't look right.") appeared in one spot above the button, far from the field | The field itself gets a red outline and the sentence sits right under it; focus goes to that field; it clears as soon as the person types | Taste: an error next to its cause. GOV.UK error message pattern; WCAG 3.3.1 |
+  | The problem was red text on yellow: 4.4:1, under our 4.5:1 rule | Dark ink, semi-bold, on yellow (13:1); red is only the outline, on white | Our contrast rule in this file |
+  | Switching to "Ask anonymously" left the email problem on a card that no longer asked for an email | The problem goes when it no longer applies | A bug found in today's screenshots |
+  | The name and email were only checked after a round trip to the server | Checked on the phone first, at once; the server still checks | Emil: the interface answers the press immediately |
+  | Pressing "Send" showed nothing until the reply came back, and a second tap could send again | The button says "Sending…" and cannot be pressed twice | Emil: every press gets feedback |
+  | Every unanswered question kept its full yellow form open: two questions meant two forms, about two phone screens of yellow | One card open at a time. An older, unsent one folds to a small "Send to Dr. Carvalho" button (the same yellow-dotted button as "Ask Dr. Carvalho too"); what was typed is kept | Taste: no blank or repeated stretch; principle 1 (never louder than the talk) |
+  | The card and the "Sent" note appeared with a jump | Both settle in (300ms, `--ease-out`); on "Sent" the yellow dot lands once. A 120ms fade under reduced motion | Emil: things that arrive now and then may move; ease-out; under 300ms; gentler, not none |
+  | Heading "Send this to Dr. Carvalho?" and, right under it, a button "Send to Dr. Carvalho" / "Send without my name" | The button says "Send" | Principle 3: few words; the heading and the switch already say it |
+  | Small print 13px | 14px | Taste: side notes may be small, not tiny |
+
+  - Proof: `docs/design-2026-11-12-hand-off.jpg` (phone, before above, after below). Desktop checked too.
+  - Sources: the two skills (`docs/DESIGN-SKILLS.md`) ; https://www.nngroup.com/videos/placeholders-form-fields/ ;
+    https://design-system.service.gov.uk/components/error-message ; https://design-system.service.gov.uk/patterns/validation ;
+    https://nhsuk.github.io/accessibility-checklist/pages/3.3.1-errors-can-be-identified-and-described
+  - Rejected: labels that float up out of the placeholder when typing starts (motion on something typed into every
+    time, and it starts life as a placeholder); hiding the LinkedIn field behind a link (one more control, and
+    connecting with the speaker is part of the product); animating the card's height when it folds (Emil: move only
+    `transform` and `opacity`); red problem text (too faint on yellow).
+  - Next candidates, seen in today's screenshots: (screen) on a phone the top bar of the speaker's page and of "Your
+    talks" overlaps the logo ("Code RXCAQ · Your talks" and the email address run into it and off the edge); in the
+    audience header the light/dark switch drops to its own line once the yellow "waiting" pill shows; in setup the
+    hint "Type or speak your answer" is cut in half on a phone. (interaction) a new card landing on the speaker's
+    page; the setup "Reading..." loader as a placeholder shaped like what is coming. (identity) lines against tone
+    steps is still to be proposed to Vamsi with mock-ups; not started.
 - 2026-11-11 (evening, built in the project chat at Vamsi's request): **dark theme** (follows the device, moon/sun switch, every colour now a variable: `--surface`, `--ring`, `--deep` for text on yellow, `--slide` for white slides), **"Ask anonymously" switch** on the yellow card, **setup as a conversation** (transcript layout like the audience chat; attach, microphone and send in one row; the mic turns yellow while listening), and a quiet **"Ask X too"** pill after general answers.
 - 2026-11-11 (2), screen and motion: **a craft pass with the two outside skills** (Vamsi's request).
   Audit of the stylesheet and the main screens against both skills:

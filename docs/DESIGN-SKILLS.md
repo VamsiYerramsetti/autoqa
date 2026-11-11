@@ -9,7 +9,9 @@ disagreement is noted in the design log.
 ## 1. Emil Kowalski, "design engineering" (how things move and respond)
 Source: https://github.com/emilkowalski/skills (MIT). Main file `skills/emil-design-eng/SKILL.md`; also useful there:
 `review-animations`, `improve-animations`, `remove-animations`, `animation-performance`, `gestures`, `break-ui`,
-`ui-cheatsheet.md`.
+`ui-cheatsheet.md`. Seen on 2026-11-12: the repository now lists 18 skills (new to us: `choreograph`,
+`find-animation-opportunities`, `animation-vocabulary`, `mobile-native`, `apple-design`, `prototype`) and a
+`performance-cheatsheet.md`; the rules we rely on (curves, times, press scale, stagger, reduced motion) are unchanged.
 
 What we take from it:
 - **Should it move at all?** Seen hundreds of times a day: never. Tens of times: barely. Now and then (a card
@@ -45,6 +47,9 @@ What we take from it:
 - **Show the real thing.** A real piece of the product beats a drawing of it.
 - **States are part of the design:** a placeholder shaped like what is coming, a composed empty state, an error next to its cause.
 - Controls explain themselves by form and placement; if one needs a sentence of instructions, redesign it.
+- **Forms** (wording in the skill as read on 2026-11-12): a control explains itself "by its form, its label and its
+  place"; a limit that stays (password rules, file type and size) is shown beside the field and tied to it with
+  `aria-describedby`; every control has press, hover and focus feedback and works from the keyboard.
 
 What we do **not** take: its photo sourcing, WebGL/scroll scenes, the "at least 8 moving elements" rule, monospace or
 serif accents, and its scripts (they need a build step). Our product is a tool used in a dark room on a phone, not a
@@ -56,4 +61,5 @@ marketing site.
 2. Audit the screens you are about to touch against both lists. Write the findings as a `Before | After | Why` table.
 3. Fix the top findings, prove them with before/after screenshots, record the table in `docs/DESIGN.md`.
 
-Last checked against the sources: 2026-11-11.
+Last checked against the sources: 2026-11-12. Taste skill is at 2.5.1; its changelog still calls v2 experimental, and
+adds bans we already keep (section-number labels, scroll cues, fake product pictures built from boxes).

@@ -1,5 +1,28 @@
 # Log (newest first)
 
+## 2026-11-12 (night): Design
+Sending a question to the speaker is now clearer on a phone: every field says what it is, a mistake is pointed out at the field itself, and only one yellow card is open at a time.
+- The yellow card: labels stay in view above what is typed (they used to vanish with the first letter); a missing
+  name or a wrong email outlines that field and says so right under it, in dark ink instead of faint red on yellow;
+  the problem goes away when "Ask anonymously" is switched on (it used to stay).
+- The button says "Send", shows "Sending…" and cannot be pressed twice. The card and the "Sent" note settle in
+  instead of jumping.
+- An older question that was not sent folds to a small "Send to Dr. Carvalho" button when the next question is
+  asked, so the chat no longer fills with yellow forms. What was typed is kept.
+- The two design skills were looked up again; nothing we rely on changed. `docs/DESIGN-SKILLS.md` notes what is new.
+
+**Tested.** `npm test` 14/14 (new check for the card). Whole journey screenshotted in practice mode at 1280x860 and
+390 wide before and after; proof in `docs/design-2026-11-12-hand-off.jpg`; the full table is in `docs/DESIGN.md`.
+
+**Unfinished, seen on the way (not touched, one focus a day).** On a phone the top bar of the speaker's page and of
+"Your talks" overlaps the logo; the light/dark switch in the audience header drops to its own line when the yellow
+"waiting" pill shows; the setup hint "Type or speak your answer" is cut in half. All three are in the design log as
+next candidates and in the roadmap.
+
+### For Vamsi
+- Nothing to decide. The button on the yellow card now just says "Send" (it used to repeat the speaker's name, or
+  say "Send without my name"); say if you want the longer wording back.
+
 ## 2026-11-11 (evening): dark mode, anonymous questions, a real conversation at setup, general answers
 Asked for by Vamsi on 2026-11-11 (in the project chat).
 - Dark mode: follows the phone or computer setting; a moon/sun button in the top bar (and in the audience header) switches it and is remembered on that device. Every colour now comes from a theme variable; yellow keeps dark text, slides stay white, the big-screen code always stays light.

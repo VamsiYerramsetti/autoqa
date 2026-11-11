@@ -228,48 +228,100 @@ function turn(question) {
 }
 
 const asked = new Map(); // message id of an unanswered question -> its place in the chat
+
+// One field on the yellow card. Its label stays in view above what is typed (a placeholder is gone with the
+// first letter), and a problem is written right under the field it belongs to.
+function slot(label, props) {
+  const id = 'f' + Math.random().toString(36).slice(2, 8);
+  const input = el('input', { ...props, 'aria-describedby': id });
+  const problem = el('p', { class: 'problem', id, role: 'alert', hidden: true });
+  const box = el('label', { class: 'slot' }, el('span', {}, label), input);
+  const say = (text) => {
+    problem.textContent = text || ''; problem.hidden = !text;
+    box.classList.toggle('bad', Boolean(text));
+    if (text) { input.setAttribute('aria-invalid', 'true'); input.focus(); } else input.removeAttribute('aria-invalid');
+  };
+  input.addEventListener('input', () => say(''));
+  return { input, say, nodes: [box, problem] };
+}
+
+// The small yellow-dotted button that opens the card: "Ask Ines too" after a general answer, "Send to Ines"
+// for a card that was folded away.
+const offer = (node, msg, others) => {
+  const more = el('button', { class: 'also', type: 'button', onclick: () => { more.remove(); handoff(node, msg, others, true); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } },
+    msg.alsoAnswered ? `Ask ${speaker} too` : `Send to ${speaker}`);
+  return more;
+};
+
+// Only one yellow card is open at a time. An older one that was never sent folds down to its small button,
+// so the chat does not fill up with forms. What was typed in it is kept for the next card.
+let openCard = null;
+const draft = {};
+function foldCard() {
+  if (openCard?.box.isConnected) openCard.box.replaceWith(offer(openCard.node, openCard.msg, openCard.others));
+  openCard = null;
+}
+
 function handoff(node, msg, others = 0, open = false) {
   asked.set(msg.id, node);
   if (msg.sent) return node.append(sentNote());
   // When the answer already helped in general terms, offer the speaker as a small extra, not a big yellow card.
-  if (msg.alsoAnswered && !open) {
-    const more = el('button', { class: 'also', type: 'button', onclick: () => { more.remove(); handoff(node, msg, others, true); } }, `Ask ${speaker} too`);
-    return node.append(more);
-  }
-  const err = el('p', { class: 'error', role: 'alert' });
-  const name = el('input', { placeholder: 'Your name', autocomplete: 'name', value: me.name, 'aria-label': 'Your name' });
-  const email = el('input', { placeholder: 'Email', type: 'email', autocomplete: 'email', inputmode: 'email', value: me.email, 'aria-label': 'Email' });
-  const link = el('input', { placeholder: 'LinkedIn link (optional)', value: me.linkedin, 'aria-label': 'LinkedIn link, optional', inputmode: 'url' });
+  if (msg.alsoAnswered && !open) return node.append(offer(node, msg, others));
+  foldCard();
+  const err = el('p', { class: 'problem', role: 'alert' });
+  const name = slot('Your name', { autocomplete: 'name', autocapitalize: 'words', value: draft.name ?? me.name });
+  const email = slot('Email', { type: 'email', autocomplete: 'email', inputmode: 'email', spellcheck: 'false', value: draft.email ?? me.email });
+  const link = slot('LinkedIn link, optional', { inputmode: 'url', autocapitalize: 'none', spellcheck: 'false', value: draft.linkedin ?? me.linkedin });
   const known = me.name && me.email;
   // Ask with your name (the default, so the speaker can reply and connect) or without it.
   const anon = el('input', { type: 'checkbox', role: 'switch', class: 'switch' });
-  const details = el('div', { class: 'details' }, !known && name, !known && email, !known && link);
+  const details = el('div', { class: 'details' }, !known && [...name.nodes, ...email.nodes, ...link.nodes]);
   const fine = el('p', { class: 'fine' });
-  const send = el('button', { class: 'btn' }, `Send to ${speaker}`);
+  const send = el('button', { class: 'btn' }, 'Send');
   const paint = () => {
     details.hidden = anon.checked || known;
     fine.replaceChildren(anon.checked
       ? `${speaker} sees the question, not who asked. The reply still shows up here. `
       : known ? '' : `${speaker} gets your name, email and question, so they can reply. Others here see the question, never your name. `,
       (anon.checked || !known) ? el('a', { href: '/privacy', target: '_blank' }, 'Privacy') : '');
-    send.textContent = anon.checked ? `Send without my name` : `Send to ${speaker}`;
   };
-  anon.addEventListener('change', paint);
+  // A problem with a name or email no longer applies once the person asks without them.
+  anon.addEventListener('change', () => { name.say(''); email.say(''); err.textContent = ''; paint(); });
+  // Say what is missing at the field itself, before anything is sent.
+  const missing = () => {
+    if (anon.checked || known) return false;
+    if (!name.input.value.trim()) return name.say('Add your name.'), true;
+    if (!/^\S+@\S+\.\S+$/.test(email.input.value.trim())) return email.say("That email doesn't look right."), true;
+    return false;
+  };
   const box = el('form', { class: 'hand', novalidate: true, onsubmit: async (e) => {
     e.preventDefault();
+    if (send.disabled || missing()) return;
+    // The button answers the press at once, and a second tap cannot send it twice.
+    send.disabled = true; send.textContent = 'Sending…'; err.textContent = '';
     try {
-      const body = anon.checked ? { messageId: msg.id, anonymous: true } : { messageId: msg.id, name: name.value, email: email.value, linkedin: link.value };
+      const body = anon.checked ? { messageId: msg.id, anonymous: true } : { messageId: msg.id, name: name.input.value, email: email.input.value, linkedin: link.input.value };
       const out = await api('/api/handoff', { method: 'POST', headers: auth, body });
-      me = out.me; box.replaceWith(sentNote());
-    } catch (x) { err.textContent = x.message; }
+      me = out.me; openCard = null;
+      const note = sentNote(); note.classList.add('now');
+      box.replaceWith(note);
+    } catch (x) {
+      send.disabled = false; send.textContent = 'Send';
+      // The server checks too; put its answer at the same field.
+      if (!known && /name/i.test(x.message)) name.say(x.message);
+      else if (!known && /email/i.test(x.message)) email.say(x.message);
+      else err.textContent = x.message;
+    }
   } },
     // Already answered in general terms: the card is an extra, not a dead end.
     el('h3', {}, msg.alsoAnswered ? `Ask ${speaker} too?` : `Send this to ${speaker}?`),
     others > 0 && el('p', { class: 'others' }, others === 1 ? 'Someone here already asked this.' : `${others} people here already asked this.`),
     el('label', { class: 'anon' }, anon, el('span', {}, 'Ask anonymously')),
     details, err, send, fine);
+  box.addEventListener('input', () => { Object.assign(draft, { name: name.input.value, email: email.input.value, linkedin: link.input.value }); });
   paint();
   node.append(box);
+  openCard = { box, node, msg, others };
 }
 const sentNote = () => el('div', { class: 'hand sent' }, `Sent to ${speaker}. The reply will show up here.`);
 
@@ -342,6 +394,7 @@ async function ask(text) {
   busy = true; sendBtn.disabled = true;
   input.value = ''; input.style.height = 'auto';
   chips = chips.filter((c) => c !== text); drawChips();
+  foldCard(); // an unsent yellow card above makes way for the new question
   const parts = turn(text), { node, a } = parts;
   // Keep the question at the top of the screen while the answer writes itself below it.
   node.scrollIntoView({ behavior: 'smooth', block: 'start' });

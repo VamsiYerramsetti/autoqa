@@ -48,6 +48,16 @@ await step('a slide opens large as a proper dialog and respects "reduce motion"'
   assert.match(script, /prefers-reduced-motion/, 'reduce motion');
   assert.match(script, /key === 'Escape'/, 'Escape closes');
 });
+// Same for the yellow "send to the speaker" card: labels that stay in view, a problem written at its own field,
+// a button that cannot send twice, and only one open card at a time.
+await step('the send-to-speaker card labels its fields, puts a problem at the field and opens one at a time', async () => {
+  const script = (await call('/js/join.js')).data;
+  assert.match(script, /class: 'slot'/, 'label kept above the field');
+  assert.match(script, /'aria-invalid', 'true'/, 'problem marked on its field');
+  assert.match(script, /send\.disabled = true/, 'no double send');
+  assert.match(script, /function foldCard/, 'one open card');
+  assert.doesNotMatch(script, /placeholder: 'Your name'/, 'no placeholder used as a label');
+});
 await step('cannot start a talk without an account', async () => {
   assert.equal((await call('/api/talks', { method: 'POST', body: { title: 'x' } })).status, 401);
 });
