@@ -70,6 +70,8 @@ const also = (item) => item.translated && el('p', { class: 'also' }, item.transl
 function card(item) {
   const names = item.people.map((p) => p.name);
   const who = names.length > 2 ? `${names[0]}, ${names[1]} and ${names.length - 2} more asked` : names.join(' and ') + ' asked';
+  // People who tapped "Me too" in the room: no name, but the speaker should see how many want this answered.
+  const more = item.backers > 0 && el('span', { class: 'metoos' }, item.backers === 1 ? '+1 wants this too' : `+${item.backers} want this too`);
   if (item.status === 'open') {
     const box = el('textarea', { placeholder: `Reply to ${first(names[0])}${names.length > 1 ? ' and the others' : ''}…`, 'aria-label': 'Your reply' });
     box.value = drafts[item.id] || '';
@@ -81,11 +83,11 @@ function card(item) {
       delete drafts[item.id]; lastSig = ''; refresh();
     } }, 'Send reply');
     return el('article', { class: 'card open', 'data-id': item.id },
-      el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who), box,
-      el('div', { class: 'row' }, el('span', { class: 'small muted' }, names.length > 1 ? `Goes to all ${names.length}` : ''), send));
+      el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who, more), box,
+      el('div', { class: 'row' }, el('span', { class: 'small muted' }, names.length + item.backers > 1 ? `Goes to all ${names.length + item.backers}` : ''), send));
   }
   return el('article', { class: 'card' },
-    el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who),
+    el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who, more),
     el('p', { class: 'reply' }, item.answer),
     el('div', { class: 'people' }, item.people.map((p) => el('span', { class: 'person' }, p.name,
       el('a', { href: `mailto:${p.email}?subject=${encodeURIComponent('Your question at ' + talk.title)}` }, 'Email'),
@@ -107,7 +109,7 @@ async function refresh() {
     data.top.length > 0 && el('ol', {}, data.top.slice(0, 3).map((q) => el('li', {}, el('span', { class: 't' }, q.text, q.n > 1 && el('span', { class: 'n' }, ' ×' + q.n))))));
   document.title = (data.stats.waiting ? `(${data.stats.waiting}) ` : '') + talk.title + ' · Auto Q&A';
   // Only rebuild the list when it changed, so typing a reply is never interrupted.
-  const sig = JSON.stringify(data.items.map((i) => [i.id, i.status, i.people.length]));
+  const sig = JSON.stringify(data.items.map((i) => [i.id, i.status, i.people.length, i.backers]));
   if (sig === lastSig) return;
   lastSig = sig;
   const focused = document.activeElement?.closest?.('.card')?.dataset.id;
@@ -115,7 +117,8 @@ async function refresh() {
     cards.replaceChildren(el('div', { class: 'empty' }, el('strong', {}, 'Nothing needs you yet'), 'Questions your slides can\'t answer land here.'));
     return;
   }
-  const open = data.items.filter((i) => i.status === 'open'), done = data.items.filter((i) => i.status !== 'open');
+  // The question most people want answered goes first; newest first among equals.
+  const open = data.items.filter((i) => i.status === 'open').sort((a, b) => (b.people.length + b.backers) - (a.people.length + a.backers)), done = data.items.filter((i) => i.status !== 'open');
   cards.replaceChildren(...open.map(card), ...done.map(card));
   if (focused) cards.querySelector(`[data-id="${focused}"] textarea`)?.focus();
 }

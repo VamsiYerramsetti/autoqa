@@ -29,7 +29,7 @@ try {
     el('div', { class: 'bars' }, m.funnel.map(([name, n]) => el('div', {}, el('span', {}, name), el('i', { style: 'width:' + (n / top) * 100 + '%' }), el('b', {}, n)))),
     el('h2', {}, 'In the room'),
     el('div', { class: 'tiles' },
-      [[a.joined, 'people joined'], [a.questions, 'questions asked'], [show(a.straightAway, '%'), 'answered straight away'], [a.sent, 'sent to a speaker'],
+      [[a.joined, 'people joined'], [a.questions, 'questions asked'], [show(a.straightAway, '%'), 'answered straight away'], [a.sent, 'sent to a speaker'], [a.meToo ?? 0, '"me too" taps'],
        [a.replies, 'speaker replies'], [show(a.medianAnswerSeconds, 's'), 'typical answer time'], [show(a.medianReplyMinutes, ' min'), 'typical speaker reply time'],
        [a.slidesOpened, 'slides opened'], [a.connects, 'LinkedIn taps'], [a.failed, 'failed answers']]
         .map(([n, label]) => el('div', {}, el('b', {}, n), el('span', {}, label)))),

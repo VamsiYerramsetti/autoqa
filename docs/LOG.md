@@ -1,5 +1,41 @@
 # Log (newest first)
 
+## 2026-11-11 (day): "Me too" for the room
+**Changed**
+- Audience chat: when questions are waiting for the speaker, a yellow "2 waiting for Marta" sits under the talk title.
+  It opens a list of those questions (never who asked) with a "Me too" button on each. No name or email needed; the
+  reply shows up in that person's chat too. Tapping again takes it back.
+- Someone whose question others already sent is told so on the hand-off card ("Someone here already asked this.").
+- Speaker's inbox: a card says "+3 want this too", the most-wanted question is at the top, and "Goes to all" counts
+  the backers. Backers light up yellow in the room picture. /admin counts "me too" taps.
+- Privacy: the hand-off small print now says others see the question, never the name; the privacy page says the same.
+  Questions sent before today are never shown to the room, because those people weren't told (stored as `shared`).
+- Docs: HOW-IT-WORKS, privacy page, roadmap (three new lines: hiding a question, waiting questions in the asker's
+  language, a "what's queued" wall on the code screen).
+
+**Why.** Re-run of the 10:03 session (it stopped on the usage limit). Today's angle was competitors and organiser
+complaints. Slido and Mentimeter both let the room upvote each other's questions so the most wanted rise; organisers'
+top complaint is duplicates with no sense of how many people care. We already merge duplicates, but a person who
+never typed the question had no way to say "me too", and the speaker saw names only.
+
+**Tested.** `npm test` 12/12 (new check: the room sees the waiting question without names, backs and un-backs it,
+the speaker's card counts backers, the backer gets the reply, the second asker is told someone already asked).
+Playwright in practice mode at 390 wide and 1280x860: hand-off card with the new line, the pill under the title
+(first version overlapped a two-line title; fixed), the list as a bottom sheet on a phone and a centred box on a
+desktop, the pressed "Me too", the speaker's card with "+1 wants this too". No page errors.
+
+**Sources**
+- Slido live Q&A (everyone sees and upvotes, the most relevant rise): https://slido.com/features-live-qa
+- Mentimeter, the audience side of Q&A (upvote what you want answered): https://help.mentimeter.com/en/articles/1501608-questions-from-audience-the-audience-perspective
+- Why event Q&A fails (duplicates, no sense of demand): https://oneask-site.pages.dev/blog/why-most-event-qa-fail-and-how-to-fix-them
+
+**Unfinished.** The speaker can't yet hide a waiting question from the room (roadmap). Waiting questions show in the
+talk's language only.
+
+### For Vamsi
+- The room now sees questions sent to the speaker (without names). If you'd rather keep them private by default and
+  let speakers switch it on, say so; it's one setting.
+
 ## 2026-11-11 (midday): Design craft pass with two outside skills; new direction for the daily runs
 Vamsi asked for the UI to be improved using Emil Kowalski's design skill and the Taste skill, and for the daily
 runs to use them from now on. He also said the product is first of all for conferences and scientific talks.

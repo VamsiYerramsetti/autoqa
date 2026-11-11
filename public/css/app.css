@@ -136,6 +136,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .card h3.long { font: 600 17px/1.4 var(--body); letter-spacing: 0; }
 .card .also { margin-top: 8px; font-size: 17px; line-height: 1.35; }
 .card .who { margin: 8px 0 16px; font-size: 15px; color: var(--muted); }
+.card .metoos { display: inline-block; margin-left: 8px; padding: 1px 10px; border-radius: 99px; background: var(--signal); color: var(--ink); font-size: 14px; font-weight: 600; }
 .card textarea { width: 100%; min-height: 84px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; resize: vertical; font-size: 16px; }
 .card textarea:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 4px var(--tint); }
 .card .row { margin-top: 12px; }
@@ -166,7 +167,27 @@ button, input, textarea { font: inherit; color: inherit; }
 .ask { max-width: 620px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .ask header { padding: 18px 20px 14px; border-bottom: 1.5px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 2; }
 .ask header h1 { font-size: 19px; line-height: 1.15; letter-spacing: -0.015em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.ask header p { font-size: 14px; color: var(--muted); margin-top: 3px; }
+.ask header p { font-size: 14px; color: var(--muted); }
+.ask header .by { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-top: 3px; }
+/* The questions waiting for the speaker: a yellow raised hand the room can join. */
+.waits { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 99px; background: var(--signal); color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer; }
+.waits::after { content: ''; position: absolute; inset: -5px 0; } /* a 44px touch target without a taller pill */
+.waits i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.sheet.list > div { text-align: left; max-width: 520px; max-height: 85vh; max-height: 85dvh; overflow-y: auto; display: grid; gap: 6px; }
+.sheet.list h3 { font-size: 24px; }
+.sheet.list ul { list-style: none; margin: 10px 0 14px; padding: 0; }
+.sheet.list li { padding: 14px 0; border-top: 1.5px solid var(--line); }
+.sheet.list li > p { font-weight: 500; line-height: 1.35; }
+.sheet.list .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.sheet.list .count { font-size: 14px; font-weight: 400; color: var(--muted); }
+.metoo { min-height: 44px; padding: 0 18px; border-radius: 99px; border: 1.5px solid var(--ink); background: transparent; font-size: 15px; font-weight: 600; cursor: pointer; }
+.metoo[aria-pressed="true"] { background: var(--signal); border-color: var(--signal); }
+.yours { font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 99px; background: var(--tint); }
+.hand .others { font-weight: 600; }
+@media (max-width: 620px) {
+  .sheet.list { place-items: end stretch; padding: 0; }
+  .sheet.list > div { max-width: none; border-radius: 28px 28px 0 0; padding: 24px 20px calc(20px + env(safe-area-inset-bottom)); }
+}
 .thread { flex: 1; padding: 8px 20px 24px; }
 .welcome { padding: 9vh 0 4vh; }
 .welcome h2 { font-size: clamp(44px, 13vw, 64px); }

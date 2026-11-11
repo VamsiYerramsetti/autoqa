@@ -18,6 +18,7 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] In other languages, "Marta says" is said in that language ("Según Marta").
 - [x] Slide labels unique per file ("Slide 4 · appendix.pdf" when two files both have a Slide 4).
 - [x] The slide under an answer opens from its place and closes back (tap, button, Escape, drag down); text slides open too.
+- [x] "Me too": the room sees questions waiting for the speaker (no names) and can back them without giving details; the speaker sees how many want each one, most-wanted first, and backers get the reply.
 
 ## Next
 - [ ] Let an opened slide fill a phone sideways (upright, a 16:9 slide barely grows); swipe between slides when an answer has two.
@@ -37,7 +38,6 @@ Work top to bottom. Tick items off and note them in LOG.md.
 
 - [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
 - [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); strip or move them to the front server-side.
-- [ ] "Me too" for the audience: let people back a question already sent to the speaker, so the speaker sees real demand (event organisers' top Q&A complaint is duplicates with no sense of how many care).
 - [ ] Stop adding a nearby fact after the answer is complete (seen: the 23:42 train offered to someone who finishes work at 00:45; Aldercote added to "how late on a Saturday?").
 - [ ] Use a second slide when it qualifies the first (the 85% test against the "9 in 10" aim; a comment deadline for someone told "not decided yet").
 - [ ] Match the asker's register: a casual one-line question gets a casual one-line answer; off-topic gets one line, not two sentences.
@@ -45,6 +45,9 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Translate the speaker's reply for an asker who wrote in another language (the question now reaches the speaker in both; the reply still goes back as written).
 - [ ] On a phone, show a long question smaller or folded, so the answer is on screen without scrolling.
 - [ ] Decide whether the LinkedIn field belongs on every hand-off form (odd at a town meeting); maybe only when the speaker added their own link.
+- [ ] Let the speaker hide a waiting question from the room (moderation; the room sees questions since "Me too").
+- [ ] Show waiting questions in the asker's own language when they write in another one (now always in the talk's language).
+- [ ] Put the speaker's most-wanted waiting questions on the "Show the code" screen, so the room sees what's queued (Slido-style wall), only if speakers ask for it.
 - [ ] Save each persona run's transcript as a report in docs/persona-runs automatically (the 2026-11-10 run only lived in the workflow log).
 
 ## Before going online

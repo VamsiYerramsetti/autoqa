@@ -24,6 +24,12 @@ and any replies the speaker already gave. The answer streams back word by word, 
 send the question to the speaker. Only then do we ask for their name and email, and we say exactly who receives them.
 Questions that mean the same thing are grouped into one card for the speaker.
 
+**"Me too".** Questions waiting for the speaker show at the top of everyone's chat ("2 waiting for Maya"), without
+the askers' names. Anyone can tap "Me too" on one, with no name or email: the speaker's card then says "+3 want this
+too", the most-wanted question moves to the top of the speaker's list, and the reply shows up in that person's chat
+as well. Someone whose own question was already sent by others is told so ("2 people here already asked this").
+Questions sent before this existed stay private, because those askers weren't told the room would see them.
+
 **Something goes wrong mid-answer.** The model thinks before it writes, and if it ever runs out of room the person
 sees only the whole sentences it managed, plus the offer to send the question to the speaker. We never show half a
 sentence, and we never say "the talk doesn't cover that" just because the model said nothing.

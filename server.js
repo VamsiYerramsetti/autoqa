@@ -102,6 +102,24 @@ function askerFrom(token) {
   return talk ? { asker, talk } : {};
 }
 const talkEscalations = (talk) => db.escalations.filter((e) => e.talkId === talk.id);
+// Everyone who wants an answer to a question for the speaker: those who sent it, and those who tapped "Me too".
+const demand = (e) => e.askers.length + (e.backers || []).length;
+
+// The questions still waiting for the speaker that the room may see and back with "Me too".
+// Only ones sent since the room could see them (shared): older ones were sent without that being said.
+function waitingList(talk, asker) {
+  return talkEscalations(talk).filter((e) => e.status === 'open' && e.shared)
+    .sort((a, b) => demand(b) - demand(a) || b.createdAt - a.createdAt)
+    .map((e) => ({ id: e.id, question: e.translated || e.question, people: demand(e),
+      mine: e.askers.includes(asker.id), backed: (e.backers || []).includes(asker.id) }));
+}
+
+// An open question for the speaker that says the same thing. Compared in the speaker's language when we have it,
+// so the same question asked in two languages is still one card.
+function twinOf(talk, msg) {
+  const inTalkLanguage = (x) => x.translated || x.handoffForSpeaker || x.question || x.handoff;
+  return talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg))) >= 0.75);
+}
 
 function speakerView(talk) {
   return {
@@ -319,7 +337,7 @@ app.get('/api/talks/:id/inbox', (req, res) => {
   const byId = new Map(askers.map((a) => [a.id, a]));
   const escalations = talkEscalations(talk);
   const waiting = new Set(), heard = new Set();
-  for (const e of escalations) for (const a of e.askers) (e.status === 'open' ? waiting : heard).add(a);
+  for (const e of escalations) for (const a of [...e.askers, ...(e.backers || [])]) (e.status === 'open' ? waiting : heard).add(a);
   const mine = db.messages.filter((m) => m.talkId === talk.id);
   const asked = new Set(mine.filter((m) => m.role === 'user').map((m) => m.askerId));
   const replies = mine.filter((m) => m.role === 'assistant');
@@ -339,6 +357,7 @@ app.get('/api/talks/:id/inbox', (req, res) => {
     seats: askers.map((a) => (waiting.has(a.id) ? 'waiting' : heard.has(a.id) ? 'replied' : asked.has(a.id) ? 'answered' : 'here')),
     items: escalations.sort((a, b) => b.createdAt - a.createdAt).map((e) => ({
       id: e.id, question: e.question, translated: e.translated || '', status: e.status, answer: e.answer || '', createdAt: e.createdAt,
+      backers: (e.backers || []).length,
       people: e.askers.map((aid) => byId.get(aid)).filter(Boolean).map((a) => ({ name: a.name, email: a.email, linkedin: a.linkedin })),
     })),
   });
@@ -357,6 +376,10 @@ app.post('/api/talks/:id/inbox/:eid', (req, res) => {
     const theirs = db.messages.filter((m) => m.askerId === aid && m.talkId === talk.id && m.sent && m.handoff);
     const own = theirs.find((m) => m.escalationId === e.id) || theirs.find((m) => m.handoff === e.question) || theirs.find((m) => overlap(m.handoff, e.question) >= 0.75);
     db.messages.push({ id: id(8), talkId: talk.id, askerId: aid, role: 'speaker', text: reply, about: e.question, replyTo: own?.id, createdAt: Date.now() });
+  }
+  // People who tapped "Me too" get the reply in their chat too, under the question as they saw it.
+  for (const aid of e.backers || []) {
+    db.messages.push({ id: id(8), talkId: talk.id, askerId: aid, role: 'speaker', text: reply, about: e.translated || e.question, createdAt: Date.now() });
   }
   save(); res.json({ ok: true });
 });
@@ -378,16 +401,29 @@ app.get('/api/join/:code', (req, res) => {
     token: a.token, title: talk.title, speaker: { name: talk.speaker.name, linkedin: talk.speaker.linkedin },
     suggested: talk.suggested, me: { name: a.name, email: a.email, linkedin: a.linkedin },
     messages: db.messages.filter((m) => m.askerId === a.id).map(publicMessage),
+    waiting: waitingList(talk, a),
   });
 });
 
 const publicMessage = (m) => ({ id: m.id, role: m.role, text: m.text, about: m.about, replyTo: m.replyTo, handoff: m.handoff, sent: m.sent, createdAt: m.createdAt });
 
 app.get('/api/thread', (req, res) => {
-  const { asker } = askerFrom(req.get('x-token'));
+  const { asker, talk } = askerFrom(req.get('x-token'));
   if (!asker) return fail(res, 404, 'Scan the code again to rejoin.');
   const since = +req.query.since || 0;
-  res.json({ messages: db.messages.filter((m) => m.askerId === asker.id && m.createdAt > since).map(publicMessage) });
+  res.json({ messages: db.messages.filter((m) => m.askerId === asker.id && m.createdAt > since).map(publicMessage), waiting: waitingList(talk, asker) });
+});
+
+// "Me too": back a question someone else sent to the speaker. No name or email needed; the reply arrives in this chat.
+app.post('/api/metoo', (req, res) => {
+  const { asker, talk } = askerFrom(req.get('x-token'));
+  if (!asker) return fail(res, 404, 'Scan the code again to rejoin.');
+  const e = talkEscalations(talk).find((x) => x.id === req.body.id && x.status === 'open' && x.shared);
+  if (!e) return fail(res, 404, 'That question has been answered or removed.');
+  e.backers = (e.backers || []).filter((a) => a !== asker.id);
+  if (req.body.on !== false && !e.askers.includes(asker.id)) { e.backers.push(asker.id); track('me_too', talk.id); }
+  save();
+  res.json({ waiting: waitingList(talk, asker) });
 });
 
 // What a "Slide 4" reference shows: the real slide picture when we have one, otherwise its text laid out as a slide.
@@ -422,7 +458,7 @@ app.post('/api/forget', (req, res) => {
   const { asker } = askerFrom(req.get('x-token'));
   if (asker) {
     db.messages = db.messages.filter((m) => m.askerId !== asker.id);
-    for (const e of db.escalations) e.askers = e.askers.filter((a) => a !== asker.id);
+    for (const e of db.escalations) { e.askers = e.askers.filter((a) => a !== asker.id); if (e.backers) e.backers = e.backers.filter((a) => a !== asker.id); }
     db.escalations = db.escalations.filter((e) => e.askers.length);
     db.askers = db.askers.filter((a) => a !== asker);
     save();
@@ -453,7 +489,9 @@ app.post('/api/chat', async (req, res) => {
     const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: out.text, handoff: out.handoff?.question, handoffForSpeaker: out.handoff?.forSpeaker || undefined, createdAt: Date.now() };
     db.messages.push(msg); save();
     track(out.handoff ? 'not_covered' : 'answered', talk.id, { ms: Date.now() - started });
-    send({ t: 'done', message: publicMessage(msg) });
+    // If others already sent the same question, say so: it is a reason to add yours.
+    const twin = msg.handoff && twinOf(talk, msg);
+    send({ t: 'done', message: publicMessage(msg), others: twin && !twin.askers.includes(asker.id) ? demand(twin) : 0 });
   } catch (e) {
     track('answer_failed', talk.id);
     noteError('answer', e);
@@ -477,12 +515,14 @@ app.post('/api/handoff', (req, res) => {
   if ('linkedin' in req.body) asker.linkedin = linkedin(req.body.linkedin);
 
   if (!msg.sent) {
-    // Compare in the speaker's language when we have it, so the same question asked in two languages is still one card.
-    const inTalkLanguage = (x) => x.translated || x.handoffForSpeaker || x.question || x.handoff;
-    const twin = talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg))) >= 0.75);
-    if (twin) { if (!twin.askers.includes(asker.id)) twin.askers.push(asker.id); msg.escalationId = twin.id; }
-    else {
-      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], status: 'open', createdAt: Date.now() };
+    const twin = twinOf(talk, msg);
+    if (twin) {
+      if (!twin.askers.includes(asker.id)) twin.askers.push(asker.id);
+      if (twin.backers) twin.backers = twin.backers.filter((a) => a !== asker.id); // sent it themselves now
+      msg.escalationId = twin.id;
+    } else {
+      // shared: the form now says others here see the question (never the name), so the room can back it.
+      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], backers: [], shared: true, status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
     }
     msg.sent = true;
@@ -527,7 +567,7 @@ app.get('/api/admin/metrics', (req, res) => {
       ['Had an audience', uniq(ev.filter((e) => e.name === 'joined').map((e) => e.talkId))],
     ],
     audience: {
-      joined: count('joined'), questions: count('question'), answered, notCovered: missed, sent: count('sent_to_speaker'),
+      joined: count('joined'), questions: count('question'), answered, notCovered: missed, sent: count('sent_to_speaker'), meToo: count('me_too'),
       replies: count('reply_sent'), slidesOpened: count('slide_opened'), connects: count('connect_tapped'), failed: count('answer_failed'),
       straightAway: answered + missed ? Math.round((answered / (answered + missed)) * 100) : null,
       medianAnswerSeconds: mid(speeds) != null ? +(mid(speeds) / 1000).toFixed(1) : null,

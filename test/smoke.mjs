@@ -32,7 +32,7 @@ const steps = [];
 async function step(name, fn) { try { await fn(); steps.push('ok   ' + name); } catch (e) { steps.push('FAIL ' + name + '\n       ' + e.message); process.exitCode = 1; } }
 
 const stamp = Date.now().toString(36), email = `test+${stamp}@autoqa.example`, password = 'correct-horse-' + stamp;
-let talk, seat, seat2, handoffMsg;
+let talk, seat, seat2, seat4, w0, handoffMsg;
 
 await step('pages load', async () => {
   for (const p of ['/', '/signup', '/signin', '/privacy', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
@@ -82,7 +82,7 @@ await step('someone else cannot open the talk', async () => {
 });
 async function ask(token, text) {
   const res = await call('/api/chat', { method: 'POST', headers: { 'x-token': token }, body: { text }, raw: true });
-  const message = JSON.parse((await res.text()).trim().split('\n').pop()).message;
+  const done = JSON.parse((await res.text()).trim().split('\n').pop()), message = { ...done.message, others: done.others };
   if (process.env.SITE) console.log(`   Q: ${text}\n   A: ${message.text}${message.handoff ? '\n   (offered to send to the speaker: ' + message.handoff + ')' : ''}\n`);
   return message;
 }
@@ -103,10 +103,27 @@ await step('a question the slides cannot answer is handed to the speaker, merged
   assert.equal((await call('/api/handoff', { method: 'POST', headers: { 'x-token': seat.token }, body: { messageId: handoffMsg.id, name: 'Jonas', email: 'jonas@autoqa.example' } })).status, 200);
   seat2 = (await call('/api/join/' + talk.code)).data;
   const m2 = await ask(seat2.token, 'Does this work on sloped tile roofs?');
+  assert.equal(m2.others, 1, 'the second asker is told someone already asked');
   await call('/api/handoff', { method: 'POST', headers: { 'x-token': seat2.token }, body: { messageId: m2.id, name: 'Aisha', email: 'aisha@autoqa.example' } });
   jar = mine;
   const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
   assert.equal(inbox.items.length, 1); assert.equal(inbox.items[0].people.length, 2); assert.equal(inbox.stats.waiting, 1);
+});
+await step('the room sees the waiting question and can back it with "Me too", no name needed', async () => {
+  const mine = jar; jar = '';
+  seat4 = (await call('/api/join/' + talk.code)).data;
+  assert.equal(seat4.waiting.length, 1); const w = seat4.waiting[0]; w0 = w.question;
+  assert.match(w.question, /slop|tile|pitch/i); assert.equal(w.people, 2); assert.equal(w.mine, false);
+  assert.ok(!JSON.stringify(seat4.waiting).includes('Jonas'), 'names never shown to the room');
+  const h = { 'x-token': seat4.token };
+  assert.equal((await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id } })).data.waiting[0].people, 3);
+  assert.equal((await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id, on: false } })).data.waiting[0].people, 2);
+  const on = (await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id } })).data.waiting[0];
+  assert.equal(on.backed, true);
+  assert.equal((await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.waiting[0].mine, true);
+  jar = mine;
+  const card = (await call(`/api/talks/${talk.id}/inbox`)).data.items[0];
+  assert.equal(card.backers, 1); assert.equal(card.people.length, 2);
 });
 await step('speaker replies; askers see it; the next person gets it straight away', async () => {
   const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
@@ -114,6 +131,9 @@ await step('speaker replies; askers see it; the next person gets it straight awa
   const mine = jar; jar = '';
   const thread = (await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.messages;
   assert.ok(thread.some((m) => m.role === 'speaker' && /flat roof/.test(m.text)));
+  const backer = (await call('/api/thread?since=0', { headers: { 'x-token': seat4.token } })).data;
+  assert.ok(backer.messages.some((m) => m.role === 'speaker' && /flat roof/.test(m.text) && m.about === w0), 'Me too gets the reply');
+  assert.equal(backer.waiting.length, 0);
   const seat3 = (await call('/api/join/' + talk.code)).data;
   const again = await ask(seat3.token, 'Can it work on sloped tile roofs?');
   assert.match(again.text, /flat/i); assert.ok(!again.handoff);

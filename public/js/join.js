@@ -39,8 +39,12 @@ const sendBtn = el('button', { class: 'send', 'aria-label': 'Ask', disabled: tru
 sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 18V4m0 0-6 6m6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const form = el('form', { onsubmit: (e) => { e.preventDefault(); ask(input.value); } }, input, sendBtn);
 
+// Questions others sent to the speaker that are still waiting. Yellow, like every raised hand in the product.
+const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'aria-haspopup': 'dialog', onclick: () => openWaiting() });
+let waiting = [];
+
 app.append(el('div', { class: 'ask' },
-  el('header', {}, el('h1', { title: talk.title }, talk.title), el('p', {}, talk.speaker.name)),
+  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, el('p', {}, talk.speaker.name), waitBtn)),
   thread,
   el('div', { class: 'composer' }, suggest, form)));
 thread.append(welcome);
@@ -224,7 +228,7 @@ function turn(question) {
 }
 
 const asked = new Map(); // message id of an unanswered question -> its place in the chat
-function handoff(node, msg) {
+function handoff(node, msg, others = 0) {
   asked.set(msg.id, node);
   if (msg.sent) return node.append(sentNote());
   const err = el('p', { class: 'error', role: 'alert' });
@@ -240,9 +244,10 @@ function handoff(node, msg) {
     } catch (x) { err.textContent = x.message; }
   } },
     el('h3', {}, `Send this to ${speaker}?`),
+    others > 0 && el('p', { class: 'others' }, others === 1 ? 'Someone here already asked this.' : `${others} people here already asked this.`),
     !known && name, !known && email, !known && link, err,
     el('button', { class: 'btn' }, `Send to ${speaker}`),
-    !known && el('p', { class: 'fine' }, `${speaker} gets your name, email and question, so they can reply. Nothing else. `, el('a', { href: '/privacy', target: '_blank' }, 'Privacy')));
+    !known && el('p', { class: 'fine' }, `${speaker} gets your name, email and question, so they can reply. Others here see the question, never your name. `, el('a', { href: '/privacy', target: '_blank' }, 'Privacy')));
   node.append(box);
 }
 const sentNote = () => el('div', { class: 'hand sent' }, `Sent to ${speaker}. The reply will show up here.`);
@@ -262,6 +267,52 @@ function speakerReply(msg, quiet) {
   const node = el('section', { class: 'turn' }, msg.about && el('h2', { class: 'q' }, msg.about), reply);
   thread.append(node);
   if (!quiet) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// "Me too": back a question someone else sent, without a name or email. The speaker sees how many want it,
+// and the reply shows up in this chat too.
+let sheet = null;
+function showWaiting(list) {
+  waiting = list;
+  const n = list.length;
+  waitBtn.hidden = !n;
+  waitBtn.replaceChildren(el('i', { 'aria-hidden': 'true' }), `${n} waiting for ${speaker}`);
+  if (sheet) drawWaiting();
+}
+function drawWaiting() {
+  const rows = sheet.querySelector('ul');
+  if (!waiting.length) return closeWaiting();
+  rows.replaceChildren(...waiting.map((w) => el('li', {},
+    el('p', {}, w.question),
+    el('div', { class: 'row' },
+      el('span', { class: 'count' }, w.people === 1 ? '1 person' : `${w.people} people`),
+      w.mine ? el('span', { class: 'yours' }, 'Yours')
+        : el('button', { class: 'metoo', type: 'button', 'aria-pressed': String(w.backed), onclick: (e) => metoo(w, e.currentTarget) }, w.backed ? 'Me too ✓' : 'Me too')))));
+}
+async function metoo(w, btn) {
+  btn.disabled = true;
+  try { showWaiting((await api('/api/metoo', { method: 'POST', headers: auth, body: { id: w.id, on: !w.backed } })).waiting); }
+  catch { btn.disabled = false; }
+}
+function openWaiting() {
+  const back = document.activeElement;
+  const done = el('button', { class: 'btn quiet', type: 'button', onclick: () => closeWaiting() }, 'Done');
+  sheet = el('div', { class: 'sheet list', onclick: (e) => { if (e.target === sheet) closeWaiting(); } },
+    el('div', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'waits-title' },
+      el('h3', { id: 'waits-title' }, `Waiting for ${speaker}`),
+      el('p', { class: 'small muted' }, `Want an answer too? Tap Me too. The reply shows up here; ${speaker} doesn't see your name.`),
+      el('ul', {}), done));
+  sheet.back = back;
+  sheet.keys = (e) => { if (e.key === 'Escape') closeWaiting(); };
+  addEventListener('keydown', sheet.keys);
+  document.body.append(sheet);
+  drawWaiting();
+  sheet.querySelector('button')?.focus();
+}
+function closeWaiting() {
+  if (!sheet) return;
+  removeEventListener('keydown', sheet.keys);
+  sheet.remove(); sheet.back?.focus?.({ preventScroll: true }); sheet = null;
 }
 
 async function ask(text) {
@@ -292,7 +343,7 @@ async function ask(text) {
         if (ev.t === 'done') {
           a.classList.remove('caret'); fill(parts, ev.message.text);
           shown.add(ev.message.id); seen = Math.max(seen, ev.message.createdAt);
-          if (ev.message.handoff) { handoff(node, ev.message); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+          if (ev.message.handoff) { handoff(node, ev.message, ev.others); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
         }
       }
     }
@@ -312,11 +363,13 @@ for (const m of talk.messages) {
   else if (m.role === 'speaker') speakerReply(m, true);
 }
 chips = chips.filter((c) => !talk.messages.some((m) => m.text === c)); drawChips();
+showWaiting(talk.waiting || []);
 
 setInterval(async () => {
   if (busy || document.hidden) return;
   try {
-    const { messages } = await api('/api/thread?since=' + seen, { headers: auth });
+    const { messages, waiting: list } = await api('/api/thread?since=' + seen, { headers: auth });
+    showWaiting(list);
     for (const m of messages) {
       if (shown.has(m.id)) continue;
       shown.add(m.id); seen = Math.max(seen, m.createdAt);
