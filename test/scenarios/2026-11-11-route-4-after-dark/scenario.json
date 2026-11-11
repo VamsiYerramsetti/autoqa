@@ -1,0 +1,46 @@
+{
+  "title": "Route 4 after dark: what changes on 10 January, and what doesn't",
+  "speaker": { "name": "Marta Lindqvist", "about": "transport officer at a town council, presenting at a public meeting; careful, answers every setup question and pastes one note" },
+  "deck": "deck.pdf",
+  "notes": "Regular trips: you can make a standing booking, for example the same pick-up every weekday after a shift. Set it up once by phone or in the app and it repeats until you cancel it.",
+  "interview": [
+    "The drivers who work evening Route 4 today are being offered the Hop driving jobs with Tarn Mobility on the same pay. Nobody is being made redundant.",
+    "The booking phone line is answered by real people from 08:00 to 01:30 every day, with two call handlers in the evening. You do not need a smartphone or an email address to book.",
+    "Aldercote is left out because it is in the neighbouring district and Northfell District Council has not agreed to pay its share. We are still talking to them.",
+    "On bank holidays Hop runs to the Sunday hours."
+  ],
+  "audience": [
+    { "name": "Dorothy Pike", "about": "78, retired school secretary, no smartphone, takes Route 4 home from choir on Thursdays; anxious, polite, long-winded", "email": "dorothy@autoqa.example",
+      "asks": ["Good evening. I do not have a smart phone, only an old mobile my grandson set up and a landline, and I go home on the Route 4 bus from choir every Thursday night after 7pm. Does this mean I will not be able to get home any more after the 10th of January? I am rather worried.",
+               "Thank you, that is a relief if I can ring up to book. Will my bus pass still work on the Hop minibus or do I have to pay now? I only have the free pass and I never carry much cash.",
+               "My neighbour says those phone lines are always engaged. What happens if I ring and nobody answers, or I cant get through, and I am stood outside the church hall in the dark on a Thursday night? Is there somebody I can ask or somewhere I can go to book in person?"] },
+    { "name": "Callum Reyes", "about": "41, public transport planner at the county council; precise, tests the details, notices when two slides disagree", "email": "callum@autoqa.example",
+      "asks": ["Slide 11 says £32,000 saved but slide 12 says about £28,700 if trips stay flat. Which figure should people quote?",
+               { "q": "Is the 9 in 10 within 15 minutes an actual contractual KPI on Tarn Mobility with financial penalties, or just an aspiration? Slide 9 says it's an aim, not a guarantee.", "send": true },
+               "What exactly would end the trial early? Is there a defined failure criterion, or just thresholds nobody has published?"] },
+    { "name": "Lucía Fernández", "about": "34, hospital cleaner on late shifts that end at 00:45; types fast in Spanish with typos and abbreviations", "email": "lucia@autoqa.example",
+      "asks": ["salgo del hospital a las 00:45 entre semana, hay bus pa volver a casa??",
+               { "q": "si el servicio acaba a las 00:30, q hacen los q salimos a esa hora?? lo van a ampliar??", "send": true },
+               "puedo reservar el mismo viaje para todos los dias de una vez o tengo q llamar cada vez??"] },
+    { "name": "Graham Tott", "about": "63, retired lorry driver, distrusts the council; arrived late and wrongly believes the number 4 is being scrapped all day", "email": "graham@autoqa.example",
+      "asks": ["So you're scrapping the number 4 altogether and calling it progress. How are people meant to get to work in the morning?",
+               "Right, so the daytime bus stays. Fine. Are the bus drivers losing their jobs though, yes or no?",
+               "Be honest, is this Hop thing actually going to work or is it just another council vanity project?"] },
+    { "name": "Jay", "about": "16, dragged along by a parent, bored; pokes at the question box, then asks what matters to a teenager", "email": "jay@autoqa.example",
+      "asks": ["can u do my geography hw wats the longest river in england and how do rivers form",
+               "whats the latest i can get home on a saturday",
+               { "q": "can i bring my bike on it", "send": true }] }
+  ],
+  "replies": [
+    { "match": "bike", "answer": "Folding bikes, folded up, yes. Full-size bikes, no: the minibuses have no rack." },
+    { "match": "penalt", "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top." },
+    { "match": "contract", "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top." },
+    { "match": "KPI", "answer": "It is in the contract. Tarn Mobility must pick up at least 85% of bookings within 15 minutes each month; in any month below that it loses 5% of that month's fee. 9 in 10 is what we are aiming for on top." },
+    { "match": "00:30", "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July." },
+    { "match": "00:45", "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July." },
+    { "match": "ampl", "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July." },
+    { "match": "hora", "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July." },
+    { "match": "extend", "answer": "We know about the 00:45 finish at the hospital. Nothing is decided: we have asked the hospital for its shift times and extending weeknight hours to 01:30 will be looked at in the six-month review in July." }
+  ],
+  "after": [{ "name": "Sam", "about": "cycles to the station, arrives late", "asks": ["Are bikes allowed on Hop?"] }]
+}
