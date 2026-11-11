@@ -63,6 +63,14 @@ doesn't cover is offered to the speaker, who replies later. Owner: Vamsi. Live s
 Deploy anywhere new, create accounts on outside services, send emails or messages to anyone, spend money,
 or change repository settings. If something needs one of those, write it under "For Vamsi".
 
+## The daily sessions (Europe/Amsterdam)
+Three scheduled sessions work here every morning without Vamsi. Each leaves a dated entry at the top of `docs/LOG.md`
+whose first lines are plain sentences, because the email quotes them.
+1. 05:00 **Design**: one visible step a day, using the two skills in `docs/DESIGN-SKILLS.md`.
+2. 05:40 **Test and improve**: a made-up conference talk and audience on the live site, a fix proven by a re-run, then one improvement.
+3. 07:45 **Morning email**: a short summary to Vamsi's own inbox. His replies to that email are written into
+   `docs/FEEDBACK.md`, which every session reads first. This is the only email any session may send.
+
 ## Reusable instructions
 - `.claude/skills/persona-test/`: run a persona test (made-up talk and audience) on the live site.
 - `.claude/skills/design-pass/`: improve one part of the experience, with before/after proof.

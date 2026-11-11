@@ -55,6 +55,11 @@ runs to use them from now on. He also said the product is first of all for confe
 - `npm test` passes. Before/after screenshots at 1280x860 and 390 wide of home, chat (welcome, answer with slide,
   long question, hand-off), files step, speaker's inbox and "Your talks": docs/design-2026-11-11-craft-pass.jpg.
 
+**The daily sessions were rebuilt** (Vamsi's request): three instead of four, starting at 05:00 Amsterdam time.
+Design (05:00), test and improve (05:40, the old persona test and "research and improve" in one), and a short
+morning email to Vamsi (07:45) that also collects his replies into docs/FEEDBACK.md. The twice-weekly feedback
+review is switched off; the email replaces it. AGENTS.md lists them.
+
 **Unfinished**
 - The Taste skill asks for surfaces separated by tone, not lines. That would change the look of every screen, so it
   is a proposal for a later design session, not done here.
