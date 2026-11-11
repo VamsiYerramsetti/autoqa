@@ -338,7 +338,7 @@ app.get('/api/talks/:id/inbox', (req, res) => {
     top: [...tally.values()].sort((a, b) => b.n - a.n).slice(0, 5),
     seats: askers.map((a) => (waiting.has(a.id) ? 'waiting' : heard.has(a.id) ? 'replied' : asked.has(a.id) ? 'answered' : 'here')),
     items: escalations.sort((a, b) => b.createdAt - a.createdAt).map((e) => ({
-      id: e.id, question: e.question, status: e.status, answer: e.answer || '', createdAt: e.createdAt,
+      id: e.id, question: e.question, translated: e.translated || '', status: e.status, answer: e.answer || '', createdAt: e.createdAt,
       people: e.askers.map((aid) => byId.get(aid)).filter(Boolean).map((a) => ({ name: a.name, email: a.email, linkedin: a.linkedin })),
     })),
   });
@@ -450,7 +450,7 @@ app.post('/api/chat', async (req, res) => {
   track('question', talk.id);
   try {
     const out = await answer(talk, talkEscalations(talk), history, (d) => send({ t: 'delta', text: d }));
-    const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: out.text, handoff: out.handoff?.question, createdAt: Date.now() };
+    const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'assistant', text: out.text, handoff: out.handoff?.question, handoffForSpeaker: out.handoff?.forSpeaker || undefined, createdAt: Date.now() };
     db.messages.push(msg); save();
     track(out.handoff ? 'not_covered' : 'answered', talk.id, { ms: Date.now() - started });
     send({ t: 'done', message: publicMessage(msg) });
@@ -477,10 +477,12 @@ app.post('/api/handoff', (req, res) => {
   if ('linkedin' in req.body) asker.linkedin = linkedin(req.body.linkedin);
 
   if (!msg.sent) {
-    const twin = talkEscalations(talk).find((e) => e.status === 'open' && overlap(e.question, msg.handoff) >= 0.75);
+    // Compare in the speaker's language when we have it, so the same question asked in two languages is still one card.
+    const inTalkLanguage = (x) => x.translated || x.handoffForSpeaker || x.question || x.handoff;
+    const twin = talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg))) >= 0.75);
     if (twin) { if (!twin.askers.includes(asker.id)) twin.askers.push(asker.id); msg.escalationId = twin.id; }
     else {
-      const e = { id: id(8), talkId: talk.id, question: msg.handoff, askers: [asker.id], status: 'open', createdAt: Date.now() };
+      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
     }
     msg.sent = true;

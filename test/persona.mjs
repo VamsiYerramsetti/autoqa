@@ -121,7 +121,8 @@ try {
   say(`\n== The speaker's inbox ==\n\n${inbox.stats.people} people, ${inbox.stats.questions} questions, ${inbox.items.length} card(s) for the speaker:`);
   for (const item of inbox.items) {
     say(`  - "${item.question}" (${item.people.map((p) => p.name).join(', ')})`);
-    const reply = (scenario.replies || []).find((r) => item.question.toLowerCase().includes(r.match.toLowerCase()));
+    if (item.translated) say(`    also shown in the talk's language: "${item.translated}"`);
+    const reply = (scenario.replies || []).find((r) => `${item.question} ${item.translated || ''}`.toLowerCase().includes(r.match.toLowerCase()));
     if (reply) { await call(`/api/talks/${talk.id}/inbox/${item.id}`, { method: 'POST', body: { answer: reply.answer } }); say(`    Speaker replies: ${reply.answer}`); }
     else say('    (no reply in this scenario)');
   }

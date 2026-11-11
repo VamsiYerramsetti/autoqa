@@ -132,6 +132,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .card { background: #fff; border: 1.5px solid var(--line); border-radius: 22px; padding: 22px; animation: settle .35s ease both; }
 .card.open { border-left: 8px solid var(--signal); }
 .card h3 { font-size: 22px; line-height: 1.15; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+.card .also { margin-top: 8px; font-size: 17px; line-height: 1.35; }
 .card .who { margin: 8px 0 16px; font-size: 15px; color: var(--muted); }
 .card textarea { width: 100%; min-height: 84px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; resize: vertical; font-size: 16px; }
 .card textarea:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 4px var(--tint); }

@@ -124,6 +124,10 @@ if (server) await step('answers name a "Dr." speaker properly and never show hal
   assert.doesNotMatch(empty.text, /doesn't cover|isn't covered/); assert.ok(empty.handoff);
   const fine = finishAnswer({ stop_reason: 'end_turn', content: [] }, '[Slide 2] Yes, 40%.', 'q');
   assert.equal(fine.text, '[Slide 2] Yes, 40%.'); assert.equal(fine.handoff, null);
+  // Asked in Spanish at an English talk: the speaker also gets the question in the talk's language.
+  const flag = (input) => finishAnswer({ stop_reason: 'end_turn', content: [{ type: 'tool_use', name: 'not_covered', input }] }, 'La charla no lo dice.', 'q');
+  assert.deepEqual(flag({ question: '¿Van a ampliar el horario?', for_speaker: 'Will the hours be extended?' }).handoff, { question: '¿Van a ampliar el horario?', forSpeaker: 'Will the hours be extended?' });
+  assert.equal(flag({ question: 'Can I bring my bike?' }).handoff.forSpeaker, '');
 });
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);

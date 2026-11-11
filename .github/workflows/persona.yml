@@ -16,11 +16,15 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Wait until the live site runs this version
         run: |
+          # A commit that only adds notes or scenarios is never deployed, so there is nothing to wait for.
+          if git diff --quiet HEAD~1 HEAD -- . ':!docs' ':!test/scenarios'; then echo "Notes or scenarios only; playing against what is live."; exit 0; fi
           want="${GITHUB_SHA::7}"
           for i in $(seq 1 60); do
             got=$(curl -s -m 70 "$SITE/healthz" || true)

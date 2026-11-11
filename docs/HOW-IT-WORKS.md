@@ -31,6 +31,9 @@ sentence, and we never say "the talk doesn't cover that" just because the model 
 **How answers name the speaker.** By first name ("Maya says"), or by title and surname when the speaker signed up
 with a title ("Dr. Carvalho says").
 
+**Questions in another language.** Answers come back in the language the person wrote in. If that question is sent to
+the speaker, the card in the speaker's inbox shows it twice: as asked, and in the language of the slides.
+
 **The speaker replies.** The reply appears in each asker's chat. It's also added to what the model knows, so the
 next person who asks gets the speaker's own answer straight away.
 
