@@ -81,11 +81,11 @@ function card(item) {
       delete drafts[item.id]; lastSig = ''; refresh();
     } }, 'Send reply');
     return el('article', { class: 'card open', 'data-id': item.id },
-      el('h3', {}, item.question), also(item), el('p', { class: 'who' }, who), box,
+      el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who), box,
       el('div', { class: 'row' }, el('span', { class: 'small muted' }, names.length > 1 ? `Goes to all ${names.length}` : ''), send));
   }
   return el('article', { class: 'card' },
-    el('h3', {}, item.question), also(item), el('p', { class: 'who' }, who),
+    el('h3', { class: item.question.length > 110 ? 'long' : '' }, item.question), also(item), el('p', { class: 'who' }, who),
     el('p', { class: 'reply' }, item.answer),
     el('div', { class: 'people' }, item.people.map((p) => el('span', { class: 'person' }, p.name,
       el('a', { href: `mailto:${p.email}?subject=${encodeURIComponent('Your question at ' + talk.title)}` }, 'Email'),

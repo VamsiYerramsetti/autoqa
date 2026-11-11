@@ -22,8 +22,12 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
 - **Signature:** the room of dots: curved rows facing a stage, filling as people join; cobalt when answered, yellow when
   waiting.
 - **Chat:** reads like a transcript (bold question, plain answer), not speech bubbles. The slide sits above the answer.
-- **Motion:** things travel from where they are to where they go, on one curve: `cubic-bezier(.2, 0, 0, 1)`.
-  Arriving takes 300ms, leaving 250ms, small settles 200ms. With "reduce motion" on, a 120ms fade replaces the travel.
+- **Motion:** a thing that moves across the screen (the slide opening) travels on `cubic-bezier(.2, 0, 0, 1)`;
+  a thing that arrives or answers a press uses `--ease-out: cubic-bezier(.23, 1, .32, 1)`. Press 140ms, arriving
+  300ms, leaving 250ms. Everything pressable gives a little under the finger (`scale(.97)`). Hover looks are for a
+  mouse only. With "reduce motion" on, a 120ms fade replaces travel, growth and loops.
+- **Outside skills:** every design session works from `docs/DESIGN-SKILLS.md` (Emil Kowalski's design engineering,
+  and the Taste skill).
 
 ## How the look may change
 The design session may evolve colour, type, logo and motion, but:
@@ -35,6 +39,33 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+- 2026-11-11 (2), screen and motion: **a craft pass with the two outside skills** (Vamsi's request).
+  Audit of the stylesheet and the main screens against both skills:
+
+  | Before | After | Why |
+  |---|---|---|
+  | Home: three equal coloured cards numbered 1 / 2 / 3, each with a little drawing | Three plain lines beside a real piece of the audience chat (question, slide, answer; one question sent to the speaker) | Taste: three equal cards and index badges are the commonest machine-made give-away; show the real product, not a drawing of it |
+  | Home on a phone: "Auto Q&A", "Sign in" and "Start a talk" each broke onto two lines | The top bar stays on one line | A broken first line is the first thing a visitor sees |
+  | A long question in the chat was a 22px bold headline: twelve lines, answer pushed off the phone | Questions over 110 characters are set as 17px text, semi-bold | Taste: headlines two lines or fewer; hierarchy by weight before size. Found by this morning's persona run |
+  | Same for a long question on the speaker's card | Same fix | The speaker reads it, not glances at it |
+  | "Automated answers, drawn from Maya's slides..." in 15px grey | 17px, near-full ink | Taste: running text 16px+ in ink; this is the one sentence that says answers are automated |
+  | `transition: all` on the setup dots and the drop area | Named properties | Emil: never `transition: all` |
+  | The browser's plain `ease`, 350-500ms arrivals | `--ease-out` curve, 300ms arrivals, 140ms presses | Emil: built-in curves are too weak; interface motion under 300ms |
+  | Only the main buttons gave under the finger | Suggested questions, slide, send, remove, links on cards and talks do too | Emil: every pressable thing answers the press |
+  | Hover looks applied on phones (an outlined button stayed filled after a tap) | Hover only with a mouse | Emil: gate hover behind `(hover: hover) and (pointer: fine)` |
+  | "Reduce motion" switched every animation off | Short fades stay; travel, growth and loops go | Emil: gentler, not none |
+  | Counts jittered sideways as they changed | Tabular figures on all counters | Emil's cheat sheet |
+
+  - Proof: `docs/design-2026-11-11-craft-pass.jpg`.
+  - Sources: https://github.com/emilkowalski/skills (emil-design-eng, ui-cheatsheet) ; https://github.com/Leonxlnx/taste-skill ;
+    https://github.com/Leonxlnx/taste-skill-classics (taste-skill-v1, minimalist-skill). Our digest: `docs/DESIGN-SKILLS.md`.
+  - Not taken from the skills, on purpose: photographs, scroll scenes, "at least 8 moving things", monospace accents.
+  - Rejected: staggering the speaker's cards and the suggested questions (both lists are redrawn often, so they
+    would replay; Emil: things seen often should not animate).
+  - Next candidates from the same audit: (screen) surfaces are separated by 1.5px lines everywhere, where Taste asks
+    for tone steps, which is an identity-level change to propose first; the hand-off card uses placeholders as labels;
+    the setup "Reading..." loader could be a placeholder shaped like the questions to come. (interaction) the
+    hand-off card arriving and the "Sent" confirmation; a new card landing on the speaker's page.
 - 2026-11-11, interaction: **opening and closing the slide under an answer.**
   - Before: tapping a slide faded the whole screen to dark and showed the slide in the middle, on a phone hardly
     bigger than it already was. Nothing said the slide could be tapped. PowerPoint slides (shown as laid-out text)

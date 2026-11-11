@@ -37,6 +37,9 @@ let talk, seat, seat2, handoffMsg;
 await step('pages load', async () => {
   for (const p of ['/', '/signup', '/signin', '/privacy', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
+  // The home page shows a piece of the real chat, and says plainly that answers are automated.
+  const home = await (await call('/', { raw: true })).text();
+  assert.match(home, /class="demo"/); assert.match(home, /Answers are automated/);
 });
 // The browser side has no test of its own here, so at least make sure the slide viewer's promises are in the page script.
 await step('a slide opens large as a proper dialog and respects "reduce motion"', async () => {

@@ -10,7 +10,8 @@ doesn't cover is offered to the speaker, who replies later. Owner: Vamsi. Live s
 ## Read first, every session
 1. `docs/FEEDBACK.md` if present: Vamsi's feedback. It outranks everything else.
 2. `docs/BLUEPRINT.md`: what the product is and why.
-3. `docs/DESIGN.md`: the look (colours, type, logo, motion) and the design log.
+3. `docs/DESIGN.md`: the look (colours, type, logo, motion) and the design log. For any design work also
+   `docs/DESIGN-SKILLS.md`: the two outside design skills Vamsi wants used, and how.
 4. `docs/ROADMAP.md`: what's next.
 5. The top three entries of `docs/LOG.md`: what the last sessions did.
 6. `docs/TESTING.md`, and for persona testing `docs/PERSONAS.md` plus the newest report in `docs/persona-runs/`.

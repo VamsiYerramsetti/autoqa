@@ -1,5 +1,28 @@
 # Log (newest first)
 
+## 2026-11-11 (midday): Design craft pass with two outside skills; new direction for the daily runs
+Vamsi asked for the UI to be improved using Emil Kowalski's design skill and the Taste skill, and for the daily
+runs to use them from now on. He also said the product is first of all for conferences and scientific talks.
+
+**Changed**
+- Home page: the three numbered cards are gone. Three plain lines now sit beside a real piece of the audience chat.
+  On a phone the top bar no longer breaks onto two lines.
+- Chat and speaker's inbox: a long question is set as readable text instead of a twelve-line headline.
+- The sentence saying answers are automated is larger and darker.
+- Motion: one stronger curve, shorter times, press feedback on everything pressable, hover looks only with a mouse,
+  "reduce motion" keeps short fades. Details and the before/after table are in docs/DESIGN.md.
+- New `docs/DESIGN-SKILLS.md`: what we take from each skill, what we leave, and how a design session uses them.
+  The design-pass instructions and AGENTS.md point to it.
+- `docs/PERSONAS.md`: at least three persona runs in four are now a technical or scientific public talk.
+
+**Tested**
+- `npm test` passes. Before/after screenshots at 1280x860 and 390 wide of home, chat (welcome, answer with slide,
+  long question, hand-off), files step, speaker's inbox and "Your talks": docs/design-2026-11-11-craft-pass.jpg.
+
+**Unfinished**
+- The Taste skill asks for surfaces separated by tone, not lines. That would change the look of every screen, so it
+  is a proposal for a later design session, not done here.
+
 ## 2026-11-11 (morning): Persona test, "Route 4 after dark"
 **Run.** A town meeting about an evening bus becoming bookable minibuses: 18-slide PDF, six made-up people (an anxious
 78-year-old without a smartphone, a transport planner, a hospital cleaner writing in Spanish, a sceptic who misheard,

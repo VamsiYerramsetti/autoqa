@@ -217,7 +217,8 @@ function zoom(src, frame) {
 function turn(question) {
   welcome.remove();
   const a = el('div', { class: 'a' }), deck = el('div', { class: 'deck', hidden: true });
-  const node = el('section', { class: 'turn' }, el('h2', { class: 'q' }, question), deck, a);
+  // Long questions are set as text, not as a headline, so the answer is still on screen (see .q.long).
+  const node = el('section', { class: 'turn' }, el('h2', { class: question.length > 110 ? 'q long' : 'q' }, question), deck, a);
   thread.append(node);
   return { node, a, deck };
 }

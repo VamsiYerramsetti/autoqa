@@ -4,13 +4,19 @@ Nobody outside has used Auto Q&A yet. Until they do, made-up people test it: one
 several audience personas with different needs. The point is to find where the product struggles before real people do.
 
 ## One run
-1. **Invent the talk.** A new subject every run (rotate widely: a research talk, a startup pitch, a university lecture,
-   a company all-hands, a medical briefing, a town-hall, a workshop, a product launch, a talk in another language).
+1. **Invent the talk.** A new subject every run. **The product is first of all for conferences, meetups and
+   university talks** (Vamsi, 2026-11-11), so at least three runs in four are a technical or scientific talk given in
+   public: a conference paper (machine learning, physics, biology, medicine, climate, economics), an engineering or
+   developer-conference talk, a PhD defence, a keynote, a poster or lightning talk, a university lecture. Decks for
+   these have what real ones have: equations, a methods slide, results tables, charts described only by a caption,
+   abbreviations, error bars, a limitations slide, references. At most one run in four is another setting (town-hall,
+   all-hands, product launch, pitch). Check the list in `docs/persona-runs/README.md` and pick a field not used lately.
    Write a realistic deck of 12-25 slides as a .pptx or .pdf: some slides dense, some with just a title or one number,
    one or two that contradict or qualify each other, facts the speaker knows that are NOT on the slides.
 2. **Invent the people.** The speaker (who they are, how much effort they put into setup: some answer every
    interview question, some skip all). Four to six audience members who differ in knowledge, patience, language,
-   and intent: for example a beginner, an expert who tests the details, a sceptic, someone who misheard the talk,
+   and intent: for example a beginner, an expert who tests the details, a sceptic, a specialist from the
+   next field over who presses on method and statistics, a student who needs a term explained, someone who misheard the talk,
    someone who writes in fragments or with typos, someone who asks in another language, someone who tries to
    get the assistant off-topic or to reveal things. Each asks three to five questions, with follow-ups that depend
    on what a real person would ask next ("and how much is that per year?").
