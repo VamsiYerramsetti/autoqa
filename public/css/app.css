@@ -182,6 +182,9 @@ button, input, textarea { font: inherit; color: inherit; }
 .sheet.list .count { font-size: 14px; font-weight: 400; color: var(--muted); }
 .metoo { min-height: 44px; padding: 0 18px; border-radius: 99px; border: 1.5px solid var(--ink); background: transparent; font-size: 15px; font-weight: 600; cursor: pointer; }
 .metoo[aria-pressed="true"] { background: var(--signal); border-color: var(--signal); }
+.waits, .metoo { transition: transform 140ms var(--ease-out), background-color 140ms ease; }
+.waits:active { transform: scale(.96); }
+.metoo:active { transform: scale(.95); }
 .yours { font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 99px; background: var(--tint); }
 .hand .others { font-weight: 600; }
 @media (max-width: 620px) {
@@ -304,7 +307,7 @@ button, input, textarea { font: inherit; color: inherit; }
   .flip { animation: pulse 1s ease infinite alternate; }
   .caret::after, .turn .a:empty::after { animation: none; }
   .btn, .send, .chip, .drop, .dots i, .meter i, .files button, .person a, .suggest button, .slide .frame[role=button] { transition-property: background-color, color, border-color, opacity; }
-  .btn:active, .send:active, .chip:active, .drop:active, .files button:active, .person a:active, .suggest button:active, .slide .frame[role=button]:active, .talk:active { transform: none; }
+  .btn:active, .send:active, .chip:active, .drop:active, .files button:active, .person a:active, .suggest button:active, .slide .frame[role=button]:active, .talk:active, .waits:active, .metoo:active { transform: none; }
 }
 
 /* ---------- Numbers, privacy, not found ---------- */
