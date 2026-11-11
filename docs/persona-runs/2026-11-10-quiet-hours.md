@@ -20,3 +20,13 @@ against the answer allowance, which was 600 tokens. Hard questions used it all u
 or nothing was written and the app filled in "The talk doesn't cover that." Allowance raised to 4000. If it ever
 runs out again, only whole sentences are shown and the speaker hand-off is offered. Cause 3: speakers with a title
 are now called "Dr. Carvalho". Item 4 is on the roadmap.
+
+## Re-run after the fix (2026-11-11, version 843cf34)
+Same scenario, 16 questions: 10 answered directly, 6 offered to the speaker (3 sent). 2.1s average to first word.
+- No answer cut off; the Portuguese NEWS2 and zolpidem answers are complete (the zolpidem one says to ask her mother's
+  doctor or pharmacist, which is right).
+- "39% or 36%?" is now answered from Slide 10 (raw count vs. per 1,000 occupied bed-nights) instead of "not covered".
+- The speaker is "Dr. Carvalho" throughout.
+- New, small: one Portuguese answer starts "Dr. Carvalho says que sim" (English phrase in a Portuguese answer); the
+  cost answer adds two figures into "roughly €32,900 in the first year" (arithmetic, not a guess, but the talk gives
+  no total); the 39/36 answer took 4.7s to start.

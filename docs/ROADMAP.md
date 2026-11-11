@@ -30,7 +30,7 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Automatic deletion of audience data after 60 days. Legal review of the privacy page.
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
 
-- [ ] Watch the next persona run: answers to hard questions should now be complete, and the 36%-vs-39% style question answered from the slides.
+- [ ] In other languages, say "Dr. Carvalho says" in that language too (seen: "Dr. Carvalho says que sim").
 - [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
 - [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); strip or move them to the front server-side.
 - [ ] "Me too" for the audience: let people back a question already sent to the speaker, so the speaker sees real demand (event organisers' top Q&A complaint is duplicates with no sense of how many care).

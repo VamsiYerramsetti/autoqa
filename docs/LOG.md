@@ -15,7 +15,8 @@
 **Tested**
 - `npm test` 10/10. Browser in practice mode with a speaker named "Dr. Ines Carvalho" at 390 wide and 1280x860:
   hand-off card reads "Send this to Dr. Carvalho?". The real-model effect can only be seen on the live site
-  (no key in this workspace): check the "Live site" log and the next persona run.
+  (no key in this workspace), so after the deploy ("Live site" workflow passed) the Quiet Hours persona run was
+  repeated: no answer cut off, "39% or 36%?" answered from Slide 10, "Dr. Carvalho" throughout. Details in its report.
 
 **Sources**
 - Thinking counts toward max_tokens; Haiku 5.5 thinks by default: https://platform.claude.com/docs/en/build-with-claude/thinking
@@ -27,6 +28,7 @@
 - The persona test and design session said to run before this one left nothing in the repository (no report,
   no design log entry); the persona run itself is in the workflow log and is now written up.
 - Slide labels mid-answer; "me too" for the audience; lower thinking effort for speed: on the roadmap.
+- Seen in the re-run: "Dr. Carvalho says que sim" (an English phrase in a Portuguese answer). Small prompt fix for a later session.
 
 ## 2026-11-10 (night): cheapest model everywhere, setup can't dead-end
 - Vamsi asked for the cheapest model: reading the deck now uses the same cheap model as answering (`claude-haiku-5-5`). Watch in persona runs whether the questions asked of the speaker stay specific; `AUTOQA_PREP_MODEL` can raise it again.
