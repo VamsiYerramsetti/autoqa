@@ -1,4 +1,4 @@
-import { $, el, api, first } from '/js/common.js';
+import { $, el, api, first, linkedinField, sheet as openSheet } from '/js/common.js';
 
 const code = location.pathname.split('/').pop().toUpperCase();
 const store = 'autoqa:seat:' + code;
@@ -32,7 +32,7 @@ document.title = talk.title;
 const thread = el('main', { class: 'thread', 'aria-live': 'polite' });
 const welcome = el('div', { class: 'welcome' },
   el('h2', {}, 'Ask about this talk.'),
-  el('p', {}, `Automated answers, drawn from ${speaker}'s slides. Anything they can't answer, you can send to ${speaker}.`));
+  el('p', {}, `Automated answers, drawn from ${speaker}'s slides. Anything they can't answer, you can send to ${speaker}. `, el('a', { href: '/how-answers-work', target: '_blank' }, 'How answers work')));
 const suggest = el('div', { class: 'suggest' });
 const input = el('textarea', { rows: 1, placeholder: 'Your question', 'aria-label': 'Your question', enterkeyhint: 'send' });
 const sendBtn = el('button', { class: 'send', 'aria-label': 'Ask', disabled: true });
@@ -44,7 +44,7 @@ const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'ar
 let waiting = [];
 
 app.append(el('div', { class: 'ask' },
-  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, el('p', {}, talk.speaker.name), waitBtn, window.themeSwitch?.())),
+  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, whoButton(), waitBtn, window.themeSwitch?.())),
   thread,
   el('div', { class: 'composer' }, suggest, form)));
 thread.append(welcome);
@@ -55,9 +55,39 @@ input.addEventListener('input', () => {
 });
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(input.value); } });
 
+// The speaker's name in the header opens a small "about" panel: who they are and how to reach them.
+// Shown as a button only when the speaker has put something on their profile.
+function contactLinks(where) {
+  const s = talk.speaker;
+  const tap = (name) => () => { api('/api/event', { method: 'POST', headers: auth, body: { name } }).catch(() => {}); };
+  return [
+    s.linkedin && el('a', { class: 'btn in', href: s.linkedin, target: '_blank', rel: 'noopener', onclick: tap('connect_tapped') }, where === 'reply' ? 'Connect on LinkedIn' : 'LinkedIn'),
+    s.email && el('a', { class: 'btn quiet', href: `mailto:${s.email}?subject=${encodeURIComponent('Your talk: ' + talk.title)}`, onclick: tap('email_tapped') }, `Email ${speaker}`),
+    s.website && el('a', { class: 'btn quiet', href: s.website, target: '_blank', rel: 'noopener', onclick: tap('website_tapped') }, 'Website'),
+  ].filter(Boolean);
+}
+function hasProfile() { const s = talk.speaker; return Boolean(s.headline || s.bio || s.linkedin || s.email || s.website); }
+function openProfile() {
+  api('/api/event', { method: 'POST', headers: auth, body: { name: 'profile_opened' } }).catch(() => {});
+  const s = talk.speaker;
+  const links = contactLinks('profile');
+  const panel = openSheet(
+    el('h3', {}, s.name),
+    s.headline && el('p', { class: 'headline' }, s.headline),
+    s.bio && el('p', { class: 'bio' }, s.bio),
+    links.length ? el('div', { class: 'reach' }, links) : el('p', { class: 'small muted' }, `${speaker} hasn't added contact details.`),
+    el('button', { class: 'btn plain', type: 'button', onclick: () => panel.close() }, 'Close'));
+  panel.panel.parentElement.classList.add('about');
+}
+function whoButton() {
+  if (!hasProfile()) return el('p', {}, talk.speaker.name);
+  return el('button', { class: 'who', type: 'button', 'aria-haspopup': 'dialog', onclick: openProfile }, talk.speaker.name, el('span', { 'aria-hidden': 'true' }, 'About'));
+}
+
 let chips = [...talk.suggested];
 function drawChips() {
-  suggest.replaceChildren(...chips.map((q) => el('button', { type: 'button', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'suggestion_tapped' } }).catch(() => {}); ask(q); } }, q)));
+  // Three at a time: when one is used, the next one in the list takes its place.
+  suggest.replaceChildren(...chips.slice(0, 3).map((q) => el('button', { type: 'button', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'suggestion_tapped' } }).catch(() => {}); ask(q); } }, q)));
   suggest.hidden = !chips.length;
 }
 drawChips();
@@ -271,11 +301,12 @@ function handoff(node, msg, others = 0, open = false) {
   const err = el('p', { class: 'problem', role: 'alert' });
   const name = slot('Your name', { autocomplete: 'name', autocapitalize: 'words', value: draft.name ?? me.name });
   const email = slot('Email', { type: 'email', autocomplete: 'email', inputmode: 'email', spellcheck: 'false', value: draft.email ?? me.email });
-  const link = slot('LinkedIn link, optional', { inputmode: 'url', autocapitalize: 'none', spellcheck: 'false', value: draft.linkedin ?? me.linkedin });
+  // Always offered, never required; the line under it says why (Vamsi's feedback, 11 Nov).
+  const link = linkedinField(draft.linkedin ?? me.linkedin, `So ${speaker} can connect with you afterwards.`);
   const known = me.name && me.email;
   // Ask with your name (the default, so the speaker can reply and connect) or without it.
   const anon = el('input', { type: 'checkbox', role: 'switch', class: 'switch' });
-  const details = el('div', { class: 'details' }, !known && [...name.nodes, ...email.nodes, ...link.nodes]);
+  const details = el('div', { class: 'details' }, !known && [...name.nodes, ...email.nodes, link.box]);
   const fine = el('p', { class: 'fine' });
   const send = el('button', { class: 'btn' }, 'Send');
   const paint = () => {
@@ -300,7 +331,7 @@ function handoff(node, msg, others = 0, open = false) {
     // The button answers the press at once, and a second tap cannot send it twice.
     send.disabled = true; send.textContent = 'Sending…'; err.textContent = '';
     try {
-      const body = anon.checked ? { messageId: msg.id, anonymous: true } : { messageId: msg.id, name: name.input.value, email: email.input.value, linkedin: link.input.value };
+      const body = anon.checked ? { messageId: msg.id, anonymous: true } : { messageId: msg.id, name: name.input.value, email: email.input.value, linkedin: link.value() };
       const out = await api('/api/handoff', { method: 'POST', headers: auth, body });
       me = out.me; openCard = null;
       const note = sentNote(); note.classList.add('now');
@@ -318,16 +349,47 @@ function handoff(node, msg, others = 0, open = false) {
     others > 0 && el('p', { class: 'others' }, others === 1 ? 'Someone here already asked this.' : `${others} people here already asked this.`),
     el('label', { class: 'anon' }, anon, el('span', {}, 'Ask anonymously')),
     details, err, send, fine);
-  box.addEventListener('input', () => { Object.assign(draft, { name: name.input.value, email: email.input.value, linkedin: link.input.value }); });
+  box.addEventListener('input', () => { Object.assign(draft, { name: name.input.value, email: email.input.value, linkedin: link.value() }); });
   paint();
   node.append(box);
   openCard = { box, node, msg, others };
 }
-const sentNote = () => el('div', { class: 'hand sent' }, `Sent to ${speaker}. The reply will show up here.`);
+const sentNote = () => el('div', { class: 'hand sent' }, el('span', {}, `Sent to ${speaker}. The reply will show up here.`), notifyOffer());
+
+/* When the speaker replies: a banner at the top of the chat, the page title, a short buzz, and (only if the
+   person said yes) a notification from the browser while this page is open in the background. */
+const canNotify = () => 'Notification' in window && Notification.permission === 'granted';
+function notifyOffer() {
+  if (!('Notification' in window) || Notification.permission !== 'default') return null;
+  const b = el('button', { class: 'tell', type: 'button', onclick: async () => {
+    const answer = await Notification.requestPermission().catch(() => 'denied');
+    b.replaceWith(el('small', {}, answer === 'granted' ? 'We will tell you. Keep this page open.' : 'Notifications are off. The reply will still show up here.'));
+  } }, 'Tell me when it arrives');
+  return b;
+}
+let unread = 0;
+const baseTitle = document.title;
+function clearUnread() { unread = 0; document.title = baseTitle; document.querySelector('.news')?.remove(); }
+function announceReply(node) {
+  unread++;
+  document.title = `(${unread}) ${talk.speaker.name} replied`;
+  try { navigator.vibrate?.(180); } catch {}
+  document.querySelector('.news')?.remove();
+  const banner = el('button', { class: 'news', type: 'button', onclick: () => { node.scrollIntoView({ behavior: 'smooth', block: 'center' }); clearUnread(); } },
+    el('i', { 'aria-hidden': 'true' }), unread > 1 ? `${unread} replies from ${speaker}` : `${speaker} replied`, el('span', {}, 'See it'));
+  document.querySelector('.ask header').after(banner);
+  if (document.hidden && canNotify()) {
+    // Phones only allow this from an installed app; there the banner and title do the job when the person returns.
+    try { const n = new Notification(`${talk.speaker.name} replied`, { body: node.textContent.slice(0, 140), tag: 'autoqa-reply' }); n.onclick = () => { window.focus(); banner.click(); }; } catch {}
+  }
+}
+addEventListener('visibilitychange', () => { if (!document.hidden) checkThread(); });
 
 function speakerReply(msg, quiet) {
-  const reply = el('div', { class: 'from' }, el('b', {}, `${talk.speaker.name} replied`), msg.text,
-    talk.speaker.linkedin && el('div', {}, el('a', { href: talk.speaker.linkedin, target: '_blank', rel: 'noopener', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'connect_tapped' } }).catch(() => {}); } }, `Connect with ${speaker} on LinkedIn`)));
+  // Under the reply: the quickest ways to reach the speaker, and who they are.
+  const reach = [...contactLinks('reply').slice(0, 2), hasProfile() && el('button', { class: 'btn plain', type: 'button', onclick: openProfile }, `About ${speaker}`)].filter(Boolean);
+  const reply = el('div', { class: 'from' }, el('b', {}, `${talk.speaker.name} replied`), el('p', {}, msg.text), reach.length ? el('div', { class: 'reach' }, reach) : null);
+  if (!quiet) setTimeout(() => announceReply(reply));
   welcome.remove();
   // Under the person's own question when we can find it; otherwise as a new entry with the question on top.
   const home = asked.get(msg.replyTo);
@@ -439,8 +501,9 @@ for (const m of talk.messages) {
 chips = chips.filter((c) => !talk.messages.some((m) => m.text === c)); drawChips();
 showWaiting(talk.waiting || []);
 
-setInterval(async () => {
-  if (busy || document.hidden) return;
+async function checkThread() {
+  // In the background we only keep checking when the person asked to be told about replies.
+  if (busy || (document.hidden && !canNotify())) return;
   try {
     const { messages, waiting: list } = await api('/api/thread?since=' + seen, { headers: auth });
     showWaiting(list);
@@ -450,4 +513,5 @@ setInterval(async () => {
       if (m.role === 'speaker') speakerReply(m);
     }
   } catch {}
-}, 4000);
+}
+setInterval(checkThread, 4000);

@@ -14,7 +14,8 @@ doesn't cover is offered to the speaker, who replies later. Owner: Vamsi. Live s
    `docs/DESIGN-SKILLS.md`: the two outside design skills Vamsi wants used, and how.
 4. `docs/ROADMAP.md`: what's next.
 5. The top three entries of `docs/LOG.md`: what the last sessions did.
-6. `docs/TESTING.md`, and for persona testing `docs/PERSONAS.md` plus the newest report in `docs/persona-runs/`.
+6. `docs/SECURITY.md` before touching sign-in, personal data, uploads or pages.
+7. `docs/TESTING.md`, and for persona testing `docs/PERSONAS.md` plus the newest report in `docs/persona-runs/`.
 
 ## Map of the code
 | Job | File | Notes |
@@ -65,15 +66,19 @@ Deploy anywhere new, create accounts on outside services, send emails or message
 or change repository settings. If something needs one of those, write it under "For Vamsi".
 
 ## The daily sessions (Europe/Amsterdam)
-Three scheduled sessions work here every night and morning without Vamsi. Each leaves a dated entry at the top of `docs/LOG.md`
+Four scheduled sessions work here every night and morning without Vamsi. Each leaves a dated entry at the top of `docs/LOG.md`
 whose first lines are plain sentences, because the email quotes them.
 1. 00:13 **Design**: one visible step a day, using the two skills in `docs/DESIGN-SKILLS.md`. (Moved from 05:00 so it gets its own usage window.)
-2. 05:40 **Test and improve**: a made-up conference talk and audience on the live site, a fix proven by a re-run, then one improvement.
-3. 07:45 **Morning email**: a short summary to Vamsi's own inbox. His replies to that email are written into
+2. 03:07 **Security**: looks online for current security, privacy and legal practice, audits the whole product with
+   `.claude/skills/security-audit/`, fixes up to three small things with tests, and records them in `docs/SECURITY.md`.
+3. 05:40 **Test and improve**: a made-up conference talk and audience on the live site, a fix proven by a re-run, then one improvement.
+4. 07:45 **Morning email**: a short summary to Vamsi's own inbox. His replies to that email are written into
    `docs/FEEDBACK.md`, which every session reads first. This is the only email any session may send.
 
 ## Reusable instructions
 - `.claude/skills/persona-test/`: run a persona test (made-up talk and audience) on the live site.
 - `.claude/skills/design-pass/`: improve one part of the experience, with before/after proof.
+- `.claude/skills/security-audit/`: the security, privacy, legal and search-engine check.
 - `.claude/agents/answer-judge.md`: an independent judge for persona transcripts.
+- `.claude/agents/security-reviewer.md`: an independent reader of code changes, looking for holes.
 Agents other than Claude can read these as plain Markdown instructions.

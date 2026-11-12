@@ -1,5 +1,35 @@
 # Log (newest first)
 
+## 2026-11-12 (evening): Security, privacy and Vamsi's fixes
+The site now has browser security rules, limits that suit a whole venue on one Wi-Fi, safer sign-in, and in-depth privacy, terms and "how answers work" pages.
+Vamsi's fixes are in: a LinkedIn field people type a name into, a speaker "About" with contact buttons, a reply notice inside the app, suggested questions that refill, and a working voice button.
+- Security (full list in `docs/SECURITY.md`): Content-Security-Policy and HSTS; writes from other websites refused;
+  uploads refused before reading if the talk isn't yours; sessions stored only as fingerprints (old sign-ins still work);
+  same-time sign-in; database certificate checked; zip-bomb guards; `npm audit` clean; Git history scanned, no secrets.
+- Voice: our own `Permissions-Policy: microphone=()` blocked it. Now allowed for our pages only; problems are explained.
+- Legal: `/privacy` (controller, every piece of data with reason and legal basis, processors and countries, retention,
+  rights, complaints), `/terms`, `/how-answers-work`; 16+ at sign-up; audience details deleted after 90 days.
+- Search engines: own title/description/canonical per public page, `/sitemap.xml`, `/robots.txt`, `security.txt`,
+  talk pages `noindex`.
+- Speaker profile (what you do, about, LinkedIn, website, contact email) via "Your profile" on the speaker page.
+- New: daily **Security** session at 03:07 with `.claude/skills/security-audit/` and the `security-reviewer` agent;
+  the morning email now reports it.
+
+**Tested.** `npm test` 17/17 (two new checks: protection rules; profile/LinkedIn). Walked through in a browser at
+phone size and 1280x860: sign-up, profile, voice (simulated), suggestions refill, About sheet, hand-off with LinkedIn,
+speaker reply, reply banner and tab title, legal pages; no console errors and no policy violations. Found and fixed on
+the way: the LinkedIn field overflowed the yellow card on a phone and covered the Send button.
+
+**Unfinished.** Notifications only while the page is open or in a background tab (no web push yet). Firefox has no
+voice typing.
+
+### For Vamsi
+- Set `CONTACT_EMAIL` (address for privacy questions) and `OPERATOR_NAME` (your name or company) on Render →
+  Environment. Until then the legal pages say "its founder" and "the contact address will be listed here".
+- Rotate the Anthropic API key and the Neon password: both were pasted into a chat once.
+- Have a lawyer read `/privacy` and `/terms` before a public launch.
+- The hosting is in the US; moving to an EU region means a new Render service. The notice explains the transfer.
+
 ## 2026-11-12 (morning): Test and improve
 Today's made-up talk was a conference paper on glacier runoff ("Peak water has passed"), with a statistician, a student, an Italian hydropower planner, a blogger and an irrigation manager asking 16 questions; the score went from 87.5% before to 92.0% after.
 What changed on the site: an answer no longer tells the room what the speaker asked to keep out, never says "I've asked the speaker" when nothing was sent, and always shows its slide even when the model names it wrongly.

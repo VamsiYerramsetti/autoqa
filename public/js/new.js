@@ -148,7 +148,8 @@ function conversation() {
   const done = el('button', { class: 'btn', type: 'button', onclick: finish }, 'Finish');
   const skip = el('button', { class: 'btn plain', type: 'button', onclick: () => reply('') }, 'Skip');
   let waiting = false, voiceUsed = false;
-  mic?.addEventListener('voice', () => { voiceUsed = true; });
+  mic?.addEventListener('voice', () => { voiceUsed = true; err.textContent = ''; });
+  mic?.addEventListener('voiceproblem', (e) => { err.textContent = e.detail; });
 
   const form = el('form', { class: 'composer talkback', onsubmit: (e) => { e.preventDefault(); reply(box.value); } },
     el('div', { class: 'line' }, attach, box, mic, send));
@@ -240,8 +241,17 @@ function voiceButton(box) {
       box.dispatchEvent(new Event('input'));
     };
     rec.onstart = () => { b.setAttribute('aria-pressed', 'true'); b.dispatchEvent(new Event('voice')); };
-    rec.onend = rec.onerror = () => { b.setAttribute('aria-pressed', 'false'); rec = null; box.focus(); };
-    try { rec.start(); } catch { rec = null; }
+    // Say why it didn't work, in words, instead of the button silently doing nothing.
+    const WHY = {
+      'not-allowed': 'Allow the microphone for this site in your browser, then tap the microphone again.',
+      'service-not-allowed': 'Allow the microphone for this site in your browser, then tap the microphone again.',
+      'audio-capture': 'No microphone was found.',
+      'no-speech': "We didn't hear anything. Tap the microphone and try again.",
+      network: 'Speaking needs an internet connection in this browser. You can type instead.',
+    };
+    rec.onerror = (e) => { if (WHY[e.error]) b.dispatchEvent(new CustomEvent('voiceproblem', { detail: WHY[e.error] })); };
+    rec.onend = () => { b.setAttribute('aria-pressed', 'false'); rec = null; box.focus(); };
+    try { rec.start(); } catch { rec = null; b.dispatchEvent(new CustomEvent('voiceproblem', { detail: "The microphone couldn't start. You can type instead." })); }
   });
   return b;
 }

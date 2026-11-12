@@ -1,4 +1,4 @@
-import { $, el, api, keys, first, room } from '/js/common.js';
+import { $, el, api, keys, first, room, linkedinField, sheet } from '/js/common.js';
 
 const id = location.pathname.split('/').pop();
 // Opening the private link on a phone carries the key in the address; keep it and tidy the address.
@@ -25,14 +25,42 @@ const waitingBox = el('div', {}, nums.waiting, el('span', {}, 'need you'));
 const cards = el('div', { class: 'cards' });
 const summary = el('div', { class: 'summary', hidden: true });
 
-const linkBox = el('input', { class: 'input', placeholder: 'linkedin.com/in/you', value: talk.speaker.linkedin || '', 'aria-label': 'Your LinkedIn link' });
-const linkSaved = el('span', { class: 'small muted' });
-linkBox.addEventListener('change', async () => {
-  talk = await api('/api/talks/' + id, { method: 'PATCH', headers: auth, body: { linkedin: linkBox.value } });
-  linkBox.value = talk.speaker.linkedin;
-  linkSaved.textContent = talk.speaker.linkedin ? 'Saved. People you reply to can connect with you.' : linkBox.value ? '' : '';
-  if (!talk.speaker.linkedin && linkBox.value === '') linkSaved.textContent = '';
-});
+// "How the audience sees you": a short profile people can open from the chat, with ways to reach you.
+const profileLine = el('span', { class: 'small muted' });
+function paintProfile() {
+  const p = talk.profile || {};
+  const parts = [p.headline, p.linkedin && 'LinkedIn', p.email && 'Email', p.website && 'Website'].filter(Boolean);
+  profileLine.textContent = parts.length ? parts.join(', ') : 'Nothing yet. Add who you are and how to reach you.';
+}
+function editProfile() {
+  const p = talk.profile || {};
+  const headline = el('input', { maxlength: 120, placeholder: 'Water engineer, Delft Water Lab' }); headline.value = p.headline || '';
+  const bio = el('textarea', { maxlength: 600, rows: 3, placeholder: 'Two or three sentences about you and your work.' }); bio.value = p.bio || '';
+  const link = linkedinField(p.linkedin, '');
+  const site = el('input', { inputmode: 'url', autocapitalize: 'none', spellcheck: 'false', placeholder: 'your-site.org' }); site.value = (p.website || '').replace(/^https:\/\//, '').replace(/\/$/, '');
+  const mail = el('input', { type: 'email', inputmode: 'email', autocomplete: 'email', placeholder: 'Leave empty to keep it private' }); mail.value = p.email || '';
+  const err = el('p', { class: 'error', role: 'alert' });
+  const form = el('form', { class: 'stack profile', novalidate: true, onsubmit: async (e) => {
+    e.preventDefault(); err.textContent = '';
+    try {
+      talk = await api('/api/talks/' + id, { method: 'PATCH', headers: auth, body: { headline: headline.value, bio: bio.value, linkedin: link.value(), website: site.value, contactEmail: mail.value } });
+      if (mail.value.trim() && !talk.profile.email) { err.textContent = "That email doesn't look right."; return; }
+      if (link.value() && !talk.profile.linkedin) { err.textContent = "That doesn't look like a LinkedIn link."; return; }
+      paintProfile(); panel.close();
+    } catch (x) { err.textContent = x.message; }
+  } },
+    el('h3', {}, 'How the audience sees you'),
+    el('label', { class: 'field' }, el('span', {}, 'What you do'), headline),
+    el('label', { class: 'field' }, el('span', {}, 'About you'), bio),
+    link.box,
+    el('label', { class: 'field' }, el('span', {}, 'Website'), site),
+    el('label', { class: 'field' }, el('span', {}, 'Email the audience can use'), mail),
+    err,
+    el('div', { class: 'row' }, el('button', { class: 'btn plain', type: 'button', onclick: () => panel.close() }, 'Cancel'), el('button', { class: 'btn' }, 'Save')));
+  const panel = sheet(form);
+  panel.panel.parentElement.classList.add('list');
+}
+paintProfile();
 
 view.append(el('div', { class: 'desk' },
   el('div', { class: 'side' },
@@ -48,7 +76,7 @@ view.append(el('div', { class: 'desk' },
       el('button', { class: 'btn quiet', onclick: phone }, 'Open on my phone'),
       el('a', { class: 'btn quiet', href: '/j/' + talk.code, target: '_blank' }, 'Try it as the audience')),
     summary,
-    el('label', { class: 'field connect' }, el('span', {}, 'Let people connect with you'), linkBox, linkSaved),
+    el('div', { class: 'connect' }, el('button', { class: 'btn quiet', type: 'button', onclick: editProfile }, 'Your profile'), profileLine),
     !talk.fullAnswers && el('p', { class: 'note' }, 'Practice mode: answers are simple word matches. Add your key to the .env file for real answers.'),
   ),
   el('section', { class: 'inbox' }, el('h2', {}, 'Questions for you'), cards),

@@ -71,6 +71,11 @@ leak into another's.
   and checks the fix helped. Reports are in `docs/persona-runs/`.
 
 ## Privacy, briefly
+The full notice is at /privacy; how answers are made is at /how-answers-work; the rules of use are at /terms.
+Names, emails and LinkedIn links people send with a question are removed automatically after 90 days.
+When a speaker replies, the asker's open page shows a blue notice and the tab title changes; if they allowed it,
+their phone also shows a notification. No email is sent.
+
 Light and dark mode follow the phone's setting; a moon/sun button switches them, remembered on that device only.
 No tracking cookies and no outside trackers. The only cookie keeps a speaker signed in. Visitor counts use a
 daily-changing scrambled code, never names or emails. Audience members stay anonymous unless they choose to send a

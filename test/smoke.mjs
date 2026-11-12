@@ -35,7 +35,7 @@ const stamp = Date.now().toString(36), email = `test+${stamp}@autoqa.example`, p
 let talk, seat, seat2, seat4, w0, handoffMsg;
 
 await step('pages load', async () => {
-  for (const p of ['/', '/signup', '/signin', '/privacy', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
+  for (const p of ['/', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
   // The home page shows a piece of the real chat, and says plainly that answers are automated.
   const home = await (await call('/', { raw: true })).text();
@@ -89,6 +89,47 @@ await step('set up a talk from a PowerPoint file', async () => {
   assert.equal(ready.data.status, 'ready'); talk = ready.data;
   assert.equal((await call('/api/me')).data.talks.length, 1);
   assert.match((await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).headers.get('content-type'), /svg/);
+});
+await step('protection: browser rules on every page, no cross-site writes, no uploads from strangers', async () => {
+  const home = await call('/', { raw: true });
+  const policy = home.headers.get('content-security-policy') || '';
+  assert.match(policy, /script-src 'self'/); assert.doesNotMatch(policy, /script-src[^;]*unsafe-inline/);
+  assert.match(policy, /frame-ancestors 'none'/);
+  assert.equal(home.headers.get('x-powered-by'), null);
+  assert.equal(home.headers.get('x-content-type-options'), 'nosniff');
+  assert.match(home.headers.get('permissions-policy'), /microphone=\(self\)/, 'the speaker may use the microphone');
+  // No page carries script text of its own: everything is loaded from our files, as the policy demands.
+  for (const p of ['/', '/signup', '/privacy', '/terms', '/how-answers-work', `/present/${talk.id}`, '/admin']) {
+    const html = await (await call(p, { raw: true })).text();
+    assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>\s*\S/, `inline script on ${p}`);
+  }
+  // A request from another website is refused, even with the speaker's cookie.
+  assert.equal((await call('/api/talks', { method: 'POST', headers: { origin: 'https://evil.example' }, body: { title: 'x' } })).status, 403);
+  assert.equal((await call('/api/signout', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site' } })).status, 403);
+  assert.equal((await call('/api/me')).data.me.email, email, 'still signed in');
+  // A stranger cannot upload into someone's talk (and is turned away before the file is read).
+  const mine = jar; jar = '';
+  const form = new FormData(); form.append('files', new Blob(['hello']), 'x.txt');
+  assert.equal((await call(`/api/talks/${talk.id}/files`, { method: 'POST', form })).status, 404);
+  assert.equal((await call('/api/admin/metrics')).status === 200, !process.env.SITE, 'numbers page is closed to strangers on the live site');
+  jar = mine;
+  for (const p of ['/robots.txt', '/sitemap.xml', '/.well-known/security.txt', '/api/site']) assert.equal((await call(p, { raw: true })).status, 200, p);
+});
+await step('speaker profile: LinkedIn typed any way becomes a clean link; the audience sees only what was shared', async () => {
+  for (const [typed, want] of [['maya-okafor', 'https://www.linkedin.com/in/maya-okafor'], ['@maya-okafor', 'https://www.linkedin.com/in/maya-okafor'],
+    ['linkedin.com/in/maya-okafor/', 'https://www.linkedin.com/in/maya-okafor'], ['https://nl.linkedin.com/in/maya-okafor?trk=x', 'https://www.linkedin.com/in/maya-okafor'],
+    ['https://evil.example/in/maya', ''], ['javascript:alert(1)', '']]) {
+    const out = await call(`/api/talks/${talk.id}`, { method: 'PATCH', body: { linkedin: typed } });
+    assert.equal(out.data.profile.linkedin, want, typed);
+  }
+  const saved = await call(`/api/talks/${talk.id}`, { method: 'PATCH', body: { linkedin: 'maya-okafor', headline: 'Water engineer, Delft Water Lab', bio: 'Works on roofs.', website: 'javascript:alert(1)', contactEmail: 'not-an-email' } });
+  assert.equal(saved.data.profile.website, ''); assert.equal(saved.data.profile.email, '');
+  const mine = jar; jar = '';
+  const seen = (await call('/api/join/' + talk.code)).data;
+  assert.equal(seen.speaker.headline, 'Water engineer, Delft Water Lab'); assert.equal(seen.speaker.linkedin, 'https://www.linkedin.com/in/maya-okafor');
+  assert.equal(seen.speaker.email, '', "the account email is never shown; only a public one the speaker adds");
+  assert.ok(seen.suggested.length >= 3, 'suggested questions');
+  jar = mine;
 });
 await step('someone else cannot open the talk', async () => {
   const mine = jar; jar = '';

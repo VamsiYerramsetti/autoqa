@@ -11,6 +11,7 @@
 <meta property="og:title" content="Auto Q&amp;A: every question gets an answer">
 <meta property="og:description" content="Your audience asks from their phones. Your slides answer. You only get the questions that need you.">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://autoqa-jcol.onrender.com/">
 <meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#13121c" media="(prefers-color-scheme: dark)">
 </head>
@@ -58,35 +59,10 @@
   </section>
 
   <footer class="foot small muted">
-    <span>Auto Q&amp;A</span>
-    <span>Answers are automated and come from the speaker's own material. <a href="/privacy">Privacy</a></span>
+    <span>Auto Q&amp;A. Answers are automated and come from the speaker's own material.</span>
+    <span><a href="/how-answers-work">How answers work</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
   </footer>
 </div>
-<script type="module">
-import { room } from '/js/common.js';
-const svg = document.getElementById('room');
-const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const total = 96, script = [];
-// One short story on load: the room fills, questions get answered, a few wait for the speaker.
-for (let i = 0; i < 58; i++) script.push('here');
-const state = still ? script.map((_, i) => (i % 9 === 4 ? 'waiting' : i % 3 ? 'answered' : 'here')) : [];
-room(svg, state, { min: total });
-if (!still) {
-  let i = 0;
-  const fill = setInterval(() => {
-    state.push('here'); room(svg, state, { min: total });
-    if (++i >= script.length) { clearInterval(fill); ask(); }
-  }, 22);
-  function ask() {
-    const order = [...state.keys()].sort(() => Math.random() - 0.5).slice(0, 40);
-    let k = 0;
-    const t = setInterval(() => {
-      state[order[k]] = k % 8 === 5 ? 'waiting' : 'answered';
-      room(svg, state, { min: total });
-      if (++k >= order.length) clearInterval(t);
-    }, 90);
-  }
-}
-</script>
+<script type="module" src="/js/page-index.js"></script>
 </body>
 </html>

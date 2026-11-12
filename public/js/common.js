@@ -66,3 +66,45 @@ export function room(svg, states, { min = 60 } = {}) {
   svg.innerHTML = `<rect class="stage" x="${W / 2 - 70}" y="6" width="140" height="12" rx="6"/>` +
     seats.map((s, i) => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="9" class="${cls[i]}"/>`).join('');
 }
+
+// A LinkedIn field people can fill in any way they like: type just their handle after the fixed
+// "linkedin.com/in/", or paste a whole link and it is trimmed to the handle for them.
+// Returns { box, input, value() }; value() is what to send to the server ('' when left empty).
+const LINKEDIN_IN = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([^\/?#\s]+).*$/i;
+export function linkedinField(current = '', hint = '') {
+  let other = ''; // a LinkedIn link that is not a personal profile (a company page): kept whole
+  const handleOf = (v) => {
+    v = String(v || '').trim();
+    const m = v.match(LINKEDIN_IN);
+    if (m) { other = ''; return decodeURIComponent(m[1]); }
+    if (/linkedin\.com\//i.test(v)) { other = v; return v.replace(/^https?:\/\/(www\.)?/i, ''); }
+    other = '';
+    return v.replace(/^@/, '').replace(/^\/?in\//i, '');
+  };
+  const input = el('input', { inputmode: 'url', autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', placeholder: 'your-name', 'aria-label': 'LinkedIn profile, optional' });
+  input.value = handleOf(current);
+  const prefix = el('span', { class: 'li-prefix', 'aria-hidden': 'true' }, 'linkedin.com/in/');
+  const badge = el('span', { class: 'li-badge', 'aria-hidden': 'true' }, 'in');
+  const tidy = () => { const h = handleOf(input.value); if (h !== input.value) input.value = h; prefix.hidden = Boolean(other); };
+  input.addEventListener('paste', () => setTimeout(tidy));
+  input.addEventListener('blur', tidy);
+  tidy();
+  const box = el('label', { class: 'li' },
+    el('span', { class: 'li-top' }, 'LinkedIn', el('em', {}, 'optional')),
+    el('span', { class: 'li-field' }, badge, prefix, input),
+    hint && el('small', {}, hint));
+  return { box, input, value: () => { tidy(); return other || input.value.trim(); } };
+}
+
+// A panel over the page. Closes on the backdrop, on Escape and with its own button; focus returns where it was.
+export function sheet(...content) {
+  const before = document.activeElement;
+  const close = () => { wrap.remove(); removeEventListener('keydown', onKey); before?.focus?.(); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const panel = el('div', { role: 'dialog', 'aria-modal': 'true', tabindex: '-1' }, ...content);
+  const wrap = el('div', { class: 'sheet', onclick: (e) => { if (e.target === wrap) close(); } }, panel);
+  addEventListener('keydown', onKey);
+  document.body.append(wrap);
+  panel.focus();
+  return { close, panel };
+}

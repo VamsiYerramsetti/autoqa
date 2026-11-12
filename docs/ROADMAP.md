@@ -3,6 +3,10 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Security pass (2026-11-12): browser rules (CSP, HSTS), no cross-site writes, limits that suit a venue on one Wi-Fi, hashed sessions, upload guards; see docs/SECURITY.md.
+- [x] In-depth privacy notice, terms, "How answers work" page, 16+ at sign-up, delete-my-details, automatic removal of audience details after 90 days.
+- [x] LinkedIn field that takes a link, a handle or @handle; speaker profile (what you do, about, LinkedIn, website, email) with an "About" button and contact buttons for the audience.
+- [x] Reply notice inside the app (banner, tab title, optional phone notification); suggested questions refill to three; voice button works.
 - [x] Accounts (email + password), "Your talks", close account.
 - [x] Database storage (Postgres) and hosting set-up for Render; test suite and GitHub workflow.
 - [x] Answers show the slide they rest on (real picture for PDFs, laid-out text for PowerPoint), tap to enlarge.
@@ -40,8 +44,11 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Group similar hand-off questions by meaning (currently by shared words).
 - [ ] Follow-up suggestions after each answer.
 - [ ] Speaker can edit their interview answers and add material after setup; "My talks" list.
-- [ ] Automatic deletion of audience data after 60 days. Legal review of the privacy page.
+- [ ] Legal review of /privacy and /terms by a lawyer before public launch (needs Vamsi).
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
+- [ ] Phone notifications when the page is closed (web push). Today the notice works while the page is open or in a background tab.
+- [ ] Voice input in Firefox (no speech recognition there): hide the button rather than show one that can't work, or record and transcribe on the server.
+- [ ] Move hosting to an EU region if customers ask for EU-only processing.
 
 - [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
 - [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); they show as a tappable chip. Labels at the end or with a wrong file name are fixed (2026-11-12); decide whether mid-answer chips stay.
@@ -60,7 +67,6 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Setup questions should aim at what a room really asks (jobs, late hours, what you can bring, what if it fails); in the Route 4 run three of four missed.
 - [ ] Translate the speaker's reply for an asker who wrote in another language (the question now reaches the speaker in both; the reply still goes back as written).
 - [ ] On a phone, show a long question smaller or folded, so the answer is on screen without scrolling.
-- [ ] Decide whether the LinkedIn field belongs on every hand-off form (odd at a town meeting); maybe only when the speaker added their own link.
 - [ ] Let the speaker hide a waiting question from the room (moderation; the room sees questions since "Me too").
 - [ ] Show waiting questions in the asker's own language when they write in another one (now always in the talk's language).
 - [ ] Put the speaker's most-wanted waiting questions on the "Show the code" screen, so the room sees what's queued (Slido-style wall), only if speakers ask for it.

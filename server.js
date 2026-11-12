@@ -17,15 +17,49 @@ const app = express();
 // Behind a hosting service's front door, the visitor's real address is one hop back.
 const HOSTED = Boolean(process.env.RENDER || process.env.PUBLIC_URL || process.env.TRUST_PROXY);
 app.set('trust proxy', HOSTED ? 1 : 'loopback');
+app.disable('x-powered-by'); // don't advertise what the server is built with
+
+// Protection headers on every response. The content policy only lets the page load its own scripts, styles,
+// fonts and pictures: no outside scripts can run even if someone manages to inject markup.
+const CONTENT_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",   // our own files; the PDF reader uses WebAssembly for some pictures
+  "style-src 'self' 'unsafe-inline'",       // small style attributes set from our own scripts
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
+].join('; ');
 app.use((req, res, next) => {
-  res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' });
+  res.set({
+    'Content-Security-Policy': CONTENT_POLICY,
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'X-Frame-Options': 'DENY',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    // The microphone is allowed for our own pages only (the speaker can answer setup questions by voice).
+    'Permissions-Policy': 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',
+  });
+  if (HOSTED) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // always use https
+  next();
+});
+
+// Requests that change something must come from our own pages. A browser on another site can't forge them:
+// it always says where the request came from (Origin / Sec-Fetch-Site), and we refuse anything that isn't us.
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const origin = req.get('origin');
+  let foreign = req.get('sec-fetch-site') === 'cross-site';
+  if (origin) { try { foreign ||= new URL(origin).host !== req.get('host'); } catch { foreign = true; } }
+  if (foreign) return res.status(403).json({ error: 'That request came from another site.' });
   next();
 });
 app.use(express.json({ limit: '200kb' }));
 
 // Page views, counted without cookies: a visitor is a one-way hash that changes every day.
 if (!db.salt) { db.salt = id(12); save(); }
-const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy']];
+const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy'], [/^\/terms$/, 'terms'], [/^\/how-answers-work$/, 'how']];
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.includes('/slide/')) {
     const hit = PAGES.find(([re]) => re.test(req.path));
@@ -38,13 +72,37 @@ app.use((req, res, next) => {
   next();
 });
 
-const hits = new Map(); // simple per-address limit on questions
-function tooFast(req) {
-  const now = Date.now(), list = (hits.get(req.ip) || []).filter((t) => now - t < 60_000);
-  list.push(now); hits.set(req.ip, list);
-  return list.length > 30;
+// Limits. over('what', who, max, ms) is true once `who` has done `what` more than `max` times in `ms`.
+// A whole room often shares one network address (venue Wi-Fi), so limits on questions are per seat and per talk,
+// and the per-address limits are set high enough for a full hall.
+const counters = new Map();
+function over(what, who, max, ms = 60_000) {
+  const key = what + ':' + who, now = Date.now();
+  const list = (counters.get(key) || []).filter((t) => now - t < ms);
+  list.push(now); counters.set(key, list);
+  return list.length > max;
 }
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024, files: 10 } });
+setInterval(() => { const now = Date.now(); for (const [k, list] of counters) if (!list.length || now - list.at(-1) > 3_600_000) counters.delete(k); }, 600_000).unref();
+const LIMITS = {
+  questionsPerSeat: 8,        // per minute, one person
+  questionsPerTalk: 300,      // per minute, the whole room
+  questionsPerTalkDay: 4000,  // per day: keeps one talk from running up the model bill
+  questionsPerAddress: 900,   // per minute
+  writesPerAddress: 1200,     // per minute, anything that changes data
+  seatsPerAddress: 1500,      // new audience seats per hour
+  seatsPerTalk: 10_000,
+  talksPerAccount: 200,
+  uploadsPerAccount: 60,      // files per hour
+};
+function tooFast(req, asker, talk) {
+  return over('q-seat', asker.id, LIMITS.questionsPerSeat) || over('q-talk', talk.id, LIMITS.questionsPerTalk)
+    || over('q-day', talk.id, LIMITS.questionsPerTalkDay, 864e5) || over('q-ip', req.ip, LIMITS.questionsPerAddress);
+}
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && over('write', req.ip, LIMITS.writesPerAddress)) return res.status(429).json({ error: 'Too much at once. Give it a minute.' });
+  next();
+});
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024, files: 3 } });
 
 /* ---------- helpers ---------- */
 
@@ -59,11 +117,26 @@ const joinUrl = (talk) => `${baseUrl()}/j/${talk.code}`;
 const fail = (res, status, message) => res.status(status).json({ error: message });
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+// A LinkedIn link, however it was typed: a full address, "linkedin.com/in/maya", "in/maya", "@maya" or just "maya".
+// Always comes out as a clean https://www.linkedin.com/... address, or '' when it isn't LinkedIn.
 function linkedin(v) {
-  v = text(v, 200);
+  v = text(v, 200).replace(/\s+/g, '');
   if (!v) return '';
+  if (/^@?[\p{L}\p{N}_%-]{2,100}$/u.test(v)) return 'https://www.linkedin.com/in/' + v.replace(/^@/, '');
+  if (/^\/?(in|company|school)\//i.test(v)) v = 'linkedin.com/' + v.replace(/^\//, '');
   if (!/^https?:\/\//i.test(v)) v = 'https://' + v.replace(/^\/+/, '');
-  try { return /(^|\.)linkedin\.com$/i.test(new URL(v).hostname) ? v : ''; } catch { return ''; }
+  try {
+    const u = new URL(v);
+    if (!/(^|\.)linkedin\.com$/i.test(u.hostname)) return '';
+    return 'https://www.linkedin.com' + u.pathname.replace(/\/+$/, '');
+  } catch { return ''; }
+}
+// Any other web address a speaker adds to their profile: https only, no scripts.
+function website(v) {
+  v = text(v, 200).replace(/\s+/g, '');
+  if (!v) return '';
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  try { const u = new URL(v); return u.protocol === 'https:' && u.hostname.includes('.') ? u.href : ''; } catch { return ''; }
 }
 
 /* Accounts: a signed-in speaker is remembered with one cookie that only the server can read. */
@@ -75,19 +148,28 @@ function cookie(req, name) {
   }
   return null;
 }
+// Sign-in tokens are stored scrambled (hashed), so a copy of the database can't be used to sign in as someone.
+const scramble = (token) => crypto.createHash('sha256').update(String(token)).digest('base64url');
 function currentUser(req) {
   const token = cookie(req, COOKIE);
-  const session = token && db.sessions.find((s) => s.token === token && Date.now() - s.createdAt < 30 * 864e5);
+  const hash = token && scramble(token);
+  // s.token === token: sign-ins from before tokens were scrambled keep working until they expire.
+  const session = token && db.sessions.find((s) => (s.hash === hash || s.token === token) && Date.now() - s.createdAt < 30 * 864e5);
   return session ? db.users.find((u) => u.id === session.userId) || null : null;
 }
 function startSession(req, res, user) {
   const token = id(24);
   db.sessions = db.sessions.filter((s) => Date.now() - s.createdAt < 30 * 864e5);
-  db.sessions.push({ token, userId: user.id, createdAt: Date.now() });
+  db.sessions.push({ hash: scramble(token), userId: user.id, createdAt: Date.now() });
   save();
   res.cookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: req.secure, maxAge: 30 * 864e5, path: '/' });
 }
-const publicUser = (u) => ({ name: u.name, email: u.email, linkedin: u.linkedin || '' });
+const publicUser = (u) => ({ name: u.name, email: u.email, linkedin: u.linkedin || '', headline: u.headline || '', bio: u.bio || '', website: u.website || '', contactEmail: u.contactEmail || '' });
+// What the audience may see about the speaker: only what the speaker chose to put on their profile.
+function speakerProfile(talk) {
+  const u = db.users.find((x) => x.id === talk.userId) || {};
+  return { name: talk.speaker.name, linkedin: u.linkedin || talk.speaker.linkedin || '', headline: u.headline || '', bio: u.bio || '', website: u.website || '', email: u.contactEmail || '' };
+}
 
 // A talk can be opened by its owner (signed in) or by anyone holding its private link (the speaker's phone).
 function speakerTalk(req, res) {
@@ -126,12 +208,13 @@ function speakerView(talk) {
     id: talk.id, code: talk.code, title: talk.title, speaker: talk.speaker, status: talk.status,
     summary: talk.summary, interview: talk.interview, suggested: talk.suggested,
     sources: talk.sources.map((s) => ({ id: s.id, name: s.name, count: s.units.length, kind: s.units[0]?.label.split(' ')[0] || 'Part', pdf: /\.pdf$/i.test(s.name), deck: /\.pptx$/i.test(s.name), images: (s.images || []).length })),
-    joinUrl: joinUrl(talk), fullAnswers: hasKey(), key: talk.key,
+    joinUrl: joinUrl(talk), fullAnswers: hasKey(), key: talk.key, profile: speakerProfile(talk),
   };
 }
 
 /* ---------- accounts ---------- */
 
+const DUMMY_PASS = hashPassword(id(12));
 const tries = new Map(); // slows down password guessing: 10 tries per address per 10 minutes
 function tooManyTries(req) {
   const now = Date.now(), list = (tries.get(req.ip) || []).filter((t) => now - t < 600_000);
@@ -157,14 +240,16 @@ app.post('/api/signin', (req, res) => {
   if (tooManyTries(req)) return fail(res, 429, 'Too many tries. Wait ten minutes.');
   const email = text(req.body.email, 160).toLowerCase();
   const user = db.users.find((u) => u.email === email);
-  if (!user || !checkPassword(String(req.body.password || ''), user.pass)) return fail(res, 401, "That email and password don't match.");
+  // Check a password even when there is no such account, so the time taken doesn't reveal which emails exist.
+  const ok = checkPassword(String(req.body.password || '').slice(0, 200), user ? user.pass : DUMMY_PASS);
+  if (!user || !ok) return fail(res, 401, "That email and password don't match.");
   startSession(req, res, user); track('signed_in');
   res.json({ me: publicUser(user) });
 });
 
 app.post('/api/signout', (req, res) => {
   const token = cookie(req, COOKIE);
-  db.sessions = db.sessions.filter((s) => s.token !== token); save();
+  db.sessions = db.sessions.filter((s) => s.token !== token && s.hash !== scramble(token || '')); save();
   res.clearCookie(COOKIE, { path: '/' }); res.json({ ok: true });
 });
 
@@ -185,6 +270,10 @@ app.patch('/api/me', (req, res) => {
   if (!user) return fail(res, 401, 'Sign in first.');
   if (req.body.name) user.name = text(req.body.name, 80);
   if ('linkedin' in req.body) user.linkedin = linkedin(req.body.linkedin);
+  if ('headline' in req.body) user.headline = text(req.body.headline, 120);
+  if ('bio' in req.body) user.bio = text(req.body.bio, 600);
+  if ('website' in req.body) user.website = website(req.body.website);
+  if ('contactEmail' in req.body) { const e = text(req.body.contactEmail, 160); user.contactEmail = isEmail(e) ? e : ''; }
   save(); res.json({ me: publicUser(user) });
 });
 
@@ -217,6 +306,7 @@ app.post('/api/talks', (req, res) => {
   if (!user) return fail(res, 401, 'Sign in to start a talk.');
   const title = text(req.body.title, 140);
   if (!title) return fail(res, 400, 'Add a title for the talk.');
+  if (db.talks.filter((t) => t.userId === user.id).length >= LIMITS.talksPerAccount) return fail(res, 429, 'You have a lot of talks. Delete one you no longer need first.');
   const talk = {
     id: id(8), key: id(18), code: joinCode(), title, status: 'draft', userId: user.id,
     speaker: { name: user.name, email: user.email, linkedin: user.linkedin || '' },
@@ -239,11 +329,25 @@ app.patch('/api/talks/:id', (req, res) => {
     if (owner) owner.linkedin = talk.speaker.linkedin;
   }
   if (req.body.title) talk.title = text(req.body.title, 140);
+  // The speaker's public profile, editable from the talk page (also on their phone, via the private link).
+  const owner = db.users.find((u) => u.id === talk.userId);
+  if (owner) {
+    if ('headline' in req.body) owner.headline = text(req.body.headline, 120);
+    if ('bio' in req.body) owner.bio = text(req.body.bio, 600);
+    if ('website' in req.body) owner.website = website(req.body.website);
+    if ('contactEmail' in req.body) { const e = text(req.body.contactEmail, 160); owner.contactEmail = isEmail(e) ? e : ''; }
+  }
   save(); res.json(speakerView(talk));
 });
 
-app.post('/api/talks/:id/files', upload.array('files'), async (req, res) => {
+// Check who is asking BEFORE accepting the upload, so strangers can't make the server swallow large files.
+const ownTalkFirst = (req, res, next) => {
   const talk = speakerTalk(req, res); if (!talk) return;
+  if (over('upload', talk.userId || talk.id, LIMITS.uploadsPerAccount, 3_600_000)) return fail(res, 429, 'That is a lot of files. Try again in an hour.');
+  next();
+};
+app.post('/api/talks/:id/files', ownTalkFirst, upload.array('files'), async (req, res) => {
+  const talk = db.talks.find((t) => t.id === req.params.id);
   const problems = [];
   for (const f of req.files || []) {
     const name = Buffer.from(f.originalname, 'latin1').toString('utf8');
@@ -416,13 +520,14 @@ app.get('/api/join/:code', (req, res) => {
   if (talk.status !== 'ready') return fail(res, 409, "The speaker hasn't opened questions yet.");
   let entry = askerFrom(req.get('x-token'));
   if (entry.talk?.id !== talk.id) {
+    if (over('seat', req.ip, LIMITS.seatsPerAddress, 3_600_000) || db.askers.filter((a) => a.talkId === talk.id).length >= LIMITS.seatsPerTalk) return fail(res, 429, 'This talk is full right now. Try again in a little while.');
     const asker = { id: id(8), token: id(18), talkId: talk.id, name: '', email: '', linkedin: '', createdAt: Date.now() };
     db.askers.push(asker); save(); track('joined', talk.id);
     entry = { asker, talk };
   }
   const a = entry.asker;
   res.json({
-    token: a.token, title: talk.title, speaker: { name: talk.speaker.name, linkedin: talk.speaker.linkedin },
+    token: a.token, title: talk.title, speaker: speakerProfile(talk),
     suggested: talk.suggested, me: { name: a.name, email: a.email, linkedin: a.linkedin },
     messages: db.messages.filter((m) => m.askerId === a.id).map(publicMessage),
     waiting: waitingList(talk, a),
@@ -495,7 +600,7 @@ app.post('/api/chat', async (req, res) => {
   if (!asker) return fail(res, 404, 'Scan the code again to rejoin.');
   const question = text(req.body.text, 600);
   if (!question) return fail(res, 400, 'Type a question first.');
-  if (tooFast(req)) return fail(res, 429, 'Too many questions at once. Give it a minute.');
+  if (tooFast(req, asker, talk)) return fail(res, 429, 'Too many questions at once. Give it a minute.');
   const mine = db.messages.filter((m) => m.askerId === asker.id);
   if (mine.filter((m) => m.role === 'user').length >= 40) return fail(res, 429, "That's a lot of questions. Catch the speaker after the talk for more.");
 
@@ -612,7 +717,34 @@ app.get('/api/admin/metrics', (req, res) => {
   });
 });
 
+/* ---------- keeping only what is needed ---------- */
+
+// The privacy page promises this, so the code does it: 90 days after someone gave their name, email or LinkedIn
+// to a speaker, those details are wiped (the question stays, without the person). Visit counts go after a year.
+const KEEP_DETAILS_DAYS = 90, KEEP_COUNTS_DAYS = 365;
+function tidyUp() {
+  const now = Date.now(); let changed = false;
+  for (const a of db.askers) {
+    if ((a.name || a.email || a.linkedin) && now - a.createdAt > KEEP_DETAILS_DAYS * 864e5) { a.name = ''; a.email = ''; a.linkedin = ''; a.wiped = true; changed = true; }
+  }
+  const before = db.events.length;
+  db.events = db.events.filter((e) => now - e.t < KEEP_COUNTS_DAYS * 864e5);
+  if (changed || db.events.length !== before) save();
+}
+tidyUp(); setInterval(tidyUp, 6 * 3_600_000).unref();
+
 /* ---------- pages ---------- */
+
+// Public facts the legal pages need. The contact address comes from a setting, never from the code.
+app.get('/api/site', (req, res) => res.json({ contact: process.env.CONTACT_EMAIL || '', operator: process.env.OPERATOR_NAME || '', keepDetailsDays: KEEP_DETAILS_DAYS, keepCountsDays: KEEP_COUNTS_DAYS }));
+app.get('/sitemap.xml', (req, res) => {
+  const base = baseUrl();
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/how-answers-work', '/privacy', '/terms'].map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
+});
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /s/\nDisallow: /j/\nDisallow: /present/\nDisallow: /api/\nDisallow: /admin\nDisallow: /talks\nDisallow: /new\n\nSitemap: ${baseUrl()}/sitemap.xml\n`));
+// A standard place for security researchers to find out how to report a problem.
+app.get('/.well-known/security.txt', (req, res) => res.type('text/plain').send(`Contact: ${process.env.CONTACT_EMAIL ? 'mailto:' + process.env.CONTACT_EMAIL : 'https://github.com/VamsiYerramsetti/autoqa/security/advisories/new'}\nPreferred-Languages: en, nl\nPolicy: ${baseUrl()}/privacy#security\n`));
+
 
 app.use('/vendor/pdfjs', express.static(path.join(ROOT, 'node_modules/pdfjs-dist/build'), { maxAge: '7d' }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'] }));
@@ -621,6 +753,8 @@ app.get('/new', page('new.html'));
 app.get('/signup', page('account.html'));
 app.get('/signin', page('account.html'));
 app.get('/talks', page('talks.html'));
+app.get('/terms', page('terms.html'));
+app.get('/how-answers-work', page('how-answers-work.html'));
 app.get('/s/:id', page('speaker.html'));
 app.get('/present/:id', page('present.html'));
 app.get('/j/:code', page('join.html'));

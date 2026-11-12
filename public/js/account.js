@@ -2,7 +2,8 @@ import { $, el, api } from '/js/common.js';
 
 const view = $('#view');
 const next = new URLSearchParams(location.search).get('next');
-const after = next && next.startsWith('/') && !next.startsWith('//') ? next : '/talks';
+// Only ever go on to one of our own pages (a path like /new), never to an address someone slipped into the link.
+const after = next && /^\/[a-z0-9]/i.test(next) && !next.includes('\\') ? next : '/talks';
 
 // Already signed in? Go straight on.
 const { me } = await api('/api/me');
@@ -30,7 +31,7 @@ function form(mode) {
     el('div', { class: 'row', style: 'margin-top:8px' },
       el('button', { class: 'btn plain', type: 'button', style: 'padding-left:0', onclick: () => form(joining ? 'signin' : 'signup') }, joining ? 'I have an account' : 'Create an account'),
       button),
-    joining && el('p', { class: 'small muted' }, 'We keep your name and email to run your talks. ', el('a', { href: '/privacy' }, 'Privacy')),
+    joining && el('p', { class: 'small muted' }, 'By creating an account you agree to the ', el('a', { href: '/terms' }, 'Terms'), ' and the ', el('a', { href: '/privacy' }, 'Privacy notice'), ', and confirm you are 16 or older.'),
   );
   view.replaceChildren(el('h1', {}, joining ? 'Create your account' : 'Welcome back'), el('p', { class: 'sub' }, joining ? 'Free while we are in testing.' : 'Sign in to see your talks.'), f);
 }

@@ -7,47 +7,117 @@
 <script src="/js/theme.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2711%27 cy=%2716%27 r=%279%27 fill=%27%23ffc83d%27/%3E%3Ccircle cx=%2721%27 cy=%2716%27 r=%279%27 fill=%27%232f3ced%27/%3E%3C/svg%3E">
 <title>Privacy · Auto Q&amp;A</title>
+<meta name="description" content="What Auto Q&A collects, why, who handles it, how long it is kept, and how to delete it.">
+<meta property="og:title" content="Privacy · Auto Q&amp;A">
+<meta property="og:description" content="What Auto Q&A collects, why, who handles it, how long it is kept, and how to delete it.">
 </head>
 <body>
-<div class="page">
+<div class="legal">
   <div class="top"><a class="mark" href="/"><i></i>Auto Q&amp;A</a></div>
   <h1>Privacy</h1>
-  <p class="small muted">Draft for testing. Needs a legal review before the product goes public.</p>
+  <p class="small muted">Last updated 12 November 2026</p>
 
-  <h2>If you ask a question</h2>
+  <div class="short">
+    <ul>
+      <li>You can ask questions at a talk without giving your name.</li>
+      <li>Answers are written by an automated system (a language model), using the speaker's material.</li>
+      <li>The speaker only learns who you are if you choose to send them a question with your name.</li>
+      <li>No advertising, no tracking cookies, no selling of data. One cookie keeps speakers signed in.</li>
+      <li>You can delete your details yourself, at the bottom of this page.</li>
+    </ul>
+  </div>
+
+  <h2>Who is responsible</h2>
+  <p>Auto Q&amp;A is run by <span data-operator>its founder</span>, based in the Netherlands, who is the "controller" of the personal data described here under the EU General Data Protection Regulation (GDPR).</p>
+  <p>Contact for anything about your data: <span data-contact>the contact address will be listed here before public launch</span>.</p>
+  <p>For the questions people send to a speaker, the speaker also receives personal data (see below) and is responsible for how they use it afterwards.</p>
+
+  <h2>If you are in the audience</h2>
+  <table>
+    <thead><tr><th>What</th><th>Why</th><th>Legal basis</th></tr></thead>
+    <tbody>
+      <tr><td>The questions you type, and the answers</td><td>To answer you, to show you your conversation again if you reload, and to show the speaker which questions came up</td><td>Our legitimate interest in providing the service you opened</td></tr>
+      <tr><td>A random code kept in your browser</td><td>So a refresh doesn't lose your place. It is not linked to your identity</td><td>Needed for the service you asked for</td></tr>
+      <tr><td>Your name, email and (optional) LinkedIn link, only if you choose "Send to the speaker" with your name</td><td>So the speaker can reply to you and connect with you</td><td>Your consent, given by filling in the form and sending it</td></tr>
+      <tr><td>Nothing about who you are, if you switch on "Ask anonymously" or tap "Me too"</td><td>The speaker sees the question, or how many people want it answered, and no name</td><td>None needed</td></tr>
+    </tbody>
+  </table>
+  <p>Other people in the room can see questions that are waiting for the speaker, so they can tap "Me too". They never see your name.</p>
+  <p>Please don't put sensitive information (health, finances, passwords) into a question. It isn't needed and it will be read by the speaker.</p>
+
+  <h2>If you are a speaker</h2>
+  <table>
+    <thead><tr><th>What</th><th>Why</th><th>Legal basis</th></tr></thead>
+    <tbody>
+      <tr><td>Your name, email and password</td><td>Your account. The password is stored only as a one-way scramble (salted scrypt); nobody, including us, can read it</td><td>Our agreement with you (the Terms)</td></tr>
+      <tr><td>Your slides, notes, files and the answers you give during setup</td><td>Only to answer your audience's questions about your talk</td><td>Our agreement with you</td></tr>
+      <tr><td>Your profile (what you do, about you, LinkedIn, website, public email), if you fill it in</td><td>Shown to your audience so they can find out who you are and reach you</td><td>Your consent, by filling it in. Empty it to withdraw</td></tr>
+      <tr><td>Your replies to questions</td><td>Shown to the people who asked, and used to answer the same question for others at your talk</td><td>Our agreement with you</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How answers are written, and who else handles data</h2>
+  <p>Answers are generated automatically by a language model (Claude, made by Anthropic). Each time someone asks, the question is sent to Anthropic together with the speaker's material for that talk, and the answer comes back. The model is not trained on your questions or on anyone's slides: Anthropic's commercial terms do not allow it to train its models on this content. <a href="/how-answers-work">More on how answers work.</a></p>
+  <p>These companies process data for us, under contract, only to provide the service:</p>
+  <table>
+    <thead><tr><th>Company</th><th>What they do</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>Anthropic</td><td>Runs the language model that writes answers. Receives questions, the talk material, and the speaker's notes and replies</td><td>United States</td></tr>
+      <tr><td>Render</td><td>Runs the website</td><td>United States</td></tr>
+      <tr><td>Neon</td><td>Stores the database (accounts, talks, questions, slide pictures)</td><td>United Kingdom (London)</td></tr>
+      <tr><td>GitHub</td><td>Stores the program's code and runs its automatic tests. Tests use made-up people only; no real personal data</td><td>United States</td></tr>
+    </tbody>
+  </table>
+  <p>Where data goes outside the European Economic Area, it is covered by an EU adequacy decision (United Kingdom; United States for companies certified under the EU-US Data Privacy Framework) or by the European Commission's standard contractual clauses in those companies' data processing terms.</p>
+  <p>We do not sell personal data, show advertising, or share data with anyone else, unless the law requires it.</p>
+
+  <h2>How long things are kept</h2>
   <ul>
-    <li>You can ask without giving your name.</li>
-    <li>Answers are written by an automated assistant using the speaker's slides. Your question is sent to Anthropic, the company whose model writes the answer.</li>
-    <li>If you send a question to the speaker, they get your name, email, your LinkedIn link if you add one, and the question. Nothing else. Others in the room see the question (never your name) so they can tap "Me too".</li>
-    <li>"Me too" needs no name or email. The speaker sees only how many people want an answer.</li>
+    <li><b>Your name, email and LinkedIn link as an audience member:</b> wiped automatically <span data-keep-details>90</span> days after you joined the talk. The question itself stays with the talk, without you attached.</li>
+    <li><b>Questions and answers:</b> as long as the speaker keeps the talk. Deleting the talk or the account deletes them.</li>
+    <li><b>A speaker's account, slides and talks:</b> until the speaker deletes them or closes the account ("Close my account" on the "Your talks" page), which removes everything at once.</li>
+    <li><b>Visit and usage counts:</b> <span data-keep-counts>365</span> days. They contain no names, emails or addresses.</li>
+    <li><b>Sign-in sessions:</b> 30 days, then you sign in again.</li>
   </ul>
 
-  <h2>If you give a talk</h2>
-  <ul>
-    <li>We keep your name, email, your slides and your replies so the service can work.</li>
-    <li>Your slides are only used to answer your audience.</li>
-  </ul>
+  <h2>Cookies and what is stored in your browser</h2>
+  <p>There is no cookie banner because there is nothing to consent to: we use no advertising, analytics or tracking cookies and load nothing from other companies (fonts and scripts come from our own server).</p>
+  <table>
+    <thead><tr><th>Name</th><th>What it is for</th><th>How long</th></tr></thead>
+    <tbody>
+      <tr><td>aq_session (cookie)</td><td>Keeps a speaker signed in. Readable only by our server, sent only over an encrypted connection</td><td>30 days</td></tr>
+      <tr><td>autoqa:seat:… (browser storage)</td><td>Your place in a talk as an audience member</td><td>Until you delete it below or clear your browser</td></tr>
+      <tr><td>autoqa:key:… (browser storage)</td><td>Lets a speaker reopen their own talk on this device</td><td>Until cleared</td></tr>
+      <tr><td>autoqa:theme (browser storage)</td><td>Remembers light or dark mode</td><td>Until cleared</td></tr>
+    </tbody>
+  </table>
+  <p>We count visits without cookies: each visit is turned into a scrambled code that changes every day, so we can count visitors in a day but cannot recognise you the next day or follow you anywhere.</p>
 
-  <h2>Cookies and tracking</h2>
+  <h2>Your rights</h2>
+  <p>Under the GDPR you can ask us to: show you the personal data we hold about you, correct it, delete it, restrict how we use it, give it to you in a portable form, and stop using it where we rely on our legitimate interest. Where we rely on your consent you can withdraw it at any time. Write to the contact address above; we answer within one month. You can also complain to your data protection authority; in the Netherlands that is the Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).</p>
+  <p>No decisions with legal or similarly significant effects are made about you automatically. The automated answers are information about a talk, nothing more.</p>
+
+  <h2>Age</h2>
+  <p>Speaker accounts are for people aged 16 or older. The audience side is meant for talks, lectures and conferences; we do not knowingly collect personal data from children under 16. If you believe a child has sent us their details, contact us and we will delete them.</p>
+
+  <h2 id="security">Security</h2>
   <ul>
-    <li>No advertising or tracking cookies.</li>
-    <li>Your browser remembers your place in a talk, so a refresh doesn't lose your questions.</li>
-    <li>We count visits and questions to improve the product. The counts hold no names or emails and can't follow you from one day to the next.</li>
+    <li>All traffic is encrypted (HTTPS), including between the website and its database.</li>
+    <li>Passwords are stored only as salted one-way scrambles; sign-in tokens are stored scrambled too.</li>
+    <li>A speaker's talk, slides and inbox can only be opened by that speaker.</li>
+    <li>The site sends strict browser protection rules, limits how fast anything can be asked or uploaded, and is checked for security problems daily.</li>
   </ul>
+  <p>Found a security problem? Please tell us at the contact address above before making it public. If personal data is ever exposed, we will tell the people affected and the data protection authority as the law requires.</p>
+
+  <h2>Changes</h2>
+  <p>If this notice changes in a way that matters, we will say so on the home page and update the date at the top.</p>
 
   <h2>Delete your details</h2>
-  <p>This removes your name, email and questions for every talk you joined from this browser.</p>
+  <p>This removes your name, email and questions for every talk you joined from this browser, straight away.</p>
   <p style="margin-top:16px"><button class="btn quiet" id="forget">Delete my details</button> <span class="small muted" id="done" role="status"></span></p>
+
+  <nav aria-label="More"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/how-answers-work">How answers work</a><a href="/">Home</a></nav>
 </div>
-<script type="module">
-document.getElementById('forget').addEventListener('click', async () => {
-  let n = 0;
-  for (const k of Object.keys(localStorage).filter((k) => k.startsWith('autoqa:seat:'))) {
-    await fetch('/api/forget', { method: 'POST', headers: { 'x-token': localStorage.getItem(k) } }).catch(() => {});
-    localStorage.removeItem(k); n++;
-  }
-  document.getElementById('done').textContent = n ? 'Deleted.' : 'Nothing is stored for this browser.';
-});
-</script>
+<script type="module" src="/js/page-privacy.js"></script>
 </body>
 </html>

@@ -419,7 +419,7 @@ table.plain td, table.plain th { padding: 9px 8px 9px 0; border-bottom: 1.5px so
 .ask header .by .theme { margin: -10px -10px -10px 0; }
 
 /* "Ask anonymously": a switch on the yellow card. Off by default. */
-.hand .details { display: grid; gap: 10px; }
+.hand .details { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .hand .anon { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 600; font-size: 16px; cursor: pointer; }
 .hand input.switch, .switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 46px; min-height: 0; height: 28px; padding: 0; border: 0; margin: 0; border-radius: 99px; background: rgba(29, 27, 46, .22); cursor: pointer; transition: background-color 200ms ease; }
 .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform 200ms var(--ease-out); }
@@ -449,3 +449,68 @@ table.plain td, table.plain th { padding: 9px 8px 9px 0; border-bottom: 1.5px so
 /* Listening: the microphone turns yellow, the colour of "waiting for the speaker". */
 .mic[aria-pressed="true"] { background: var(--signal); border-color: var(--signal); color: var(--deep); }
 @media (max-width: 480px) { .tool, .talkback .send { width: 46px; height: 46px; } .talkback .line { gap: 6px; } }
+
+/* LinkedIn field: a fixed "linkedin.com/in/" in front, so people type only their handle (or paste a whole link). */
+.li { display: block; }
+.li-top { display: flex; align-items: baseline; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.li-top em { font-style: normal; font-weight: 400; color: var(--muted); }
+.li-field { display: flex; align-items: center; gap: 0; min-height: 52px; padding: 0 14px 0 10px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); cursor: text; }
+.li-field:focus-within { border-color: var(--cobalt); box-shadow: 0 0 0 4px var(--tint); }
+.li-badge { flex: none; width: 28px; height: 28px; margin-right: 10px; border-radius: 7px; background: #0a66c2; color: #fff; font: 700 15px/28px var(--body); text-align: center; }
+.li-prefix { flex: none; color: var(--muted); font-size: 17px; }
+.li-field input { flex: 1; width: 0; min-width: 0; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 17px; outline: none; color: inherit; }
+.li small { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); }
+/* On the yellow card it matches the white slots there. */
+.hand .li { padding: 8px 14px 8px; border-radius: 12px; background: #fff; color: var(--deep); }
+.hand .li-top { font-size: 13px; margin-bottom: 0; color: #5b5970; }
+.hand .li-top em { color: #5b5970; }
+.hand .li-field { min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.hand .li-field input { min-height: 30px; width: 0; border-radius: 0; background: transparent; }
+.hand .li-prefix { color: #5b5970; }
+.hand .li-badge { width: 22px; height: 22px; font-size: 12px; line-height: 22px; border-radius: 5px; margin-right: 8px; }
+.hand .li small { color: #5b5970; margin-top: 2px; }
+.hand .li:focus-within { box-shadow: 0 0 0 3px var(--deep); }
+@media (max-width: 380px) { .li-prefix { font-size: 15px; } }
+
+/* The speaker's name in the audience header opens "about the speaker". */
+.who { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: -12px auto -12px 0; padding: 0; border: 0; background: none; font-size: 14px; color: var(--muted); cursor: pointer; text-align: left; }
+.who span { padding: 2px 9px; border-radius: 99px; border: 1.5px solid var(--line); font-size: 12px; font-weight: 600; color: var(--ink); }
+.sheet.about > div { text-align: left; display: grid; gap: 10px; max-width: 440px; }
+.sheet.about h3 { font-size: 28px; }
+.sheet.about .headline { font-weight: 600; }
+.sheet.about .bio { color: var(--text); white-space: pre-wrap; }
+.reach { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.reach .btn { min-height: 44px; padding: 0 18px; font-size: 15px; }
+.btn.in { background: #0a66c2; color: #fff; }
+.sheet .btn.plain { justify-self: start; padding-left: 0; }
+/* Inside the blue reply card the buttons are white on blue. */
+.from p { margin: 0; white-space: pre-wrap; }
+.from .reach .btn { margin-top: 0; background: #fff; color: var(--cobalt); box-shadow: none; }
+.from .reach .btn.plain { background: transparent; color: #fff; padding: 0 6px; text-decoration: underline; text-underline-offset: 3px; }
+/* "The speaker replied": a bar under the header that takes you to the reply. */
+.news { position: sticky; top: var(--header-h, 76px); z-index: 2; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 20px; border: 0; background: var(--cobalt); color: #fff; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; animation: settle 300ms var(--ease-out) both; }
+.news i { width: 9px; height: 9px; border-radius: 50%; background: var(--signal); flex: none; }
+.news span { margin-left: auto; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+.hand.sent { flex-wrap: wrap; }
+.hand.sent > span { flex: 1; min-width: 60%; }
+.tell { min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer; }
+.hand.sent small { font-size: 13px; font-weight: 400; color: var(--muted); }
+/* Speaker page: profile line and editor. */
+.connect { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.profile { text-align: left; gap: 14px; }
+.profile h3 { font-size: 24px; }
+.profile textarea { min-height: 84px; }
+/* Long pages of text: privacy, terms, how answers work. */
+.legal { max-width: 720px; margin: 0 auto; padding: 0 24px 96px; }
+.legal h1 { font-size: clamp(40px, 6vw, 60px); margin: 24px 0 10px; }
+.legal h2 { font-size: 26px; margin: 44px 0 12px; }
+.legal h3 { font-size: 19px; margin: 24px 0 6px; letter-spacing: -0.01em; }
+.legal p, .legal li { color: var(--text); margin: 0 0 10px; }
+.legal ul { padding-left: 20px; margin: 0 0 10px; }
+.legal table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 15px; }
+.legal th, .legal td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-top: 1.5px solid var(--line); color: var(--text); }
+.legal th { font-weight: 600; color: var(--ink); }
+.legal .short { background: var(--tint); border-radius: 18px; padding: 18px 20px; margin: 18px 0 8px; }
+.legal .short li { color: var(--ink); }
+.legal nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; margin: 6px 0 18px; }
+@media (max-width: 640px) { .legal table, .legal tbody, .legal tr, .legal td, .legal th { display: block; } .legal thead { display: none; } .legal td { border: 0; padding: 2px 0; } .legal tr { border-top: 1.5px solid var(--line); padding: 10px 0; } .legal td:first-child { font-weight: 600; color: var(--ink); } }
