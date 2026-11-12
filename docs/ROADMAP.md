@@ -22,6 +22,10 @@ Work top to bottom. Tick items off and note them in LOG.md.
 
 - [x] The "send to the speaker" card: labels always in view, a problem shown at its own field, "Sending…", one open card at a time.
 
+- [x] The speaker's "please don't ask about..." stays private: the answer no longer tells the room she asked.
+- [x] Answers never say the speaker has been or will be asked (seen in Italian: "Ho chiesto a Léa", "Lo chiedo a Léa").
+- [x] A slide label written at the end of an answer, or with a made-up file name, is put right so the slide still shows.
+
 ## Next
 - [ ] Phone: the top bar of the speaker's page and of "Your talks" overlaps the logo; the light/dark switch in the audience header wraps under the "waiting" pill; the setup hint text is cut off.
 - [ ] Let an opened slide fill a phone sideways (upright, a 16:9 slide barely grows); swipe between slides when an answer has two.
@@ -40,7 +44,16 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
 
 - [ ] Try a lower thinking effort for answers (faster first word, cheaper) once the live test shows answers are complete; compare quality on a persona run first.
-- [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); strip or move them to the front server-side.
+- [ ] Slide labels still appear mid-answer ("... [Slide 17] proposes ..."); they show as a tappable chip. Labels at the end or with a wrong file name are fixed (2026-11-12); decide whether mid-answer chips stay.
+- [ ] Check the arithmetic the answers do themselves: a range worked out from "7.3 ± 0.9" came out as "37 to 51 mm" instead of 38 to 49 (2026-11-12 run). Either have the model show the two multiplications or leave ranges out.
+- [ ] General explanations are where mistakes appear ("ice, which is denser than water"; "shares summing to 100% fits either choice"). Try a stronger model for answers on a scientific deck and compare on the 2026-11-12 scenario.
+- [ ] Always mark general knowledge as not from the talk: in one run of two, a term was explained with no marker.
+- [ ] The two-language card for the speaker is not reliable: the same Italian question got English underneath in one run and not in the next. Translate on the server when the second line is missing.
+- [ ] Translate a unit for a lay asker ("44 mm w.e." meant nothing to an irrigation manager; "a layer of water about 4.4 cm deep" would).
+- [ ] Keep the asker's requested unit and their language throughout ("milioni di m³", not "hm³"; "alla stazione di misura", not "al gauge").
+- [ ] Setup conversation: after a skipped question the site says odd things ("I won't revisit the 10–90% range"; repeating the last note). Say nothing after a skip.
+- [ ] Phone: after "not covered", the chat scrolls so far that the question and "Send this to ..." heading are hidden above the yellow card's fields.
+- [ ] When a number is only in a chart's picture, say so and offer the nearest printed fact (for the 2040 value: "−9% a year by the 2050s").
 - [ ] Stop adding a nearby fact after the answer is complete (seen: the 23:42 train offered to someone who finishes work at 00:45; Aldercote added to "how late on a Saturday?").
 - [ ] Use a second slide when it qualifies the first (the 85% test against the "9 in 10" aim; a comment deadline for someone told "not decided yet").
 - [ ] Match the asker's register: a casual one-line question gets a casual one-line answer; off-topic gets one line, not two sentences.

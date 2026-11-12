@@ -1,5 +1,32 @@
 # Log (newest first)
 
+## 2026-11-12 (morning): Test and improve
+Today's made-up talk was a conference paper on glacier runoff ("Peak water has passed"), with a statistician, a student, an Italian hydropower planner, a blogger and an irrigation manager asking 16 questions; the score went from 87.5% before to 92.0% after.
+What changed on the site: an answer no longer tells the room what the speaker asked to keep out, never says "I've asked the speaker" when nothing was sent, and always shows its slide even when the model names it wrongly.
+- Found in the first run: a blogger fishing for a headline was told "Léa has asked not to be asked about the 2015 study"; two
+  Italian answers ended "I've asked Léa" for questions nobody had sent; one answer showed no slide because its label came
+  last with a made-up file name; a student was told ice is denser than water.
+- Changed: the answering instructions in `lib/ai.js` (the speaker's request is private; no claim of asking, in any
+  language; labels copied exactly; a general explanation stops once the term is explained) and a small server-side
+  tidy-up of slide labels (`tidyLabels`). `docs/HOW-IT-WORKS.md` says the same in plain words.
+- Re-run of the same 16 questions: limits handled 8 of 8 (was 5 of 8), slide shown 16 of 16 (was 15). Kept.
+- Not better: the model's own added sentences still slip (a range of "37 to 51 mm" that should be 38 to 49). And my
+  rewording made two explanations lose their "not from the slides" note; I put the old wording for that back after
+  the re-run. That last small change is covered by `npm test` and the live check, not by a third persona run.
+- Full report: `docs/persona-runs/2026-11-12-peak-water.md`. Eleven new roadmap lines, three ticked.
+
+**Tested.** `npm test` 15/15 (new check: a slide label at the end or with a wrong file name still shows the slide).
+"Live site" passed after each push. Screens walked locally in a browser with today's deck at 1280x860 and phone size.
+32 questions on the live site; both test accounts closed.
+
+**Part 2 (one improvement beyond the test) was skipped today**: nothing in FEEDBACK.md, nothing broken, and the top
+"Next" items are about the look, which belongs to the design session.
+
+### For Vamsi
+- The answers run on the cheapest model. On a scientific deck its slips are in the explanations it adds itself (a
+  wrong physical fact, a wrong range). A stronger model for answers would likely cut these but costs more per
+  question; say if you want a side-by-side on today's scenario.
+
 ## 2026-11-12 (night): Design
 Sending a question to the speaker is now clearer on a phone: every field says what it is, a mistake is pointed out at the field itself, and only one yellow card is open at a time.
 - The yellow card: labels stay in view above what is typed (they used to vanish with the first letter); a missing

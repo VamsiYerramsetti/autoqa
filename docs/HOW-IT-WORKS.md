@@ -41,6 +41,15 @@ Questions sent before this existed stay private, because those askers weren't to
 sees only the whole sentences it managed, plus the offer to send the question to the speaker. We never show half a
 sentence, and we never say "the talk doesn't cover that" just because the model said nothing.
 
+**The speaker asked not to be asked about something.** The answer repeats only what a slide itself prints and says
+the rest is outside what it can answer here. It does not tell the room that the speaker asked for this, or why.
+
+**The answer never says "I've asked the speaker".** Nothing is sent until the person chooses to send it, so the
+answer only says what the talk doesn't cover; the yellow card does the asking.
+
+**The slide always shows.** If the model writes the slide's name in the wrong place, or adds a file name to it, the
+website puts it right before the answer is saved, so the slide still appears above the answer.
+
 **How answers name the speaker.** By first name ("Maya says"), or by title and surname when the speaker signed up
 with a title ("Dr. Carvalho says").
 
