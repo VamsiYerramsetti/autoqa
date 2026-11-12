@@ -196,6 +196,18 @@ if (server) await step('answers name a "Dr." speaker properly and never show hal
   assert.equal(flag({ question: 'What is a p-value?', for_speaker: 'What is a p-value?', in_general: true }).handoff.general, true);
   assert.equal(flag({ question: 'Can I bring my bike?' }).handoff.forSpeaker, '');
 });
+if (server) await step('a slide label in the wrong place or with a made-up file name still shows the slide', async () => {
+  const { tidyLabels, finishAnswer } = await import('../lib/ai.js');
+  const deck = ['Slide 10', 'Slide 11'], two = ['Slide 4', 'Slide 4 · appendix'];
+  // Seen live on 2026-11-12: the label came last and carried the file's name, so no slide appeared.
+  assert.equal(tidyLabels('Both are right.\n\n[Slide 11 · deck.pdf]', deck), '[Slide 11] Both are right.');
+  assert.equal(tidyLabels('[Slide 10] Yes, 17% less.', deck), '[Slide 10] Yes, 17% less.');
+  assert.equal(tidyLabels('[Slide 10] It falls 17% [Slide 11], then recovers.', deck), '[Slide 10] It falls 17% [Slide 11], then recovers.');
+  assert.equal(tidyLabels('[Slide 99] Hello there.', deck), 'Hello there.', 'a label that matches nothing is removed');
+  assert.equal(tidyLabels('[Slide 4 · appendix] From the appendix.', two), '[Slide 4 · appendix] From the appendix.', 'a real file tag is kept');
+  assert.equal(tidyLabels('Back to the talk, please.', deck), 'Back to the talk, please.');
+  assert.equal(finishAnswer({ stop_reason: 'end_turn', content: [] }, 'Both. [Slide 11 · deck.pdf]', 'q', () => {}, deck).text, '[Slide 11] Both.');
+});
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password } })).status, 200);
