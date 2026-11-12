@@ -46,6 +46,7 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Speaker can edit their interview answers and add material after setup; "My talks" list.
 - [ ] Legal review of /privacy and /terms by a lawyer before public launch (needs Vamsi).
 - [ ] Cookie consent banner only if third-party analytics or ads are ever added (none today).
+- [ ] Live check flaked once right after a deploy (2026-11-12): wait until /healthz answers with the new version several times in a row before testing, and make the "not covered" test question one that can't be answered from general knowledge.
 - [ ] Phone notifications when the page is closed (web push). Today the notice works while the page is open or in a background tab.
 - [ ] Voice input in Firefox (no speech recognition there): hide the button rather than show one that can't work, or record and transcribe on the server.
 - [ ] Move hosting to an EU region if customers ask for EU-only processing.

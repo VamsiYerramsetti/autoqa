@@ -20,6 +20,10 @@ phone size and 1280x860: sign-up, profile, voice (simulated), suggestions refill
 speaker reply, reply banner and tab title, legal pages; no console errors and no policy violations. Found and fixed on
 the way: the LinkedIn field overflowed the yellow card on a phone and covered the Send button.
 
+**Live site.** The first check after deploying failed (a "not covered" question was answered generally instead of being
+sent to the speaker, then a correct password was refused at the end); the re-run straight after passed 14/14. Most
+likely the old copy of the site still answered some requests during the switch-over. Added to the roadmap.
+
 **Unfinished.** Notifications only while the page is open or in a background tab (no web push yet). Firefox has no
 voice typing.
 
