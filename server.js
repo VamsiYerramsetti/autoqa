@@ -11,7 +11,7 @@ import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBl
 import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
 import { renderPptx } from './lib/pptx-render.js';
 import { brandedQr } from './lib/qr.js';
-import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError } from './lib/ai.js';
+import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError, toTalkLanguage } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -717,6 +717,8 @@ app.post('/api/handoff', (req, res) => {
       // shared: the form now says others here see the question (never the name), so the room can back it.
       const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], shared: true, status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
+      // No line in the talk's language yet: add one in the background if the question needs it (lib/ai.js says why).
+      if (!e.translated) toTalkLanguage(talk, e.question).then((t) => { if (t) { e.translated = t; save(); } });
     }
     msg.sent = true;
     track('sent_to_speaker', talk.id, { merged: Boolean(twin), anonymous });

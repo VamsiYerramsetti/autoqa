@@ -57,7 +57,8 @@ website puts it right before the answer is saved, so the slide still appears abo
 with a title ("Dr. Carvalho says").
 
 **Questions in another language.** Answers come back in the language the person wrote in. If that question is sent to
-the speaker, the card in the speaker's inbox shows it twice: as asked, and in the language of the slides.
+the speaker, the card in the speaker's inbox shows it twice: as asked, and in the language of the slides. If the
+answer didn't supply that second line, a small extra check adds it a moment after the question is sent.
 
 **The speaker replies.** The reply appears in each asker's chat. It's also added to what the model knows, so the
 next person who asks gets the speaker's own answer straight away.

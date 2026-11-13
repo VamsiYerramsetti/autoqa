@@ -316,6 +316,7 @@ if (server) await step('a slide label in the wrong place or with a made-up file 
   assert.equal(finishAnswer({ stop_reason: 'end_turn', content: [] }, 'Both. [Slide 11 · deck.pdf]', 'q', () => {}, deck).text, '[Slide 11] Both.');
   // Seen live on 2026-11-13: a second label left alone on the last line now joins the first.
   assert.equal(tidyLabels('[Slide 10] Pooled is likely.\n\n[Slide 11]', deck), '[Slide 10] [Slide 11] Pooled is likely.');
+  assert.equal(tidyLabels('[Slide 11] Site D fits. [Slide 10]', deck), '[Slide 11] [Slide 10] Site D fits.');
 });
 if (server) await step('numbers survive and promises to pass a question on are dropped', async () => {
   const { finishAnswer } = await import('../lib/ai.js');
@@ -326,6 +327,13 @@ if (server) await step('numbers survive and promises to pass a question on are d
   assert.equal(done(maths), maths);
   assert.equal(done("[Slide 3] The talk doesn't say. I'll pass the question on."), "[Slide 3] The talk doesn't say.");
   assert.equal(done('[Slide 3] O talk não lista as espécies. Vou encaminhar essa dúvida para a Amara.'), '[Slide 3] O talk não lista as espécies.');
+});
+if (server) await step("a card sent without the talk's language gets a translation only when it needs one", async () => {
+  const { readTranslation, toTalkLanguage } = await import('../lib/ai.js');
+  assert.equal(readTranslation('SAME', 'Is it pooled?'), '');
+  assert.equal(readTranslation('Is it pooled?', 'Is it pooled?'), '');
+  assert.equal(readTranslation('"Are jaguar, tapir and capybara among the 38 species?"', 'Onça, anta e capivara estão entre as 38 espécies?'), 'Are jaguar, tapir and capybara among the 38 species?');
+  if (!process.env.ANTHROPIC_API_KEY) assert.equal(await toTalkLanguage({ sources: [] }, 'Olá?'), '', 'practice mode adds nothing');
 });
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);
