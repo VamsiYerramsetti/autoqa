@@ -9,6 +9,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBlobs, hashPassword, checkPassword } from './lib/store.js';
 import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
+import { renderPptx } from './lib/pptx-render.js';
+import { brandedQr } from './lib/qr.js';
 import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
@@ -59,7 +61,7 @@ app.use(express.json({ limit: '200kb' }));
 
 // Page views, counted without cookies: a visitor is a one-way hash that changes every day.
 if (!db.salt) { db.salt = id(12); save(); }
-const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy'], [/^\/terms$/, 'terms'], [/^\/how-answers-work$/, 'how']];
+const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy'], [/^\/terms$/, 'terms'], [/^\/how-answers-work$/, 'how'], [/^\/why$/, 'why']];
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.includes('/slide/')) {
     const hit = PAGES.find(([re]) => re.test(req.path));
@@ -120,14 +122,18 @@ const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 // A LinkedIn link, however it was typed: a full address, "linkedin.com/in/maya", "in/maya", "@maya" or just "maya".
 // Always comes out as a clean https://www.linkedin.com/... address, or '' when it isn't LinkedIn.
 function linkedin(v) {
-  v = text(v, 200).replace(/\s+/g, '');
+  v = text(v, 200).trim();
   if (!v) return '';
+  // A name rather than a handle: a LinkedIn search for that name (we can't know their exact profile).
+  if (/^[\p{L}.'’-]+(\s+[\p{L}.'’-]+)+$/u.test(v)) return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(v.replace(/\s+/g, ' '));
+  v = v.replace(/\s+/g, '');
   if (/^@?[\p{L}\p{N}_%-]{2,100}$/u.test(v)) return 'https://www.linkedin.com/in/' + v.replace(/^@/, '');
   if (/^\/?(in|company|school)\//i.test(v)) v = 'linkedin.com/' + v.replace(/^\//, '');
   if (!/^https?:\/\//i.test(v)) v = 'https://' + v.replace(/^\/+/, '');
   try {
     const u = new URL(v);
     if (!/(^|\.)linkedin\.com$/i.test(u.hostname)) return '';
+    if (/^\/search\/results\/people\/?$/.test(u.pathname) && u.searchParams.get('keywords')) return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(u.searchParams.get('keywords').slice(0, 100));
     return 'https://www.linkedin.com' + u.pathname.replace(/\/+$/, '');
   } catch { return ''; }
 }
@@ -203,11 +209,26 @@ function twinOf(talk, msg) {
   return talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg))) >= 0.75);
 }
 
+// Suggested questions for the audience: the ones written when the talk was prepared, topped up with one per slide
+// title, so when someone taps one there is always another to take its place (older talks only have three).
+function suggestions(talk) {
+  const out = [...(talk.suggested || [])];
+  const seen = new Set(out.map((q) => q.toLowerCase()));
+  for (const s of talk.sources) for (const u of s.units) {
+    if (out.length >= 12 || !/^Slide /.test(u.label) || u.n === 1) continue; // slide 1 is usually the title
+    const title = u.text.split('\n')[0].replace(/^[•\-–\s]+/, '').trim();
+    if (title.length < 4 || title.length > 48 || /^\d+$/.test(title) || /^speaker notes/i.test(title)) continue;
+    const q = `Explain “${title}”`;
+    if (!seen.has(q.toLowerCase()) && !out.some((x) => x.toLowerCase().includes(title.toLowerCase()))) { out.push(q); seen.add(q.toLowerCase()); }
+  }
+  return out;
+}
+
 function speakerView(talk) {
   return {
     id: talk.id, code: talk.code, title: talk.title, speaker: talk.speaker, status: talk.status,
     summary: talk.summary, interview: talk.interview, suggested: talk.suggested,
-    sources: talk.sources.map((s) => ({ id: s.id, name: s.name, count: s.units.length, kind: s.units[0]?.label.split(' ')[0] || 'Part', pdf: /\.pdf$/i.test(s.name), deck: /\.pptx$/i.test(s.name), images: (s.images || []).length })),
+    sources: talk.sources.map((s) => ({ id: s.id, name: s.name, count: s.units.length, kind: s.units[0]?.label.split(' ')[0] || 'Part', pdf: /\.pdf$/i.test(s.name), deck: /\.pptx$/i.test(s.name), images: (s.images || []).length, drawn: s.drawn || [] })),
     joinUrl: joinUrl(talk), fullAnswers: hasKey(), key: talk.key, profile: speakerProfile(talk),
   };
 }
@@ -348,7 +369,7 @@ const ownTalkFirst = (req, res, next) => {
 };
 app.post('/api/talks/:id/files', ownTalkFirst, upload.array('files'), async (req, res) => {
   const talk = db.talks.find((t) => t.id === req.params.id);
-  const problems = [];
+  const problems = [], before = talk.sources.length;
   for (const f of req.files || []) {
     const name = Buffer.from(f.originalname, 'latin1').toString('utf8');
     try {
@@ -356,12 +377,15 @@ app.post('/api/talks/:id/files', ownTalkFirst, upload.array('files'), async (req
       if (!units.length) { problems.push(`${name} has no text we can read. If it's all images, export it with speaker notes or add a text file.`); continue; }
       const src = { id: id(6), name, units };
       talk.sources.push(src); tagSource(talk, src);
+      if (/\.pptx$/i.test(name)) await drawSlides(talk, src, f.buffer);
       track('material_added', talk.id, { kind: name.split('.').pop().toLowerCase() });
     } catch (e) {
       problems.push(e.message.startsWith("Can't read") ? `${name}: ${e.message}` : `We couldn't open ${name}. Try exporting it as a PDF.`);
     }
   }
-  talk.status = 'draft'; save();
+  // A file that couldn't be read changes nothing: a talk that is already open stays open.
+  if (talk.sources.length !== before) talk.status = 'draft';
+  save();
   res.json({ ...speakerView(talk), problems });
 });
 
@@ -375,18 +399,49 @@ app.post('/api/talks/:id/notes', (req, res) => {
 });
 
 // Pictures of each slide, made in the speaker's browser from their PDF, so answers can show the real slide.
-const slideKey = (talk, sid, n = '') => `slides/${talk.id}/${sid}/${n ? n + '.jpg' : ''}`;
+const slideKey = (talk, sid, n = '', ext = 'jpg') => `slides/${talk.id}/${sid}/${n ? n + '.' + ext : ''}`;
+
+// PowerPoint slides are drawn here as SVG pictures. The speaker's browser then turns each into a small JPEG
+// (as with PDFs); until it has, the audience is shown the SVG itself.
+async function drawSlides(talk, src, buffer) {
+  try {
+    const drawn = [];
+    for (const { n, svg } of await renderPptx(buffer)) {
+      if (svg.length > 15_000_000) continue;
+      await putBlob(slideKey(talk, src.id, n, 'svg'), Buffer.from(svg));
+      drawn.push(n);
+    }
+    src.drawn = drawn;
+  } catch (e) { console.error('slide drawing failed:', e.message); }
+}
+// Our own drawing of a slide, served with rules that stop it from ever running anything.
+function sendSvg(res, data) {
+  res.set({ 'Content-Security-Policy': "default-src 'none'; img-src data:; style-src 'unsafe-inline'", 'Cache-Control': 'private, max-age=3600' }).type('image/svg+xml').send(data);
+}
+app.get('/api/talks/:id/files/:sid/drawn/:n', async (req, res) => {
+  const talk = speakerTalk(req, res); if (!talk) return;
+  const src = talk.sources.find((x) => x.id === req.params.sid), n = parseInt(req.params.n, 10);
+  if (!src || !(src.drawn || []).includes(n)) return res.sendStatus(404);
+  const svg = await getBlob(slideKey(talk, src.id, n, 'svg'));
+  return svg ? sendSvg(res, svg) : res.sendStatus(404);
+});
 app.post('/api/talks/:id/files/:sid/pages/:n', express.raw({ type: 'image/jpeg', limit: '3mb' }), async (req, res) => {
   const talk = speakerTalk(req, res); if (!talk) return;
   const src = talk.sources.find((x) => x.id === req.params.sid), n = +req.params.n;
   if (!src || !Number.isInteger(n) || n < 1 || n > 500 || !Buffer.isBuffer(req.body) || !req.body.length) return fail(res, 400, "That slide picture didn't arrive.");
   await putBlob(slideKey(talk, src.id, n), req.body);
   src.images = [...new Set([...(src.images || []), n])];
+  // The JPEG replaces our SVG drawing of the same slide: keep storage small.
+  if ((src.drawn || []).includes(n)) { await dropBlobs(slideKey(talk, src.id, n, 'svg')); src.drawn = src.drawn.filter((x) => x !== n); }
   save(); res.json({ ok: true });
 });
 app.get('/j/:code/slide/:sid/:n', async (req, res) => {
   const talk = db.talks.find((t) => t.code === req.params.code.toUpperCase());
   const src = talk?.sources.find((x) => x.id === req.params.sid), n = parseInt(req.params.n, 10);
+  if (src && !(src.images || []).includes(n) && (src.drawn || []).includes(n)) {
+    const svg = await getBlob(slideKey(talk, src.id, n, 'svg'));
+    return svg ? sendSvg(res, svg) : res.sendStatus(404);
+  }
   if (!src || !(src.images || []).includes(n)) return res.sendStatus(404);
   const picture = await getBlob(slideKey(talk, src.id, n));
   if (!picture) return res.sendStatus(404);
@@ -450,9 +505,12 @@ app.post('/api/talks/:id/ready', (req, res) => {
 app.get('/api/talks/:id/qr.svg', async (req, res) => {
   const talk = db.talks.find((t) => t.id === req.params.id);
   if (!talk) return res.sendStatus(404);
-  const target = req.query.inbox && req.query.key === talk.key ? `${baseUrl()}/s/${talk.id}#${talk.key}` : joinUrl(talk);
-  const svg = await QRCode.toString(target, { type: 'svg', errorCorrectionLevel: 'M', margin: 4, color: { dark: '#000000', light: '#ffffff' } });
-  res.type('image/svg+xml').send(svg);
+  // The speaker's private link stays a plain black code, so it can never be mistaken for the audience's one.
+  if (req.query.inbox && req.query.key === talk.key) {
+    const svg = await QRCode.toString(`${baseUrl()}/s/${talk.id}#${talk.key}`, { type: 'svg', errorCorrectionLevel: 'M', margin: 4, color: { dark: '#000000', light: '#ffffff' } });
+    return res.type('image/svg+xml').send(svg);
+  }
+  res.set('Cache-Control', 'public, max-age=300').type('image/svg+xml').send(brandedQr(joinUrl(talk)));
 });
 
 /* ---------- speaker: during and after the talk ---------- */
@@ -528,7 +586,7 @@ app.get('/api/join/:code', (req, res) => {
   const a = entry.asker;
   res.json({
     token: a.token, title: talk.title, speaker: speakerProfile(talk),
-    suggested: talk.suggested, me: { name: a.name, email: a.email, linkedin: a.linkedin },
+    suggested: suggestions(talk), me: { name: a.name, email: a.email, linkedin: a.linkedin },
     messages: db.messages.filter((m) => m.askerId === a.id).map(publicMessage),
     waiting: waitingList(talk, a),
   });
@@ -567,7 +625,7 @@ app.get('/api/source', (req, res) => {
     const lines = u.text.split('\n\nSpeaker notes:')[0].split('\n').map((l) => l.replace(/^[•\-–\s]+/, '').trim()).filter(Boolean);
     return res.json({
       label: labelOf(s, u),
-      image: (s.images || []).includes(u.n) ? `/j/${talk.code}/slide/${s.id}/${u.n}` : null,
+      image: [...(s.images || []), ...(s.drawn || [])].includes(u.n) ? `/j/${talk.code}/slide/${s.id}/${u.n}` : null,
       title: lines[0]?.slice(0, 120) || u.label,
       lines: lines.slice(1, 7).map((l) => l.slice(0, 160)),
     });
@@ -575,7 +633,7 @@ app.get('/api/source', (req, res) => {
   fail(res, 404, 'Not found.');
 });
 
-const CLIENT_EVENTS = new Set(['slide_opened', 'connect_tapped', 'suggestion_tapped']);
+const CLIENT_EVENTS = new Set(['slide_opened', 'connect_tapped', 'suggestion_tapped', 'email_tapped', 'website_tapped', 'profile_opened']);
 app.post('/api/event', (req, res) => {
   const { talk } = askerFrom(req.get('x-token'));
   if (talk && CLIENT_EVENTS.has(req.body.name)) track(req.body.name, talk.id);
@@ -739,7 +797,7 @@ tidyUp(); setInterval(tidyUp, 6 * 3_600_000).unref();
 app.get('/api/site', (req, res) => res.json({ contact: process.env.CONTACT_EMAIL || '', operator: process.env.OPERATOR_NAME || '', keepDetailsDays: KEEP_DETAILS_DAYS, keepCountsDays: KEEP_COUNTS_DAYS }));
 app.get('/sitemap.xml', (req, res) => {
   const base = baseUrl();
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/how-answers-work', '/privacy', '/terms'].map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/why', '/how-answers-work', '/privacy', '/terms'].map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
 });
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /s/\nDisallow: /j/\nDisallow: /present/\nDisallow: /api/\nDisallow: /admin\nDisallow: /talks\nDisallow: /new\n\nSitemap: ${baseUrl()}/sitemap.xml\n`));
 // A standard place for security researchers to find out how to report a problem.
@@ -754,9 +812,11 @@ app.get('/signup', page('account.html'));
 app.get('/signin', page('account.html'));
 app.get('/talks', page('talks.html'));
 app.get('/terms', page('terms.html'));
+app.get('/why', page('why.html'));
 app.get('/how-answers-work', page('how-answers-work.html'));
 app.get('/s/:id', page('speaker.html'));
 app.get('/present/:id', page('present.html'));
+app.get('/j/', (req, res) => res.redirect(302, '/j/' + String(req.query.code || '').replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 8)));
 app.get('/j/:code', page('join.html'));
 app.get('/admin', page('admin.html'));
 app.get('/healthz', (req, res) => res.json({ ok: true, version: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7), fullAnswers: hasKey(), durable, lastModelError }));

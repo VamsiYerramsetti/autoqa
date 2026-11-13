@@ -35,11 +35,14 @@ const stamp = Date.now().toString(36), email = `test+${stamp}@autoqa.example`, p
 let talk, seat, seat2, seat4, w0, handoffMsg;
 
 await step('pages load', async () => {
-  for (const p of ['/', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
+  for (const p of ['/', '/why', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
   // The home page shows a piece of the real chat, and says plainly that answers are automated.
   const home = await (await call('/', { raw: true })).text();
   assert.match(home, /class="demo"/); assert.match(home, /Answers are automated/);
+  // The audience's way in from the home page: a typed code goes straight to that talk.
+  const go = await call('/j/?code=ab2cd', { raw: true });
+  assert.equal(go.status, 302); assert.equal(go.headers.get('location'), '/j/AB2CD');
 });
 // The browser side has no test of its own here, so at least make sure the slide viewer's promises are in the page script.
 await step('a slide opens large as a proper dialog and respects "reduce motion"', async () => {
@@ -90,6 +93,27 @@ await step('set up a talk from a PowerPoint file', async () => {
   assert.equal((await call('/api/me')).data.talks.length, 1);
   assert.match((await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).headers.get('content-type'), /svg/);
 });
+await step('PowerPoint slides become pictures; the audience code is the Auto Q&A one, the private one stays plain', async () => {
+  const src = talk.sources[0];
+  assert.equal(src.drawn.length, 6, 'every slide drawn');
+  const drawn = await call(`/api/talks/${talk.id}/files/${src.id}/drawn/4`, { raw: true });
+  assert.equal(drawn.status, 200); assert.match(drawn.headers.get('content-type'), /svg/);
+  assert.match(drawn.headers.get('content-security-policy'), /default-src 'none'/, 'a drawn slide can never run anything');
+  const svg = await drawn.text(); assert.match(svg, /^<svg/); assert.match(svg, /Pilot results/);
+  // The browser sends a JPEG of slide 1; it replaces the drawing.
+  const jpeg = await call(`/api/talks/${talk.id}/files/${src.id}/pages/1`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, form: new Blob([Buffer.from([0xff, 0xd8, 0xff, 0xd9])]) });
+  assert.equal(jpeg.status, 200);
+  const now = (await call(`/api/talks/${talk.id}`)).data.sources[0];
+  assert.equal(now.images, 1); assert.ok(!now.drawn.includes(1));
+  const code = await (await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).text();
+  assert.match(code, /#2f3ced/i, 'cobalt dots'); assert.match(code, /#ffc83d/i, 'the two-dot mark');
+  const own = await (await call(`/api/talks/${talk.id}/qr.svg?inbox=1&key=${encodeURIComponent(talk.key)}`, { raw: true })).text();
+  assert.doesNotMatch(own, /#2f3ced/i, 'the private code looks different');
+  // A Keynote file gets a one-step way out instead of a dead end.
+  const form = new FormData(); form.append('files', new Blob([Buffer.from('x')]), 'talk.key');
+  const key = await call(`/api/talks/${talk.id}/files`, { method: 'POST', form });
+  assert.match(key.data.problems.join(' '), /Export To → PowerPoint/);
+});
 await step('protection: browser rules on every page, no cross-site writes, no uploads from strangers', async () => {
   const home = await call('/', { raw: true });
   const policy = home.headers.get('content-security-policy') || '';
@@ -118,7 +142,8 @@ await step('protection: browser rules on every page, no cross-site writes, no up
 await step('speaker profile: LinkedIn typed any way becomes a clean link; the audience sees only what was shared', async () => {
   for (const [typed, want] of [['maya-okafor', 'https://www.linkedin.com/in/maya-okafor'], ['@maya-okafor', 'https://www.linkedin.com/in/maya-okafor'],
     ['linkedin.com/in/maya-okafor/', 'https://www.linkedin.com/in/maya-okafor'], ['https://nl.linkedin.com/in/maya-okafor?trk=x', 'https://www.linkedin.com/in/maya-okafor'],
-    ['https://evil.example/in/maya', ''], ['javascript:alert(1)', '']]) {
+    ['https://evil.example/in/maya', ''], ['javascript:alert(1)', ''],
+    ['Maya Okafor', 'https://www.linkedin.com/search/results/people/?keywords=Maya%20Okafor']]) {
     const out = await call(`/api/talks/${talk.id}`, { method: 'PATCH', body: { linkedin: typed } });
     assert.equal(out.data.profile.linkedin, want, typed);
   }
@@ -151,6 +176,9 @@ await step('audience joins and gets an answer with its slide', async () => {
   assert.match(a.text, /62/); assert.match(a.text, /\[Slide 4/);
   const src = await call('/api/source?label=' + encodeURIComponent('Slide 4'), { headers: { 'x-token': seat.token } });
   assert.match(JSON.stringify(src.data), /Pilot results/);
+  assert.ok(src.data.image, 'the PowerPoint slide has a picture');
+  const pic = await call(src.data.image, { raw: true });
+  assert.equal(pic.status, 200); assert.match(pic.headers.get('content-type'), /svg|jpeg/);
   jar = mine;
 });
 await step('a question the slides cannot answer is handed to the speaker, merged for two askers', async () => {

@@ -1,4 +1,5 @@
-import { $, el, api, first, linkedinField, sheet as openSheet } from '/js/common.js';
+import { $, el, api, first, linkedinField, sheet as openSheet, icon } from '/js/common.js';
+const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Website'; } };
 
 const code = location.pathname.split('/').pop().toUpperCase();
 const store = 'autoqa:seat:' + code;
@@ -38,6 +39,10 @@ const input = el('textarea', { rows: 1, placeholder: 'Your question', 'aria-labe
 const sendBtn = el('button', { class: 'send', 'aria-label': 'Ask', disabled: true });
 sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 18V4m0 0-6 6m6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const form = el('form', { onsubmit: (e) => { e.preventDefault(); ask(input.value); } }, input, sendBtn);
+// A question being typed survives a reload or a dropped connection (this tab only).
+const DRAFT = 'autoqa:draft:' + location.pathname;
+try { input.value = sessionStorage.getItem(DRAFT) || ''; sendBtn.disabled = !input.value.trim(); } catch {}
+input.addEventListener('input', () => { try { sessionStorage.setItem(DRAFT, input.value); } catch {} });
 
 // Questions others sent to the speaker that are still waiting. Yellow, like every raised hand in the product.
 const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'aria-haspopup': 'dialog', onclick: () => openWaiting() });
@@ -61,9 +66,9 @@ function contactLinks(where) {
   const s = talk.speaker;
   const tap = (name) => () => { api('/api/event', { method: 'POST', headers: auth, body: { name } }).catch(() => {}); };
   return [
-    s.linkedin && el('a', { class: 'btn in', href: s.linkedin, target: '_blank', rel: 'noopener', onclick: tap('connect_tapped') }, where === 'reply' ? 'Connect on LinkedIn' : 'LinkedIn'),
-    s.email && el('a', { class: 'btn quiet', href: `mailto:${s.email}?subject=${encodeURIComponent('Your talk: ' + talk.title)}`, onclick: tap('email_tapped') }, `Email ${speaker}`),
-    s.website && el('a', { class: 'btn quiet', href: s.website, target: '_blank', rel: 'noopener', onclick: tap('website_tapped') }, 'Website'),
+    s.linkedin && el('a', { class: 'btn in', href: s.linkedin, target: '_blank', rel: 'noopener', onclick: tap('connect_tapped') }, icon('linkedin', 20), where === 'reply' ? 'Connect' : 'LinkedIn'),
+    s.website && el('a', { class: 'btn quiet', href: s.website, target: '_blank', rel: 'noopener', onclick: tap('website_tapped') }, icon('web', 18), hostOf(s.website)),
+    s.email && el('a', { class: 'btn quiet', href: `mailto:${s.email}?subject=${encodeURIComponent('Your talk: ' + talk.title)}`, onclick: tap('email_tapped') }, icon('mail', 18), 'Email'),
   ].filter(Boolean);
 }
 function hasProfile() { const s = talk.speaker; return Boolean(s.headline || s.bio || s.linkedin || s.email || s.website); }
@@ -85,9 +90,12 @@ function whoButton() {
 }
 
 let chips = [...talk.suggested];
+let chipsShown = new Set();
 function drawChips() {
-  // Three at a time: when one is used, the next one in the list takes its place.
-  suggest.replaceChildren(...chips.slice(0, 3).map((q) => el('button', { type: 'button', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'suggestion_tapped' } }).catch(() => {}); ask(q); } }, q)));
+  // Three at a time: when one is used, the next one in the list takes its place (and arrives with a small rise).
+  const now = chips.slice(0, 3);
+  suggest.replaceChildren(...now.map((q) => el('button', { type: 'button', class: chipsShown.size && !chipsShown.has(q) ? 'fresh' : '', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'suggestion_tapped' } }).catch(() => {}); ask(q); } }, q)));
+  chipsShown = new Set(now);
   suggest.hidden = !chips.length;
 }
 drawChips();
@@ -455,6 +463,7 @@ async function ask(text) {
   if (!text || busy) return;
   busy = true; sendBtn.disabled = true;
   input.value = ''; input.style.height = 'auto';
+  try { sessionStorage.removeItem(DRAFT); } catch {}
   chips = chips.filter((c) => c !== text); drawChips();
   foldCard(); // an unsent yellow card above makes way for the new question
   const parts = turn(text), { node, a } = parts;
@@ -485,7 +494,10 @@ async function ask(text) {
     }
   } catch (x) {
     a.classList.remove('caret');
-    a.replaceChildren(el('span', { class: 'error' }, x.message));
+    // Nothing is lost: the question goes back in the box and one tap sends it again.
+    a.replaceChildren(el('span', { class: 'error' }, x.message === 'Failed to fetch' ? 'No connection just now.' : x.message), ' ',
+      el('button', { class: 'chip', type: 'button', onclick: () => { node.remove(); ask(text); } }, 'Try again'));
+    if (!input.value) { input.value = text; sendBtn.disabled = false; }
   }
   busy = false; sendBtn.disabled = !input.value.trim();
 }

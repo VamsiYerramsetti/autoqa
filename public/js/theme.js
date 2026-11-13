@@ -29,9 +29,19 @@
     }
     b.addEventListener('click', function () {
       var next = isDark() ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      try { localStorage.setItem(KEY, next); } catch (e) {}
-      paint();
+      function apply() {
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        paint();
+      }
+      var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // The whole page fades from one theme to the other in about two thirds of a second, instead of a jump.
+      // Browsers that can, cross-fade the page as one picture; the rest fade each colour on its own.
+      if (still) return apply();
+      if (document.startViewTransition) { document.startViewTransition(apply); return; }
+      root.classList.add('theming');
+      apply();
+      setTimeout(function () { root.classList.remove('theming'); }, 700);
     });
     paint();
     return b;

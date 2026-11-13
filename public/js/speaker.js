@@ -1,4 +1,4 @@
-import { $, el, api, keys, first, room, linkedinField, sheet } from '/js/common.js';
+import { $, el, api, keys, first, room, linkedinField, sheet, icon } from '/js/common.js';
 
 const id = location.pathname.split('/').pop();
 // Opening the private link on a phone carries the key in the address; keep it and tidy the address.
@@ -72,7 +72,8 @@ view.append(el('div', { class: 'desk' },
       el('div', {}, nums.questions, el('span', {}, 'questions')),
       waitingBox),
     el('div', { class: 'actions' },
-      el('a', { class: 'btn', href: '/present/' + id, target: '_blank' }, 'Show the code'),
+      el('a', { class: 'btn', href: '/present/' + id, target: '_blank' }, 'Show QR code'),
+      el('button', { class: 'btn quiet', type: 'button', onclick: share }, 'Put it on a slide'),
       el('button', { class: 'btn quiet', onclick: phone }, 'Open on my phone'),
       el('a', { class: 'btn quiet', href: '/j/' + talk.code, target: '_blank' }, 'Try it as the audience')),
     summary,
@@ -81,6 +82,56 @@ view.append(el('div', { class: 'desk' },
   ),
   el('section', { class: 'inbox' }, el('h2', {}, 'Questions for you'), cards),
 ));
+
+// "Put it on a slide": the Auto Q&A code ready to drop into a deck. Copy it, download it, or download a whole
+// ready-made slide (16:9) with the code, the short address and "Scan to ask".
+async function share() {
+  const joinUrl = new URL(talk.joinUrl), short = joinUrl.host + '/j/' + talk.code;
+  const svgText = await fetch(`/api/talks/${id}/qr.svg`).then((r) => r.text());
+  const svgUrl = URL.createObjectURL(new Blob([svgText], { type: 'image/svg+xml' }));
+  const qrImage = new Image(); qrImage.src = svgUrl; await qrImage.decode().catch(() => {});
+  const pngOf = (canvas) => new Promise((r) => canvas.toBlob(r, 'image/png'));
+  const qrCanvas = () => { const c = document.createElement('canvas'); c.width = c.height = 1200; c.getContext('2d').drawImage(qrImage, 0, 0, 1200, 1200); return c; };
+  const save = (blob, name) => { const a = el('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  const done = (btn, text) => { const was = btn.lastChild.textContent; btn.lastChild.textContent = text; btn.classList.add('ok'); setTimeout(() => { btn.lastChild.textContent = was; btn.classList.remove('ok'); }, 1800); };
+  const fileName = (talk.title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 40) || 'talk').toLowerCase();
+
+  async function slide() {
+    await document.fonts.ready;
+    const c = document.createElement('canvas'); c.width = 1920; c.height = 1080;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 1920, 1080);
+    g.drawImage(qrImage, 150, 150, 780, 780);
+    g.fillStyle = '#1d1b2e'; g.font = "700 132px 'Bricolage Grotesque', sans-serif"; g.fillText('Questions?', 1020, 430);
+    g.fillStyle = '#6b6a7b'; g.font = "500 56px 'Instrument Sans', sans-serif"; g.fillText('Scan to ask. No app, no sign-up.', 1024, 530);
+    g.font = "600 50px 'Bricolage Grotesque', sans-serif";
+    const host = joinUrl.host + '/j/'; g.fillStyle = '#1d1b2e'; g.fillText(host, 1024, 700);
+    g.fillStyle = '#2f3ced'; g.fillText(talk.code, 1024 + g.measureText(host).width, 700);
+    g.fillStyle = '#ffc83d'; g.beginPath(); g.arc(1046, 900, 22, 0, 7); g.fill();
+    g.fillStyle = '#2f3ced'; g.beginPath(); g.arc(1072, 900, 22, 0, 7); g.fill();
+    g.fillStyle = '#1d1b2e'; g.font = "600 34px 'Bricolage Grotesque', sans-serif"; g.fillText('Auto Q&A', 1110, 912);
+    return c;
+  }
+  const preview = el('img', { class: 'qr-big', src: svgUrl, alt: 'Your Auto Q&A code' });
+  const copyCode = el('button', { class: 'btn', type: 'button' }, icon('copy', 18), 'Copy code');
+  copyCode.onclick = async () => {
+    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngOf(qrCanvas()) })]); done(copyCode, 'Copied. Paste it on a slide'); }
+    catch { save(await pngOf(qrCanvas()), `auto-qa-${fileName}.png`); done(copyCode, 'Downloaded instead'); }
+  };
+  const copyLink = el('button', { class: 'btn quiet', type: 'button' }, icon('link', 18), short);
+  copyLink.onclick = async () => { try { await navigator.clipboard.writeText(joinUrl.href); done(copyLink, 'Link copied'); } catch {} };
+  const pack = el('div', { class: 'qr-files' },
+    el('button', { class: 'btn quiet', type: 'button', onclick: async () => save(await pngOf(await slide()), `auto-qa-slide-${fileName}.png`) }, icon('slide', 18), 'Ready-made slide'),
+    el('button', { class: 'btn quiet', type: 'button', onclick: async () => save(await pngOf(qrCanvas()), `auto-qa-${fileName}.png`) }, icon('down', 18), 'PNG'),
+    el('button', { class: 'btn quiet', type: 'button', onclick: () => save(new Blob([svgText], { type: 'image/svg+xml' }), `auto-qa-${fileName}.svg`) }, icon('down', 18), 'SVG'));
+  const panel = sheet(
+    el('h3', {}, 'Put your code on a slide'),
+    el('p', { class: 'small muted' }, 'Paste it on your first or last slide. People scan it and ask.'),
+    preview, copyCode, copyLink, pack,
+    el('button', { class: 'btn plain', type: 'button', onclick: () => panel.close() }, 'Done'));
+  panel.panel.parentElement.classList.add('share');
+}
+if (new URLSearchParams(location.search).has('new')) { history.replaceState(null, '', location.pathname); share(); }
 
 function phone() {
   const sheet = el('div', { class: 'sheet', onclick: (e) => { if (e.target === sheet) sheet.remove(); } },
@@ -119,7 +170,7 @@ function card(item) {
     el('p', { class: 'reply' }, item.answer),
     el('div', { class: 'people' }, item.people.map((p) => el('span', { class: 'person' }, p.name,
       p.email && el('a', { href: `mailto:${p.email}?subject=${encodeURIComponent('Your question at ' + talk.title)}` }, 'Email'),
-      p.linkedin && el('a', { class: 'in', href: p.linkedin, target: '_blank', rel: 'noopener' }, 'LinkedIn')))));
+      p.linkedin && el('a', { class: 'in', href: p.linkedin, target: '_blank', rel: 'noopener', 'aria-label': `${p.name} on LinkedIn` }, icon('linkedin', 16), 'LinkedIn')))));
 }
 
 async function refresh() {

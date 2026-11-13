@@ -514,3 +514,99 @@ table.plain td, table.plain th { padding: 9px 8px 9px 0; border-bottom: 1.5px so
 .legal .short li { color: var(--ink); }
 .legal nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; margin: 6px 0 18px; }
 @media (max-width: 640px) { .legal table, .legal tbody, .legal tr, .legal td, .legal th { display: block; } .legal thead { display: none; } .legal td { border: 0; padding: 2px 0; } .legal tr { border-top: 1.5px solid var(--line); padding: 10px 0; } .legal td:first-child { font-weight: 600; color: var(--ink); } }
+
+/* ---------- Motion, everywhere (2026-11-13) ----------
+   One small vocabulary: things arrive with a short rise and fade, presses give a little, the theme cross-fades.
+   Everything here is off under "reduce motion" (bottom of this block). */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 650ms; animation-timing-function: cubic-bezier(.4, 0, .2, 1); }
+.theming, .theming *, .theming *::before, .theming *::after { transition: background-color 600ms ease, color 600ms ease, border-color 600ms ease, fill 600ms ease, stroke 600ms ease, box-shadow 600ms ease !important; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-100%); } }
+.wrap > *, main > * { animation: settle 420ms var(--ease-out) both; }
+.wrap > :nth-child(2) { animation-delay: 40ms; } .wrap > :nth-child(3) { animation-delay: 80ms; } .wrap > :nth-child(4) { animation-delay: 120ms; }
+.sheet { animation: fade 200ms ease both; }
+.sheet > div { animation: rise 260ms var(--ease-out) both; }
+.suggest button.fresh { animation: rise 320ms var(--ease-out) both; }
+.news { animation: drop-in 320ms var(--ease-out) both; }
+.reach .btn, .who, .icon-link { transition: transform 140ms var(--ease-out), background-color 140ms ease, box-shadow 140ms ease; }
+.reach .btn:active, .who:active, .icon-link:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover, .reach .btn:hover, .icon-link:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0) scale(.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap > *, main > *, .sheet, .sheet > div, .suggest button.fresh, .news { animation: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+  .btn:hover, .reach .btn:hover, .icon-link:hover { transform: none; }
+}
+
+/* Contact icons and the LinkedIn field's "where this goes" line (2026-11-13) */
+.ico { flex: none; display: block; }
+.btn .ico { margin-left: -4px; }
+.btn.in .ico rect:first-child { fill: transparent; }
+.from .reach .btn.in { color: #0a66c2; }
+.from .reach .btn.in .ico rect:first-child { fill: #0a66c2; }
+.person a.in { gap: 6px; padding-left: 8px; background: #0a66c2; color: #fff; display: inline-flex; align-items: center; }
+.person a.in .ico rect:first-child { fill: transparent; }
+.li-field > .ico { margin-right: 10px; }
+.hand .li-field > .ico { width: 20px; height: 20px; margin-right: 8px; }
+.li-preview { display: flex !important; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.li-preview[hidden] { display: none !important; }
+.li-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li-check { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border-radius: 99px; color: #0a66c2; font-weight: 600; text-decoration: none; background: rgba(10, 102, 194, .1); }
+.li-check:hover { background: rgba(10, 102, 194, .18); }
+.hand .li-preview { color: #5b5970; margin-top: 4px; }
+
+/* "Put your code on a slide" */
+.sheet.share > div { display: grid; gap: 10px; max-width: 420px; text-align: left; }
+.sheet.share h3 { font-size: 26px; }
+.sheet.share .qr-big { width: min(260px, 70vw); justify-self: center; margin: 6px 0 8px; border-radius: 16px; box-shadow: 0 0 0 1.5px var(--line); }
+.sheet.share .btn { width: 100%; }
+.sheet.share .btn.ok { background: var(--cobalt); color: #fff; box-shadow: none; }
+.qr-files { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 8px; }
+.qr-files .btn { padding: 0 12px; font-size: 15px; }
+.sheet.share .btn.plain { justify-self: center; width: auto; }
+.present .how { margin-top: 2vh; font-size: clamp(18px, 2vw, 34px); color: #6b6a7b; }
+
+/* "Why Auto Q&A" */
+.why { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+.why h1 { font-size: clamp(44px, 7vw, 76px); margin: 28px 0 12px; }
+.why .lede { font-size: clamp(20px, 2.4vw, 26px); color: var(--text); max-width: 34ch; }
+.whys { list-style: none; padding: 0; margin: 44px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.whys li { background: var(--surface); border: 1.5px solid var(--line); border-radius: 24px; padding: 22px; display: grid; align-content: start; gap: 8px; }
+.whys .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--c); }
+.whys h2 { font-size: 22px; line-height: 1.15; margin: 4px 0 0; }
+.whys p { color: var(--muted); margin: 0; }
+.whys .fix { color: var(--ink); font-weight: 600; margin-top: 6px; }
+.why .sec { font-size: 28px; margin: 56px 0 14px; }
+.for { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.for li { display: grid; padding: 12px 18px; border-radius: 18px; background: var(--tint); }
+.for b { color: var(--ink); } .for span { font-size: 14px; color: var(--muted); }
+.isnt { padding-left: 20px; color: var(--text); display: grid; gap: 8px; }
+.faq details { border-top: 1.5px solid var(--line); padding: 4px 0; }
+.faq details:last-child { border-bottom: 1.5px solid var(--line); }
+.faq summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-weight: 600; list-style: none; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; font: 400 26px/1 var(--body); color: var(--muted); transition: transform 200ms var(--ease-out); }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq p { color: var(--text); margin: 0 0 14px; max-width: 62ch; }
+.why .end { margin: 48px 0 0; }
+@media (max-width: 760px) { .whys { grid-template-columns: 1fr; } }
+
+/* Home: two ways in (speaker / audience), a line of reassurance, labelled example */
+.nav { display: flex; gap: 6px; align-items: center; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.trust { margin: 16px 0 0; font-size: 15px; color: var(--muted); }
+.joinbox { margin-top: 32px; padding-top: 22px; border-top: 1.5px solid var(--line); max-width: 380px; }
+.joinbox label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.joinbox span { display: flex; gap: 8px; }
+.joinbox input { flex: 1; min-width: 0; min-height: 48px; padding: 0 16px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 18px var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.joinbox input:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 4px var(--tint); }
+.demo-label { margin: 14px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.demo .tag { margin: 6px 0 4px; font-size: 13px; color: var(--muted); }
+.demo .tag b { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+.demo .tag b::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+@media (max-width: 520px) { .hide-s { display: none; } }
+.hero h1 { font-size: clamp(44px, 6vw, 84px); text-wrap: balance; }
+.sheet > div:focus { outline: none; }

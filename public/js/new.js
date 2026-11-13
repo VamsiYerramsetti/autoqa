@@ -55,7 +55,7 @@ function files(problems = [], busy = []) {
     } }, 'Add notes')));
   show(
     el('h1', {}, 'Add your slides'),
-    el('p', { class: 'sub' }, 'PDF, PowerPoint or Word. Up to 50 MB each.'),
+    el('p', { class: 'sub' }, 'PowerPoint, PDF or Word. Keynote and Google Slides: export as PowerPoint. Up to 50 MB.'),
     drop, list,
     problems.map((p) => el('p', { class: 'error', role: 'alert', style: 'margin-top:12px' }, p)),
     notesBox,
@@ -87,6 +87,7 @@ async function uploadFiles(list) {
       talk = out; problems.push(...out.problems);
       const added = talk.sources.find((s) => !before.has(s.id));
       if (added?.pdf) await pictures(file, added, waiting);
+      if (added?.drawn?.length) await drawnPictures(added);
     } catch (x) { problems.push(x.message); }
   }
   try { talk = await api('/api/talks/' + talk.id, { headers: auth() }); } catch {}
@@ -113,6 +114,32 @@ async function pictures(file, src, waiting) {
       await fetch(`/api/talks/${talk.id}/files/${src.id}/pages/${n}`, { method: 'POST', headers: { ...auth(), 'Content-Type': 'image/jpeg' }, body: blob });
     }
   } catch (x) { console.warn('slide pictures skipped:', x); }
+}
+// PowerPoint slides arrive drawn by the server as SVG. Turn each into a small JPEG here, like PDF pages,
+// so the pictures load fast on the audience's phones. If this stops halfway, the SVG is still shown.
+async function drawnPictures(src) {
+  const total = src.drawn.length;
+  for (const [i, n] of src.drawn.entries()) {
+    try {
+      const meta = document.querySelector('.files li.busy .meta');
+      if (meta) meta.textContent = `Slide ${i + 1} of ${total}…`;
+      const svg = await fetch(`/api/talks/${talk.id}/files/${src.id}/drawn/${n}`, { headers: auth() }).then((r) => (r.ok ? r.blob() : null));
+      if (!svg) continue;
+      const url = URL.createObjectURL(svg);
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      const width = 1600, height = Math.round(width * (img.naturalHeight || 900) / (img.naturalWidth || 1600));
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const g = canvas.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, width, height);
+      g.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.85));
+      if (blob) await fetch(`/api/talks/${talk.id}/files/${src.id}/pages/${n}`, { method: 'POST', headers: { ...auth(), 'Content-Type': 'image/jpeg' }, body: blob });
+    } catch (x) { console.warn('slide picture skipped:', x); }
+  }
 }
 picker.addEventListener('change', () => { uploadFiles(picker.files); picker.value = ''; });
 // The whole page is the drop target.
@@ -143,7 +170,7 @@ function conversation() {
   const mic = voiceButton(box);
   const attach = el('button', { class: 'tool', type: 'button', 'aria-label': 'Add a file: transcript, notes, paper', title: 'Add a file', onclick: () => more.click() });
   attach.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M15.5 10.5 10 16a3.5 3.5 0 0 1-5-5l6.5-6.5a2.3 2.3 0 0 1 3.3 3.3L8.6 14a1.1 1.1 0 0 1-1.6-1.6l5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const more = el('input', { type: 'file', multiple: true, hidden: true, accept: '.pdf,.pptx,.docx,.txt,.md' });
+  const more = el('input', { type: 'file', multiple: true, hidden: true, accept: '.pdf,.pptx,.key,.ppt,.odp,.docx,.txt,.md' });
   const err = el('p', { class: 'error', role: 'alert' });
   const done = el('button', { class: 'btn', type: 'button', onclick: finish }, 'Finish');
   const skip = el('button', { class: 'btn plain', type: 'button', onclick: () => reply('') }, 'Skip');
@@ -209,6 +236,7 @@ function conversation() {
         if (talk.problems?.length) err.textContent = talk.problems.join(' ');
         line.textContent = added ? `Added ${file.name}` : `Couldn't add ${file.name}`;
         if (added?.pdf) pictures(file, added, []);
+        if (added?.drawn?.length) drawnPictures(added);
       } catch (x) { line.textContent = `Couldn't add ${file.name}`; err.textContent = x.message; }
     }
   }
@@ -258,7 +286,7 @@ function voiceButton(box) {
 
 async function finish() {
   await api(`/api/talks/${talk.id}/ready`, { method: 'POST', headers: auth(), body: {} });
-  location.href = '/s/' + talk.id;
+  location.href = '/s/' + talk.id + '?new=1'; // the talk page opens with "put your code on a slide"
 }
 
 /* Resume after a reload */

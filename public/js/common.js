@@ -67,33 +67,79 @@ export function room(svg, states, { min = 60 } = {}) {
     seats.map((s, i) => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="9" class="${cls[i]}"/>`).join('');
 }
 
-// A LinkedIn field people can fill in any way they like: type just their handle after the fixed
-// "linkedin.com/in/", or paste a whole link and it is trimmed to the handle for them.
-// Returns { box, input, value() }; value() is what to send to the server ('' when left empty).
+// Small icons for contact buttons. The LinkedIn mark is LinkedIn's own, used as they allow: to link to a profile.
+const ICONS = {
+  linkedin: '<rect width="24" height="24" rx="5" fill="#0a66c2"/><circle cx="7" cy="7.3" r="1.65" fill="#fff"/><rect x="5.6" y="9.6" width="2.8" height="8.6" fill="#fff"/><path d="M10.7 9.6h2.7v1.2c.4-.7 1.4-1.4 2.9-1.4 2.9 0 3.4 1.9 3.4 4.3v4.5h-2.8v-4c0-1-.1-2.2-1.4-2.2-1.4 0-1.6 1-1.6 2.1v4.1h-2.8z" fill="#fff"/>',
+  web: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9s-1.3 6.5-3.9 9c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3Z" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+  mail: '<rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m4 7.5 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  down: '<path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+  slide: '<rect x="3" y="5" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 17v3M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="6" y="8" width="5" height="5" rx="1" fill="currentColor"/>',
+  out: '<path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+export function icon(name, size = 20) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', size); s.setAttribute('height', size);
+  s.setAttribute('aria-hidden', 'true'); s.setAttribute('class', 'ico');
+  s.innerHTML = ICONS[name] || '';
+  return s;
+}
+
+// What someone typed in a LinkedIn field, as a link that opens. A handle, @handle or link → their profile;
+// a name with spaces ("Ines Carvalho") → a LinkedIn search for that name, since we can't know their exact profile.
+// Kept in step with linkedin() in server.js.
 const LINKEDIN_IN = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([^\/?#\s]+).*$/i;
+export function linkedinUrl(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  if (/^[\p{L}.'’-]+(\s+[\p{L}.'’-]+)+$/u.test(v)) return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(v);
+  const m = v.match(LINKEDIN_IN);
+  if (m) return 'https://www.linkedin.com/in/' + m[1];
+  if (/linkedin\.com\//i.test(v)) return 'https://' + v.replace(/^https?:\/\//i, '').replace(/^linkedin/i, 'www.linkedin');
+  return 'https://www.linkedin.com/in/' + v.replace(/^@/, '').replace(/^\/?in\//i, '').replace(/\s+/g, '');
+}
+
+// A LinkedIn field people can fill in any way they like: type their handle after the fixed "linkedin.com/in/",
+// paste a whole link (trimmed to the handle for them), or just type their name. A line under it shows where
+// the link will go, with a way to check it.
+// Returns { box, input, value() }; value() is what to send to the server ('' when left empty).
 export function linkedinField(current = '', hint = '') {
   let other = ''; // a LinkedIn link that is not a personal profile (a company page): kept whole
   const handleOf = (v) => {
     v = String(v || '').trim();
+    if (/search\/results\/people\/\?keywords=/i.test(v)) { other = ''; try { return new URL(v).searchParams.get('keywords') || ''; } catch { return v; } }
     const m = v.match(LINKEDIN_IN);
     if (m) { other = ''; return decodeURIComponent(m[1]); }
     if (/linkedin\.com\//i.test(v)) { other = v; return v.replace(/^https?:\/\/(www\.)?/i, ''); }
     other = '';
     return v.replace(/^@/, '').replace(/^\/?in\//i, '');
   };
-  const input = el('input', { inputmode: 'url', autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', placeholder: 'your-name', 'aria-label': 'LinkedIn profile, optional' });
+  const input = el('input', { inputmode: 'url', autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', placeholder: 'your-name or a link', 'aria-label': 'LinkedIn profile, optional' });
   input.value = handleOf(current);
   const prefix = el('span', { class: 'li-prefix', 'aria-hidden': 'true' }, 'linkedin.com/in/');
-  const badge = el('span', { class: 'li-badge', 'aria-hidden': 'true' }, 'in');
-  const tidy = () => { const h = handleOf(input.value); if (h !== input.value) input.value = h; prefix.hidden = Boolean(other); };
+  const check = el('a', { class: 'li-check', target: '_blank', rel: 'noopener' }, 'Check', icon('out', 14));
+  const note = el('span', { class: 'li-note' });
+  const preview = el('small', { class: 'li-preview', 'aria-live': 'polite' }, note, check);
+  const paint = () => {
+    const v = input.value.trim(), named = /\s/.test(v);
+    prefix.hidden = Boolean(other) || named;
+    const url = other ? linkedinUrl(other) : linkedinUrl(v);
+    preview.hidden = !url;
+    check.href = url || '#';
+    note.textContent = named ? 'Opens a LinkedIn search for this name. A profile link is better.' : 'Opens ' + url.replace(/^https:\/\/www\./, '').replace(/\?.*$/, '');
+  };
+  const tidy = () => { const h = handleOf(input.value); if (h !== input.value) input.value = h; paint(); };
   input.addEventListener('paste', () => setTimeout(tidy));
   input.addEventListener('blur', tidy);
+  input.addEventListener('input', paint);
   tidy();
   const box = el('label', { class: 'li' },
     el('span', { class: 'li-top' }, 'LinkedIn', el('em', {}, 'optional')),
-    el('span', { class: 'li-field' }, badge, prefix, input),
+    el('span', { class: 'li-field' }, icon('linkedin', 22), prefix, input),
+    preview,
     hint && el('small', {}, hint));
-  return { box, input, value: () => { tidy(); return other || input.value.trim(); } };
+  return { box, input, value: () => { tidy(); const v = input.value.trim(); return other || (/\s/.test(v) ? linkedinUrl(v) : v); } };
 }
 
 // A panel over the page. Closes on the backdrop, on Escape and with its own button; focus returns where it was.

@@ -19,14 +19,19 @@
 <div class="wrap">
   <div class="top">
     <a class="mark" href="/"><i></i>Auto Q&amp;A</a>
-    <span style="display:flex;gap:8px;align-items:center"><a class="btn plain" href="/signin">Sign in</a><a class="btn quiet" href="/new">Start a talk</a></span>
+    <nav class="nav"><a class="btn plain hide-s" href="/why">Why</a><a class="btn plain" href="/signin">Sign in</a><a class="btn quiet" href="/new">Start a talk</a></nav>
   </div>
 
   <section class="hero">
     <div>
-      <h1>Every question gets an answer.</h1>
-      <p class="lede">Your audience asks from their phones. Your slides answer. You only get the ones that need you.</p>
-      <a class="btn big" href="/new">Start a talk</a>
+      <h1>Your slides, ready for every question.</h1>
+      <p class="lede">Your audience asks from their phones. Your slides answer, and show the slide. The questions only you can answer wait for you.</p>
+      <div class="cta"><a class="btn big" href="/new">Start a talk</a><a class="btn plain" href="/why">Why Auto Q&amp;A</a></div>
+      <p class="trust">No app · No sign-up for the audience · Ask anonymously</p>
+      <form class="joinbox" action="/j/" method="get" id="joinbox">
+        <label for="joincode">At a talk? Enter its code</label>
+        <span><input id="joincode" name="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="4EPHX" inputmode="text"><button class="btn" type="submit">Join</button></span>
+      </form>
     </div>
     <div>
       <svg id="room" aria-label="A room of people. Most questions are answered straight away, a few wait for the speaker."></svg>
@@ -40,27 +45,30 @@
   <section class="how">
     <ol class="ways">
       <li><h3>Drop in your slides</h3><p>Then answer a few quick questions about your talk.</p></li>
-      <li><h3>Show the code</h3><p>People scan it and ask. No app, no sign-up.</p></li>
+      <li><h3>Show the QR code</h3><p>People scan it and ask. No app, no sign-up.</p></li>
       <li><h3>Reply to what's left</h3><p>The few your slides couldn't answer wait on your phone.</p></li>
     </ol>
     <!-- A piece of the real audience chat, with a made-up talk: the product shown, not described. -->
     <div class="demo" role="img" aria-label="What your audience sees. One question is answered straight away, with the slide it comes from. Another, which the slides don't cover, is sent to the speaker.">
+      <p class="demo-label">Example: what your audience sees</p>
       <div class="turn" aria-hidden="true">
         <h3 class="q">Does it keep the roof cooler too?</h3>
         <div class="deck"><figure class="slide"><div class="frame text ready"><strong>Pilot results</strong><ul><li>Four schools, 18 months</li><li>Peak runoff reduced by 62%</li><li>Roof temperature in summer down 9 degrees</li></ul></div><figcaption>Slide 4</figcaption></figure></div>
         <p class="a">Yes. Across the four pilot schools, roofs were 9 degrees cooler in summer.</p>
+        <p class="tag"><b style="--c:var(--cobalt)">Answered from slide 4</b> · automated</p>
       </div>
       <div class="turn" aria-hidden="true">
         <h3 class="q">Would it work on a sloped roof?</h3>
         <p class="a">The talk doesn't say.</p>
         <div class="hand sent">Sent to Maya. The reply will show up here.</div>
+        <p class="tag"><b style="--c:var(--signal)">Waiting for the speaker</b></p>
       </div>
     </div>
   </section>
 
   <footer class="foot small muted">
     <span>Auto Q&amp;A. Answers are automated and come from the speaker's own material.</span>
-    <span><a href="/how-answers-work">How answers work</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
+    <span><a href="/why">Why Auto Q&amp;A</a> · <a href="/how-answers-work">How answers work</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
   </footer>
 </div>
 <script type="module" src="/js/page-index.js"></script>
