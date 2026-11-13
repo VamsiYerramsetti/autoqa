@@ -416,7 +416,7 @@ async function drawSlides(talk, src, buffer) {
 }
 // Our own drawing of a slide, served with rules that stop it from ever running anything.
 function sendSvg(res, data) {
-  res.set({ 'Content-Security-Policy': "default-src 'none'; img-src data:; style-src 'unsafe-inline'", 'Cache-Control': 'private, max-age=3600' }).type('image/svg+xml').send(data);
+  res.set({ 'Content-Security-Policy': "default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'none'; frame-ancestors 'none'; sandbox", 'Cache-Control': 'private, max-age=3600' }).type('image/svg+xml').send(data);
 }
 app.get('/api/talks/:id/files/:sid/drawn/:n', async (req, res) => {
   const talk = speakerTalk(req, res); if (!talk) return;

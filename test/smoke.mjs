@@ -6,6 +6,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import JSZip from 'jszip';
+import { renderPptx, parseXml } from '../lib/pptx-render.js';
+import { parseFile } from '../lib/parse.js';
+import { readPart } from '../lib/zip.js';
 
 let server = null, SITE = process.env.SITE?.replace(/\/$/, '');
 if (!SITE) {
@@ -103,6 +107,7 @@ await step('PowerPoint slides become pictures; the audience code is the Auto Q&A
   const drawn = await call(`/api/talks/${talk.id}/files/${src.id}/drawn/4`, { raw: true });
   assert.equal(drawn.status, 200); assert.match(drawn.headers.get('content-type'), /svg/);
   assert.match(drawn.headers.get('content-security-policy'), /default-src 'none'/, 'a drawn slide can never run anything');
+  assert.match(drawn.headers.get('content-security-policy'), /form-action 'none'.*sandbox/, 'opened on its own, a drawn slide cannot post a form');
   const svg = await drawn.text(); assert.match(svg, /^<svg/); assert.match(svg, /Pilot results/);
   // The browser sends a JPEG of slide 1; it replaces the drawing.
   const jpeg = await call(`/api/talks/${talk.id}/files/${src.id}/pages/1`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, form: new Blob([Buffer.from([0xff, 0xd8, 0xff, 0xd9])]) });
@@ -117,6 +122,34 @@ await step('PowerPoint slides become pictures; the audience code is the Auto Q&A
   const form = new FormData(); form.append('files', new Blob([Buffer.from('x')]), 'talk.key');
   const key = await call(`/api/talks/${talk.id}/files`, { method: 'POST', form });
   assert.match(key.data.problems.join(' '), /Export To → PowerPoint/);
+});
+// Code-level: a speaker could upload a PowerPoint built to attack us. These files run on this machine only.
+await step('a hostile PowerPoint file cannot inject markup, stall the server or unpack into gigabytes', async () => {
+  const sample = await JSZip.loadAsync(fs.readFileSync('samples/rooftop-rain.pptx'));
+  const themeFile = Object.keys(sample.files).find((f) => /^ppt\/theme\/theme\d+\.xml$/.test(f));
+  const theme = (await sample.file(themeFile).async('string'))
+    .replace(/<a:dk1>[\s\S]*?<\/a:dk1>/, '<a:dk1><a:srgbClr val="000&quot;/&gt;&lt;script&gt;x()&lt;/script&gt;&lt;foreignObject&gt;"/></a:dk1>');
+  sample.file(themeFile, theme);
+  const svgs = await renderPptx(await sample.generateAsync({ type: 'nodebuffer' }));
+  assert.ok(svgs.length, 'the deck still draws');
+  for (const { svg } of svgs) assert.doesNotMatch(svg, /<script|<foreignObject/i, 'a theme colour cannot add markup');
+  // Unclosed "<!" and "<a:p" over and over took minutes; now it is one quick pass.
+  let t = Date.now(); parseXml('<!'.repeat(2_000_000)); parseXml('<a b="'.repeat(500_000));
+  assert.ok(Date.now() - t < 2000, `XML reading stays fast (${Date.now() - t} ms)`);
+  const slow = new JSZip();
+  slow.file('ppt/slides/slide1.xml', '<a:p '.repeat(400_000));
+  slow.file('ppt/presentation.xml', '<p:sldId '.repeat(400_000)); slow.file('ppt/_rels/presentation.xml.rels', '<Relationship '.repeat(400_000));
+  t = Date.now(); await parseFile('slow.pptx', await slow.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
+  assert.ok(Date.now() - t < 3000, `slide text reading stays fast (${Date.now() - t} ms)`);
+  // A part that claims to be tiny but really unpacks to 30 MB is refused once the real bytes pass the cap.
+  const bomb = new JSZip(); bomb.file('big.xml', 'a'.repeat(30_000_000));
+  const bytes = await bomb.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  const honest = await JSZip.loadAsync(Buffer.from(bytes));
+  bytes.writeUInt32LE(10, 22); bytes.writeUInt32LE(10, bytes.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02])) + 24);
+  const lying = await JSZip.loadAsync(bytes);
+  assert.equal(lying.file('big.xml')._data.uncompressedSize, 10, 'the file really lies about its size');
+  assert.equal(await readPart(lying, 'big.xml'), undefined, 'the real size is what counts');
+  assert.equal((await readPart(honest, 'big.xml', { cap: 40_000_000 })).length, 30_000_000, 'an honest read under the cap still works');
 });
 await step('protection: browser rules on every page, no cross-site writes, no uploads from strangers', async () => {
   const home = await call('/', { raw: true });
