@@ -314,6 +314,18 @@ if (server) await step('a slide label in the wrong place or with a made-up file 
   assert.equal(tidyLabels('[Slide 4 · appendix] From the appendix.', two), '[Slide 4 · appendix] From the appendix.', 'a real file tag is kept');
   assert.equal(tidyLabels('Back to the talk, please.', deck), 'Back to the talk, please.');
   assert.equal(finishAnswer({ stop_reason: 'end_turn', content: [] }, 'Both. [Slide 11 · deck.pdf]', 'q', () => {}, deck).text, '[Slide 11] Both.');
+  // Seen live on 2026-11-13: a second label left alone on the last line now joins the first.
+  assert.equal(tidyLabels('[Slide 10] Pooled is likely.\n\n[Slide 11]', deck), '[Slide 10] [Slide 11] Pooled is likely.');
+});
+if (server) await step('numbers survive and promises to pass a question on are dropped', async () => {
+  const { finishAnswer } = await import('../lib/ai.js');
+  const deck = ['Slide 3', 'Slide 14'];
+  const done = (t) => finishAnswer({ stop_reason: 'end_turn', content: [] }, t, 'q', () => {}, deck).text;
+  // Seen live on 2026-11-13: a talk about images that are "flagged" lost "[Slide 14] ... 1." and showed "5 hours" for 1.5.
+  const maths = '[Slide 14] About 1,300 per 10,000 are flagged, which takes 1.5 hours. 6,500 flagged images take 1.5 × 5 = 7.5 hours.';
+  assert.equal(done(maths), maths);
+  assert.equal(done("[Slide 3] The talk doesn't say. I'll pass the question on."), "[Slide 3] The talk doesn't say.");
+  assert.equal(done('[Slide 3] O talk não lista as espécies. Vou encaminhar essa dúvida para a Amara.'), '[Slide 3] O talk não lista as espécies.');
 });
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);
