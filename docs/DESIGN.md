@@ -49,6 +49,16 @@ The design session may evolve colour, type, logo and motion, but:
 
 ## Design log (newest first)
 
+### 2026-11-13 (night): the home page film (Vamsi's request)
+- Before: a still card with two example questions beside three steps.
+- After: a ~28 s looping film in flat product shapes: a speaker on stage with the code on screen, the room of dots
+  filling, one person scanning; a zoom into their phone (tap a suggestion → slide → answer with "From slide 4 ·
+  automated"); a question the slides don't cover goes to Maya; her phone, her reply; the reply lands; back out to
+  the room turning cobalt and yellow. The four steps on the left light up with the film. `public/js/home-film.js`.
+- Rules kept: only opacity and transform move; plays only while on screen; pause button (WCAG 2.2.2, anything
+  moving over 5 s); one still frame under reduce motion; the old still example stays for browsers without scripts.
+- Next: a "watch it with sound off" caption track is not needed (no sound); consider the same film on the Why page.
+
 ### 2026-11-13: motion, the Auto Q&A code, contact icons (Vamsi's requests)
 - Before: the theme snapped; the QR code was a plain black square; LinkedIn was a text button; no icons anywhere.
 - After: theme cross-fade; branded code with copy/download/ready-made slide; icon buttons; chips and sheets arrive

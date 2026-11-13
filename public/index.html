@@ -44,10 +44,14 @@
 
   <section class="how">
     <ol class="ways">
-      <li><h3>Drop in your slides</h3><p>Then answer a few quick questions about your talk.</p></li>
-      <li><h3>Show the QR code</h3><p>People scan it and ask. No app, no sign-up.</p></li>
-      <li><h3>Reply to what's left</h3><p>The few your slides couldn't answer wait on your phone.</p></li>
+      <li data-step="1"><h3>Drop in your slides</h3><p>Then answer a few quick questions about your talk.</p></li>
+      <li data-step="2"><h3>Show the QR code</h3><p>People scan it and ask. No app, no sign-up.</p></li>
+      <li data-step="3"><h3>Your slides answer</h3><p>In seconds, with the slide shown.</p></li>
+      <li data-step="4"><h3>Reply to what's left</h3><p>The few your slides couldn't answer wait on your phone.</p></li>
     </ol>
+    <!-- A short looping film of a talk: scan, ask, answer, hand-off, reply (public/js/home-film.js).
+         Without scripts, the still example below stays. -->
+    <div class="film" id="film" role="img" aria-label="A short film: a speaker shows the code, someone scans it, asks on their phone and gets an answer with the slide; a question the slides don't cover goes to the speaker, who replies from their phone.">
     <!-- A piece of the real audience chat, with a made-up talk: the product shown, not described. -->
     <div class="demo" role="img" aria-label="What your audience sees. One question is answered straight away, with the slide it comes from. Another, which the slides don't cover, is sent to the speaker.">
       <p class="demo-label">Example: what your audience sees</p>
@@ -64,6 +68,7 @@
         <p class="tag"><b style="--c:var(--signal)">Waiting for the speaker</b></p>
       </div>
     </div>
+    </div>
   </section>
 
   <footer class="foot small muted">
@@ -72,5 +77,6 @@
   </footer>
 </div>
 <script type="module" src="/js/page-index.js"></script>
+<script type="module" src="/js/home-film.js"></script>
 </body>
 </html>

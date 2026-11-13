@@ -1,5 +1,17 @@
 # Log (newest first)
 
+## 2026-11-13 (night, later): home page film and a visual morning email
+The home page now plays a short looping film of a talk: someone scans the code, asks on their phone, gets the slide and an answer, a harder question goes to the speaker and her reply comes back.
+The morning email is now a visual summary: status, four numbers, one card per session, a chart of answer scores, what was learned online, and what needs Vamsi.
+- Film: `public/js/home-film.js` + styles at the end of `app.css`. Flat shapes in the product colours, the room of dots,
+  a finger that taps. The four steps beside it light up in time. Plays only while visible, has a pause button,
+  one still frame with reduce motion, the old still example without scripts.
+- Email: `docs/email-template.html` (inline styles, tables, works in Gmail); the 07:45 task fills it in.
+  Every session now records what it looked up online in a `### Researched` list (AGENTS.md), which the email shows.
+
+**Tested.** `npm test` 18/18 (new: the film script is on the home page with its pause and reduce-motion handling).
+Filmed frame by frame at 1280×860, iPhone 14 and in dark mode; no console errors. Sample email rendered and checked.
+
 ## 2026-11-13 (night): Vamsi's requests and the UX audit
 PowerPoint slides now show as real pictures in answers, and the QR code is an Auto Q&A code speakers can copy straight onto a slide.
 Also: a smooth light/dark fade, LinkedIn and website buttons with their icons, suggestions that always refill, a "Why" page, and every answer labelled with where it came from.

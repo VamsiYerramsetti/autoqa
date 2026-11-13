@@ -40,6 +40,10 @@ await step('pages load', async () => {
   // The home page shows a piece of the real chat, and says plainly that answers are automated.
   const home = await (await call('/', { raw: true })).text();
   assert.match(home, /class="demo"/); assert.match(home, /Answers are automated/);
+  // The looping film of how it works, with a still example underneath for browsers without scripts.
+  assert.match(home, /id="film"/); assert.match(home, /home-film\.js/);
+  const film = await (await call('/js/home-film.js', { raw: true })).text();
+  assert.match(film, /prefers-reduced-motion/); assert.match(film, /Pause the film/);
   // The audience's way in from the home page: a typed code goes straight to that talk.
   const go = await call('/j/?code=ab2cd', { raw: true });
   assert.equal(go.status, 302); assert.equal(go.headers.get('location'), '/j/AB2CD');

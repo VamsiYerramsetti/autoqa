@@ -1,0 +1,97 @@
+<!-- The morning email to Vamsi. The 07:45 session fills in every placeholder in double braces and sends it as htmlBody.
+     Email apps ignore <style> blocks and scripts, so every style is inline and the layout is tables.
+     Remove a whole block (between its BEGIN/END comments) when there is nothing to put in it. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbfbf8;padding:24px 0;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1d1b2e;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e2e1ea;border-radius:20px;">
+
+  <!-- Header: the two-dot mark, the date, one status pill -->
+  <tr><td style="padding:24px 28px 8px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="font-size:18px;font-weight:700;">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#ffc83d;"></span><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#2f3ced;margin-left:-5px;margin-right:8px;"></span>Auto Q&amp;A this morning
+      </td>
+      <td align="right"><span style="display:inline-block;padding:5px 12px;border-radius:99px;font-size:13px;font-weight:600;background:{{STATUS_BG}};color:{{STATUS_FG}};">{{STATUS_TEXT}}</span></td>
+    </tr></table>
+    <p style="margin:6px 0 0;font-size:14px;color:#6b6a7b;">{{WEEKDAY_DATE}} · {{ONE_LINE_SUMMARY}}</p>
+  </td></tr>
+
+  <!-- Four numbers. Use real values only; write "–" when unknown. -->
+  <tr><td style="padding:16px 22px 4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="6"><tr>
+      <td width="25%" style="background:#f3f4ff;border-radius:14px;padding:12px;"><div style="font-size:24px;font-weight:700;color:#2f3ced;">{{N_LIVE_CHECKS}}</div><div style="font-size:12px;color:#6b6a7b;">live checks passed</div></td>
+      <td width="25%" style="background:#f3f4ff;border-radius:14px;padding:12px;"><div style="font-size:24px;font-weight:700;color:#2f3ced;">{{SCORE_AFTER}}</div><div style="font-size:12px;color:#6b6a7b;">answer score ({{SCORE_CHANGE}})</div></td>
+      <td width="25%" style="background:#f3f4ff;border-radius:14px;padding:12px;"><div style="font-size:24px;font-weight:700;color:#2f3ced;">{{N_CHANGES}}</div><div style="font-size:12px;color:#6b6a7b;">changes shipped</div></td>
+      <td width="25%" style="background:#fff6dc;border-radius:14px;padding:12px;"><div style="font-size:24px;font-weight:700;color:#1d1b2e;">{{N_NEEDS_YOU}}</div><div style="font-size:12px;color:#6b6a7b;">need you</div></td>
+    </tr></table>
+  </td></tr>
+
+  <!-- One card per session. Left border: cobalt = design, ink = security, yellow = test and improve. -->
+  <tr><td style="padding:14px 28px 0;"><div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#6b6a7b;">WHAT CHANGED OVERNIGHT</div></td></tr>
+  <!-- BEGIN session card (repeat per session) -->
+  <tr><td style="padding:8px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid {{CARD_COLOUR}};background:#fbfbf8;border-radius:0 12px 12px 0;"><tr><td style="padding:12px 14px;">
+      <div style="font-size:15px;font-weight:700;">{{SESSION_NAME}} <span style="font-weight:500;color:{{RAN_COLOUR}};font-size:13px;">· {{RAN_TEXT}}</span></div>
+      <div style="font-size:14px;line-height:1.45;margin-top:4px;color:#3b3950;">{{WHAT_A_VISITOR_NOTICES}}</div>
+      <div style="font-size:13px;margin-top:6px;"><a href="{{LINK}}" style="color:#2f3ced;">{{LINK_TEXT}}</a></div>
+    </td></tr></table>
+  </td></tr>
+  <!-- END session card -->
+
+  <!-- BEGIN design picture: only if the design session saved docs/design-<date>-*.jpg today -->
+  <tr><td style="padding:14px 28px 0;"><a href="{{DESIGN_IMAGE_URL}}"><img src="{{DESIGN_IMAGE_URL}}" width="544" alt="Before and after: {{DESIGN_FOCUS}}" style="width:100%;max-width:544px;border-radius:12px;border:1px solid #e2e1ea;display:block;"></a>
+    <div style="font-size:12px;color:#6b6a7b;margin-top:4px;">Before and after: {{DESIGN_FOCUS}}</div></td></tr>
+  <!-- END design picture -->
+
+  <!-- Answer quality over the last runs: one bar per run from docs/persona-runs/README.md (width = score %) -->
+  <tr><td style="padding:18px 28px 0;"><div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#6b6a7b;">ANSWER SCORE, LAST RUNS</div></td></tr>
+  <tr><td style="padding:8px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <!-- BEGIN bar row (repeat, newest last) -->
+      <tr><td width="88" style="font-size:12px;color:#6b6a7b;padding:3px 8px 3px 0;white-space:nowrap;">{{RUN_DATE}}</td>
+        <td style="padding:3px 0;"><div style="background:#e7e9ff;border-radius:6px;"><div style="width:{{SCORE_PCT}}%;background:#2f3ced;border-radius:6px;height:14px;"></div></div></td>
+        <td width="48" align="right" style="font-size:12px;font-weight:700;padding-left:8px;">{{SCORE_PCT}}%</td></tr>
+      <!-- END bar row -->
+    </table>
+  </td></tr>
+
+  <!-- What the sessions looked up online, from the "### Researched" lists in last night's LOG entries -->
+  <!-- BEGIN researched -->
+  <tr><td style="padding:18px 28px 0;"><div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#6b6a7b;">LEARNED ONLINE</div></td></tr>
+  <tr><td style="padding:6px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <!-- BEGIN research row (repeat, at most 4) -->
+      <tr><td style="padding:6px 0;border-bottom:1px solid #eeeef4;font-size:14px;line-height:1.4;">
+        <a href="{{SOURCE_URL}}" style="color:#1d1b2e;font-weight:600;text-decoration:none;">{{SOURCE_TITLE}}</a><br>
+        <span style="color:#3b3950;">{{WHAT_IT_SAYS}}</span>
+        <span style="display:inline-block;margin-left:4px;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:600;background:{{OUTCOME_BG}};color:{{OUTCOME_FG}};">{{OUTCOME}}</span>
+      </td></tr>
+      <!-- END research row -->
+    </table>
+  </td></tr>
+  <!-- END researched -->
+
+  <!-- BEGIN needs you -->
+  <tr><td style="padding:18px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffc83d;border-radius:14px;"><tr><td style="padding:14px 16px;">
+      <div style="font-size:15px;font-weight:700;color:#1d1b2e;">Needs you</div>
+      <!-- one line per item: a question he can answer in a word, or a short to-do -->
+      <div style="font-size:14px;line-height:1.5;color:#1d1b2e;margin-top:4px;">• {{ITEM}}</div>
+    </td></tr></table>
+  </td></tr>
+  <!-- END needs you -->
+
+  <!-- Quick links -->
+  <tr><td style="padding:18px 28px 0;font-size:13px;">
+    <a href="https://autoqa-jcol.onrender.com" style="display:inline-block;margin:0 6px 6px 0;padding:8px 14px;border-radius:99px;background:#2f3ced;color:#fff;text-decoration:none;font-weight:600;">Open the site</a>
+    <a href="https://github.com/VamsiYerramsetti/autoqa/blob/main/docs/LOG.md" style="display:inline-block;margin:0 6px 6px 0;padding:8px 14px;border-radius:99px;border:1.5px solid #1d1b2e;color:#1d1b2e;text-decoration:none;font-weight:600;">Full log</a>
+    <a href="https://github.com/VamsiYerramsetti/autoqa/blob/main/docs/ROADMAP.md" style="display:inline-block;margin:0 6px 6px 0;padding:8px 14px;border-radius:99px;border:1.5px solid #1d1b2e;color:#1d1b2e;text-decoration:none;font-weight:600;">Roadmap</a>
+    <a href="https://github.com/VamsiYerramsetti/autoqa/commits/main" style="display:inline-block;margin:0 6px 6px 0;padding:8px 14px;border-radius:99px;border:1.5px solid #1d1b2e;color:#1d1b2e;text-decoration:none;font-weight:600;">All changes</a>
+  </td></tr>
+
+  <tr><td style="padding:14px 28px 24px;font-size:13px;color:#6b6a7b;line-height:1.5;">
+    Reply to this email with any feedback and tomorrow's sessions will pick it up.
+  </td></tr>
+</table>
+</td></tr>
+</table>

@@ -617,3 +617,118 @@ table.plain td, table.plain th { padding: 9px 8px 9px 0; border-bottom: 1.5px so
 .fine li { display: flex; gap: 8px; }
 .fine li::before { content: ''; flex: none; width: 6px; height: 6px; margin-top: 8px; border-radius: 50%; background: var(--ring-strong); }
 .fine a { color: inherit; }
+
+/* ---------- The home page film (public/js/home-film.js) ----------
+   Flat shapes in the product's own colours: ink, cobalt for answered, yellow for waiting. Only opacity and
+   transform move. Under "reduce motion" it is one still frame. */
+.film { max-width: 440px; width: 100%; justify-self: center; transition: opacity 400ms ease; }
+.film.fade { opacity: 0; }
+.film.ready { background: var(--surface); border: 1.5px solid var(--line); border-radius: 32px; padding: 14px; }
+.f-stage { position: relative; height: 560px; overflow: hidden; border-radius: 22px; background: var(--paper); }
+.film-room { position: absolute; inset: 0; width: 100%; height: 100%; padding: 18px 10px; transform-origin: 66% 72%; transition: transform 900ms cubic-bezier(.65, 0, .35, 1), opacity 700ms ease 200ms; }
+.f-stage.zoom .film-room { transform: scale(3.2); opacity: 0; }
+.film-room .paper { fill: var(--slide); stroke: var(--line); stroke-width: 1.5; }
+.film-room .paper-edge { fill: #fff; stroke: #e2e1ea; stroke-width: 1; }
+.film-room .ink { fill: var(--ink); }
+.film-room .screen .ink { fill: #1d1b2e; }
+.film-room .soft { fill: #cfcedb; }
+.film-room .finder { fill: none; stroke: #1d1b2e; stroke-width: 3.2; }
+.film-room .cobalt { fill: #2f3ced; }
+.film-room .yellow { fill: #ffc83d; }
+.film-room .seat { fill: none; stroke: var(--ring); stroke-width: 1.6; transition: fill 300ms ease, stroke 300ms ease; }
+.film-room .seat.here { fill: var(--ink); stroke: var(--ink); }
+.film-room .seat.answered { fill: var(--cobalt); stroke: var(--cobalt); }
+.film-room .seat.you { fill: var(--cobalt); stroke: var(--cobalt); }
+.film-room .seat.waiting { fill: var(--signal); stroke: var(--signal); }
+.film-room .arm { transform-box: fill-box; transform-origin: 0 50%; animation: wave 1.6s ease-in-out infinite alternate; }
+@keyframes wave { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
+.film-room .pocket { fill: var(--ink); opacity: 0; transform: translateY(10px); transition: opacity 300ms ease, transform 400ms var(--ease-out); }
+.film-room .beam { fill: none; stroke: var(--cobalt); stroke-width: 2.5; stroke-dasharray: 5 7; stroke-linecap: round; opacity: 0; transition: opacity 300ms ease 300ms; }
+.film-room.scan .pocket { opacity: 1; transform: none; }
+.film-room.scan .beam { opacity: 1; animation: march 700ms linear infinite; }
+.film-room.scan .code { animation: ping 900ms ease-out 400ms 2; transform-box: fill-box; transform-origin: center; }
+@keyframes march { to { stroke-dashoffset: -24; } }
+@keyframes ping { 40% { transform: scale(1.06); } }
+
+/* The phones */
+.f-phone { position: absolute; left: 50%; top: 18px; width: 268px; height: 524px; margin-left: -134px; border: 9px solid #1d1b2e; border-radius: 38px; background: var(--paper); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px -20px rgba(29, 27, 46, .35);
+  opacity: 0; transform: translate(34px, 120px) scale(.12); transition: transform 900ms cubic-bezier(.65, 0, .35, 1), opacity 500ms ease; }
+.f-stage[data-scene="phone"] .f-phone:not(.f-speaker) { opacity: 1; transform: none; }
+.f-stage[data-scene="speaker"] .f-phone:not(.f-speaker) { opacity: 0; transform: translateX(-120%); }
+.f-speaker { transform: translateX(120%); }
+.f-stage[data-scene="speaker"] .f-speaker { opacity: 1; transform: none; }
+.f-head { flex: none; padding: 16px 14px 10px; border-bottom: 1.5px solid var(--line); display: grid; gap: 1px; }
+.f-head b { font: 700 14px/1.2 var(--display); color: var(--ink); }
+.f-head span { font-size: 11px; color: var(--muted); }
+.f-banner { flex: none; display: flex; align-items: center; gap: 8px; height: 0; padding: 0 14px; overflow: hidden; background: var(--cobalt); color: #fff; font-size: 12px; font-weight: 600; transition: height 350ms var(--ease-out); }
+.f-banner i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+.f-banner.in { height: 32px; }
+.f-thread { flex: 1; overflow: hidden; padding: 6px 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; }
+.f-turn { padding: 10px 0; border-bottom: 1.5px solid var(--line); opacity: 0; transform: translateY(10px); transition: opacity 300ms ease, transform 350ms var(--ease-out); }
+.f-turn.in { opacity: 1; transform: none; }
+.f-turn:last-child { border-bottom: 0; }
+.f-turn > b { display: block; font: 700 14px/1.25 var(--display); color: var(--ink); }
+.f-turn p { margin: 6px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text); }
+.f-slide { margin-top: 8px; padding: 10px 12px 8px; border-radius: 10px; background: var(--slide); border: 1.5px solid var(--line); display: grid; gap: 4px; opacity: 0; transform: scale(.94); transition: opacity 300ms ease, transform 350ms var(--ease-out); }
+.f-slide.in, .film:not(.ready) .f-slide { opacity: 1; transform: none; }
+.f-slide b { font: 700 12px var(--display); color: #1d1b2e; }
+.f-slide i { height: 5px; border-radius: 3px; background: #d7d6e4; width: 88%; }
+.f-slide i.short { width: 60%; }
+.f-slide small { font-size: 10px; font-weight: 600; color: #2f3ced; margin-top: 2px; }
+.f-tag { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 10.5px; color: var(--muted); }
+.f-tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--cobalt); }
+.f-hand { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px 9px 12px; border-radius: 14px; background: var(--signal); color: #1d1b2e; font-size: 12px; font-weight: 600; animation: rise 300ms var(--ease-out) both; }
+.f-hand.sent { justify-content: flex-start; background: var(--tint); color: var(--ink); }
+.f-hand.sent i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+.f-reply { margin-top: 8px; padding: 9px 12px; border-radius: 14px; background: var(--cobalt); color: #fff; font-size: 12px; line-height: 1.35; display: grid; gap: 2px; opacity: 0; transform: translateY(8px); transition: opacity 300ms ease, transform 350ms var(--ease-out); }
+.f-reply.in { opacity: 1; transform: none; }
+.f-reply small { font-size: 10px; opacity: .8; font-weight: 600; }
+.f-compose { flex: none; padding: 8px 10px 12px; border-top: 1.5px solid var(--line); display: grid; gap: 8px; }
+.f-chips { display: flex; gap: 6px; overflow: hidden; }
+.f-chip { flex: none; padding: 6px 10px; border-radius: 99px; border: 1.5px solid var(--ink); font-size: 11px; color: var(--ink); white-space: nowrap; animation: rise 300ms var(--ease-out) both; transition: transform 140ms var(--ease-out), background-color 140ms ease; }
+.f-row { display: flex; gap: 6px; align-items: center; }
+.f-box { flex: 1; min-height: 34px; padding: 8px 12px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); font-size: 12px; color: var(--ink); display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+.f-box.tall { border-radius: 12px; min-height: 52px; align-items: flex-start; white-space: normal; margin: 8px 0; color: #1d1b2e; background: #fff; border-color: rgba(29, 27, 46, .15); }
+.f-caret { width: 1.5px; height: 14px; margin-left: 1px; background: var(--cobalt); opacity: 0; }
+.typing .f-caret { opacity: 1; animation: blink 900ms steps(1) infinite; }
+.f-send { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--cobalt); position: relative; transition: transform 140ms var(--ease-out); }
+.f-send::after { content: ''; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-left: 2px solid #fff; border-top: 2px solid #fff; transform: translate(-50%, -30%) rotate(45deg); }
+.f-card { padding: 12px; border-radius: 16px; background: var(--signal); color: #1d1b2e; display: grid; gap: 2px; transition: background-color 400ms ease, color 400ms ease; }
+.f-card b { font: 700 14px/1.25 var(--display); }
+.f-who { font-size: 11px; opacity: .75; }
+.f-card .f-btn { justify-self: end; }
+.f-card.done { background: var(--cobalt); color: #fff; }
+.f-card.done .f-box { background: rgba(255, 255, 255, .15); color: #fff; border-color: transparent; }
+.f-card.done .f-btn { opacity: 0; }
+.f-btn { padding: 7px 12px; border-radius: 99px; background: var(--cobalt); color: #fff; font-size: 11px; font-weight: 600; transition: transform 140ms var(--ease-out), opacity 200ms ease; }
+.f-btn.dark { background: #1d1b2e; }
+.pressed { transform: scale(.92); }
+.f-chip.pressed { background: var(--tint); }
+/* The finger: a soft dot that travels and presses */
+.f-finger { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: rgba(29, 27, 46, .18); box-shadow: inset 0 0 0 2px rgba(29, 27, 46, .35); opacity: 0; pointer-events: none; transition: transform 600ms cubic-bezier(.45, 0, .2, 1), opacity 250ms ease; z-index: 5; }
+.f-finger.show { opacity: 1; }
+.f-finger.press { scale: .8; }
+:root[data-theme="dark"] .f-finger { background: rgba(255, 255, 255, .22); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .f-finger { background: rgba(255, 255, 255, .22); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5); } }
+.f-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 6px 2px; }
+.f-caption { margin: 0; min-height: 2.6em; display: flex; align-items: center; font-size: 15px; font-weight: 600; color: var(--ink); }
+.f-pause { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--tint); cursor: pointer; position: relative; }
+.f-pause::before, .f-pause::after { content: ''; position: absolute; top: 15px; width: 4px; height: 14px; border-radius: 2px; background: var(--cobalt); }
+.f-pause::before { left: 16px; } .f-pause::after { left: 24px; }
+.f-pause.paused::before { left: 18px; width: 0; height: 0; border-radius: 0; background: none; border-left: 12px solid var(--cobalt); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.f-pause.paused::after { display: none; }
+.film.paused .arm, .film.paused .beam, .film.paused .f-caret { animation-play-state: paused; }
+/* The left-hand steps follow the film */
+.ways li { transition: opacity 300ms ease; }
+.how:has(.film.ready) .ways li { opacity: .38; }
+.how:has(.film.ready) .ways li.on { opacity: 1; }
+.ways li.on h3 { color: var(--ink); }
+@media (max-width: 760px) {
+  .f-stage { height: 520px; }
+  .f-phone { height: 486px; }
+  .how:has(.film.ready) .ways li { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .film-room, .f-phone, .f-turn, .f-slide, .f-reply, .f-finger, .film { transition: none; }
+  .film-room .arm, .film-room.scan .beam, .film-room.scan .code, .f-chip, .f-hand { animation: none; }
+}

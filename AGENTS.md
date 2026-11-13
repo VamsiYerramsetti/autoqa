@@ -59,6 +59,9 @@ doesn't cover is offered to the speaker, who replies later. Owner: Vamsi. Live s
 - Tick finished items in `docs/ROADMAP.md`; add new ideas there, one clear line each.
 - Add a dated entry at the top of `docs/LOG.md`: what changed, what was tested, what's unfinished,
   and anything Vamsi must decide under a "For Vamsi" heading.
+- If you looked anything up online, add a `### Researched` list to that entry, one line per source:
+  `- [title](link): what it says → what we did with it (built / roadmap / not for us, and why)`.
+  The morning email shows Vamsi these lines, so keep each one plain and short.
 - If you changed how something works, update the plain-language docs (`README.md`, `docs/HOW-IT-WORKS.md`) in the same commit.
 
 ## Do not

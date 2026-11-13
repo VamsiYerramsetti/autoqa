@@ -3,6 +3,8 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Home page film: talk → scan → ask → slide answer → hand-off → speaker reply, looping, with pause and reduce-motion still (2026-11-13). Covers audit A01.
+- [x] Morning email redesigned: status, four numbers, a card per session, score bars, what was learned online, needs you, quick links (`docs/email-template.html`).
 - [x] Real slide pictures for PowerPoint (drawn on the server: shapes, photos, tables, charts, text); Keynote/Google Slides via PowerPoint export (2026-11-13).
 - [x] Branded Auto Q&A QR code; "Show QR code"; "Put it on a slide" (copy, PNG, SVG, ready-made slide). Private code stays plain.
 - [x] Theme cross-fade and a small motion vocabulary (sheets, chips, banner); LinkedIn/website/email icon buttons; a typed name opens a LinkedIn search.
@@ -39,7 +41,6 @@ Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Next
 From the UX/UI audit of 2026-11-12 (`docs/` has no copy; Vamsi shared it in chat). Open items worth doing, in order:
-- [ ] A01 Hero product preview with a real slide picture and the speaker's inbox beside the phone (design session).
 - [ ] A27 A public demo talk anyone can try without an account (a fixed sample talk, reset nightly).
 - [ ] A15 Speaker inbox: sort by most "Me too", oldest unanswered; "Needs your reply" count at the top.
 - [ ] A18 Announce a finished answer once to screen readers (now the whole thread is a polite live region while it streams).
