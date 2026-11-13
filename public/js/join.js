@@ -125,6 +125,16 @@ function fill(parts, text) {
   });
 }
 
+// Under each finished answer, in a few words: where it came from, and that it's automated.
+function provenance(parts, message) {
+  parts.node.querySelector('.from-tag')?.remove();
+  if (message.handoff && !message.alsoAnswered) return; // the yellow card already says the talk doesn't cover it
+  const { labels } = split(message.text);
+  const general = message.alsoAnswered || /isn't in the (slides|talk)|not (in|from) the (slides|talk)/i.test(message.text);
+  const where = labels.length ? `From ${labels[0].split(' · ')[0].toLowerCase()}` : general ? 'General background, not from the talk' : 'From the talk';
+  parts.a.after(el('p', { class: 'from-tag' }, el('i', { class: general && !labels.length ? 'gen' : '' }), `${where} · automated`));
+}
+
 const sources = new Map();
 function source(label) {
   if (!sources.has(label)) sources.set(label, api('/api/source?label=' + encodeURIComponent(label), { headers: auth }).catch(() => null));
@@ -486,7 +496,7 @@ async function ask(text) {
         const ev = JSON.parse(line);
         if (ev.t === 'delta') { answer += ev.text; fill(parts, answer); }
         if (ev.t === 'done') {
-          a.classList.remove('caret'); fill(parts, ev.message.text);
+          a.classList.remove('caret'); fill(parts, ev.message.text); provenance(parts, ev.message);
           shown.add(ev.message.id); seen = Math.max(seen, ev.message.createdAt);
           if (ev.message.handoff) { handoff(node, ev.message, ev.others); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
         }
@@ -507,7 +517,7 @@ let pending = null;
 for (const m of talk.messages) {
   shown.add(m.id); seen = Math.max(seen, m.createdAt);
   if (m.role === 'user') pending = turn(m.text);
-  else if (m.role === 'assistant' && pending) { fill(pending, m.text); if (m.handoff) handoff(pending.node, m); pending = null; }
+  else if (m.role === 'assistant' && pending) { fill(pending, m.text); provenance(pending, m); if (m.handoff) handoff(pending.node, m); pending = null; }
   else if (m.role === 'speaker') speakerReply(m, true);
 }
 chips = chips.filter((c) => !talk.messages.some((m) => m.text === c)); drawChips();

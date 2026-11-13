@@ -42,7 +42,7 @@ function files(problems = [], busy = []) {
   const list = el('ul', { class: 'files' },
     talk.sources.map((s) => el('li', {},
       el('span', { class: 'ico' }),
-      el('div', { class: 'grow' }, el('div', { class: 'name' }, s.name), el('div', { class: 'meta' }, s.kind === 'Notes' ? 'Added' : `${s.count} ${s.kind.toLowerCase()}${s.count === 1 ? '' : 's'}` + (s.deck ? '. Export as PDF to show the real slides in answers.' : ''))),
+      el('div', { class: 'grow' }, el('div', { class: 'name' }, s.name), el('div', { class: 'meta' }, s.kind === 'Notes' ? 'Added' : `${s.count} ${s.kind.toLowerCase()}${s.count === 1 ? '' : 's'}` + (s.images || s.drawn?.length ? ', with pictures' : ''))),
       el('button', { 'aria-label': 'Remove ' + s.name, onclick: async () => { talk = await api(`/api/talks/${talk.id}/files/${s.id}`, { method: 'DELETE', headers: auth() }); files(); } }, '×'))),
     busy.map((name) => el('li', { class: 'busy' }, el('span', { class: 'ico' }), el('div', { class: 'grow' }, el('div', { class: 'name' }, name), el('div', { class: 'meta' }, 'Reading…')))),
   );
@@ -56,7 +56,12 @@ function files(problems = [], busy = []) {
   show(
     el('h1', {}, 'Add your slides'),
     el('p', { class: 'sub' }, 'PowerPoint, PDF or Word. Keynote and Google Slides: export as PowerPoint. Up to 50 MB.'),
-    drop, list,
+    drop,
+    // What happens to the file, said where the decision is made.
+    el('ul', { class: 'fine' },
+      el('li', {}, 'Answers use the words and speaker notes. Describe key charts in a note.'),
+      el('li', {}, 'Sent to Anthropic to write answers, never used for training. ', el('a', { href: '/privacy', target: '_blank' }, 'Privacy'))),
+    list,
     problems.map((p) => el('p', { class: 'error', role: 'alert', style: 'margin-top:12px' }, p)),
     notesBox,
     el('div', { class: 'row' },

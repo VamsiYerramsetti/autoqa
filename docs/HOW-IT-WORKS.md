@@ -12,7 +12,10 @@
 ## What happens when...
 
 **A speaker sets up a talk.** They sign up, give the talk a title and drop in their slides. The website pulls the
-text out of every slide (and, for PDFs, takes a picture of each slide). Then it has a short conversation with the
+text out of every slide and makes a picture of each one, so answers can show the real slide. For a PDF the
+speaker's browser photographs each page; for PowerPoint the website draws each slide from the file (shapes, photos,
+colours, tables, charts, text) and the browser turns the drawings into small pictures. Keynote and Google Slides decks
+work once exported as PowerPoint. Answers still only read the words and speaker notes, not what is in a chart. Then it has a short conversation with the
 speaker: one question at a time, each one built on the last answer, about what the slides can't say (where a number
 comes from, the method, the limits, what's next). Early on it asks for anything else useful: a transcript, a script,
 notes, a paper. The speaker can type, speak (the browser turns speech into text) or attach a file, and can stop at any

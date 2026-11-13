@@ -1,5 +1,35 @@
 # Log (newest first)
 
+## 2026-11-13 (night): Vamsi's requests and the UX audit
+PowerPoint slides now show as real pictures in answers, and the QR code is an Auto Q&A code speakers can copy straight onto a slide.
+Also: a smooth light/dark fade, LinkedIn and website buttons with their icons, suggestions that always refill, a "Why" page, and every answer labelled with where it came from.
+- PowerPoint: `lib/pptx-render.js` draws each slide from the file (positions, photos, theme colours, gradients,
+  tables, simple bar/line/pie charts, SmartArt's saved drawing, text with wrapping and bullets) as SVG; the speaker's
+  browser turns each into a JPEG like PDF pages. Compared side by side with LibreOffice on 9 decks (incl. Apache POI's
+  test decks): layout, colours and pictures match; text can sit a little differently because fonts differ.
+  Keynote, .ppt and .odp get a one-line "export as PowerPoint" message instead of a dead end.
+- QR: `lib/qr.js`, cobalt dots, rounded corner markers, the two-dot mark, highest error correction. Scan-tested with
+  jsQR on 5 addresses at 90–600 px (fails only a long address at 90 px). "Show QR code"; "Put it on a slide" opens
+  after setup with Copy code, PNG, SVG and a ready-made 16:9 slide.
+- LinkedIn: real LinkedIn mark; a typed name ("Maya Okafor") becomes a LinkedIn people search instead of a broken link;
+  a "Check" link shows where it goes. Website and email buttons have icons.
+- Suggestions: topped up from slide titles, so older talks (three suggestions) also refill.
+- Motion: theme cross-fade (~0.65 s), sheets rise in, new chips rise in, banner drops in; all off with reduce motion.
+- From the audit file Vamsi shared: home page (clearer promise, audience code box, "No app · No sign-up · Ask
+  anonymously", labelled example), Why page with FAQ, upload notes (what is read; sent to Anthropic, not for training),
+  answer provenance labels, unsent questions kept and "Try again", accessibility scan (contrast fixed in dark mode),
+  "Scan to ask. No app, no sign-up." on the code page. The rest is in the roadmap under "From the UX/UI audit".
+- Fixed on the way: adding an unreadable file to an open talk closed the talk.
+
+**Tested.** `npm test` 18/18 (new: PowerPoint pictures served safely and replaced by the JPEG, branded vs plain code,
+Keynote message, name → LinkedIn search, code box redirect, /why). Browser walk-through at 1280×860 and iPhone 14:
+upload, share sheet (copy and slide download), profile with LinkedIn preview, audience answer with the PowerPoint slide,
+About sheet, theme fade mid-way; no console errors. axe scan: 0 issues on 10 pages, light and dark.
+
+### For Vamsi
+- Still open from last time: set `CONTACT_EMAIL` and `OPERATOR_NAME` on Render; rotate the API key and Neon password.
+- Decide whether to add a public demo talk anyone can try without an account (audit A27).
+
 ## 2026-11-12 (evening): Security, privacy and Vamsi's fixes
 The site now has browser security rules, limits that suit a whole venue on one Wi-Fi, safer sign-in, and in-depth privacy, terms and "how answers work" pages.
 Vamsi's fixes are in: a LinkedIn field people type a name into, a speaker "About" with contact buttons, a reply notice inside the app, suggested questions that refill, and a working voice button.

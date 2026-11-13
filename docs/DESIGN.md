@@ -28,6 +28,13 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
   a thing that arrives or answers a press uses `--ease-out: cubic-bezier(.23, 1, .32, 1)`. Press 140ms, arriving
   300ms, leaving 250ms. Everything pressable gives a little under the finger (`scale(.97)`). Hover looks are for a
   mouse only. With "reduce motion" on, a 120ms fade replaces travel, growth and loops.
+- **Theme switch:** light and dark cross-fade in about 0.65 s (the whole page as one picture where the browser can,
+  colour by colour elsewhere). Sheets rise in (260 ms), new suggestion chips rise in, the reply banner drops in.
+- **The Auto Q&A code:** the audience QR code is drawn in our look: cobalt round dots, ink corner markers with
+  rounded corners and a cobalt centre, the two-dot logo in the middle (`lib/qr.js`). Highest error correction; tested
+  to scan from 90 px to 600 px. The speaker's private phone code stays a plain black square on purpose.
+- **Contact buttons:** LinkedIn with LinkedIn's own mark (allowed for linking to a profile), website with a globe,
+  email with an envelope. Icons are 24-unit line drawings at 1.8 stroke (`icon()` in `common.js`).
 - **Outside skills:** every design session works from `docs/DESIGN-SKILLS.md` (Emil Kowalski's design engineering,
   and the Taste skill).
 
@@ -41,6 +48,13 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+
+### 2026-11-13: motion, the Auto Q&A code, contact icons (Vamsi's requests)
+- Before: the theme snapped; the QR code was a plain black square; LinkedIn was a text button; no icons anywhere.
+- After: theme cross-fade; branded code with copy/download/ready-made slide; icon buttons; chips and sheets arrive
+  with a small rise. Dark-mode cobalt darkened to `#5562fa` so white text on buttons passes 4.5:1 (axe scan).
+- Screens checked at 1280×860 and iPhone 14, light and dark. Next: a hero product preview with a real slide
+  picture; a moving dot on the code page when someone joins.
 - 2026-11-12, interaction and screen: **sending a question to the speaker** (the yellow card on the phone).
   Audited against both skills; candidates carried over from the craft pass ("placeholders as labels", "the card
   arriving and the Sent confirmation").

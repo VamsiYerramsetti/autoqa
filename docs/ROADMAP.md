@@ -3,6 +3,13 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Real slide pictures for PowerPoint (drawn on the server: shapes, photos, tables, charts, text); Keynote/Google Slides via PowerPoint export (2026-11-13).
+- [x] Branded Auto Q&A QR code; "Show QR code"; "Put it on a slide" (copy, PNG, SVG, ready-made slide). Private code stays plain.
+- [x] Theme cross-fade and a small motion vocabulary (sheets, chips, banner); LinkedIn/website/email icon buttons; a typed name opens a LinkedIn search.
+- [x] Why page with who it's for and a short FAQ; home page: audience code entry, reassurance line, labelled example.
+- [x] Every answer says where it came from ("From slide 4 · automated", "General background, not from the talk · automated").
+- [x] At upload: what is read and that files go to Anthropic (not for training). Typed questions survive a reload; failed sends get "Try again".
+- [x] Automated accessibility scan (axe, WCAG 2.2 AA) on 10 pages in both themes: contrast fixed, 0 issues left.
 - [x] Security pass (2026-11-12): browser rules (CSP, HSTS), no cross-site writes, limits that suit a venue on one Wi-Fi, hashed sessions, upload guards; see docs/SECURITY.md.
 - [x] In-depth privacy notice, terms, "How answers work" page, 16+ at sign-up, delete-my-details, automatic removal of audience details after 90 days.
 - [x] LinkedIn field that takes a link, a handle or @handle; speaker profile (what you do, about, LinkedIn, website, email) with an "About" button and contact buttons for the audience.
@@ -31,6 +38,16 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] A slide label written at the end of an answer, or with a made-up file name, is put right so the slide still shows.
 
 ## Next
+From the UX/UI audit of 2026-11-12 (`docs/` has no copy; Vamsi shared it in chat). Open items worth doing, in order:
+- [ ] A01 Hero product preview with a real slide picture and the speaker's inbox beside the phone (design session).
+- [ ] A27 A public demo talk anyone can try without an account (a fixed sample talk, reset nightly).
+- [ ] A15 Speaker inbox: sort by most "Me too", oldest unanswered; "Needs your reply" count at the top.
+- [ ] A18 Announce a finished answer once to screen readers (now the whole thread is a polite live region while it streams).
+- [ ] A16 Show a quiet "offline" line in the audience chat when the connection drops, and send queued questions when it returns.
+- [ ] A21 Measure LCP/INP/CLS on home and audience pages (Lighthouse in the live workflow), keep the audience page light.
+- [ ] A26 A support/contact route once CONTACT_EMAIL is set (needs Vamsi).
+- [ ] A28 Moderated tests with two real speakers and their audience (needs Vamsi to find them).
+- [ ] PowerPoint pictures: arrowheads on connectors, SmartArt colours, slide numbers/footers, EMF pictures (shown blank today).
 - [ ] Phone: the top bar of the speaker's page and of "Your talks" overlaps the logo; the light/dark switch in the audience header wraps under the "waiting" pill; the setup hint text is cut off.
 - [ ] Let an opened slide fill a phone sideways (upright, a 16:9 slide barely grows); swipe between slides when an answer has two.
 - [ ] Make the "not covered" reply consistent: one short sentence naming what's missing, no slide description first.
@@ -39,7 +56,7 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [ ] Account page: change name, password and LinkedIn link; delete a single talk from "Your talks".
 - [ ] Test real answers on 3 real, longer decks (20+ slides, charts, sparse text). The 6-slide sample passes; see docs/TESTING.md for the question set. Waiting on real decks: put them in samples/.
 - [ ] Read slides as images too (charts, diagrams, image-only decks), not just their text.
-- [ ] Real slide pictures for PowerPoint uploads (now PDF only) and thumbnails during upload.
+- [ ] Thumbnails of the slides during upload.
 - [ ] Email: send the speaker's reply to the asker; one digest to the speaker after the talk.
 - [ ] Group similar hand-off questions by meaning (currently by shared words).
 - [ ] Follow-up suggestions after each answer.
