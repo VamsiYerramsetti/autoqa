@@ -16,9 +16,10 @@ How to run the check: `.claude/skills/security-audit/SKILL.md`.
 | Browser rules | Content-Security-Policy (no inline scripts, no outside sources), no framing, HSTS, nosniff, referrer trimmed to the site name, camera/location off, microphone only for our own pages | `server.js` |
 | XSS | All user text is put on the page as text, never as HTML | `public/js/*` |
 | Limits | Per-seat, per-talk and per-day question limits (cost control), generous per-address limits so a venue sharing one Wi-Fi address still works, upload and talk-count limits per account | `LIMITS` in `server.js` |
-| Uploads | 50 MB per file, 3 files, only PDF/PowerPoint/Word/text; guarded against zip bombs and huge documents | `lib/parse.js` |
+| Uploads | 50 MB per file, 3 files, only PDF/PowerPoint/Word/text; zip parts capped by the bytes that really come out, not the size the file claims; XML and slide text read in one pass so a hostile file can't stall the server | `lib/parse.js`, `lib/zip.js`, `lib/pptx-render.js` |
+| PowerPoint drawings | Theme colours must be plain six-digit colours before they reach the SVG; text is escaped; outside links dropped; a drawn slide is served sandboxed, with no scripts, forms or framing | `lib/pptx-render.js`, `sendSvg` in `server.js` |
 | Database | TLS with certificate checking (Neon) | `lib/store.js` |
-| Dependencies | `npm audit`: 0 known vulnerabilities (12 Nov 2026) | `package.json` |
+| Dependencies | `npm audit`: 0 known vulnerabilities (13 Nov 2026); multer 2.5.0 is past the Aug 2026 fixes (2.3.0) | `package.json` |
 | Errors | No stack traces or debug output to visitors; one generic message | `server.js` |
 
 ## Privacy and legal checklist (EU first: the operator is in the Netherlands)
@@ -48,4 +49,5 @@ How to run the check: `.claude/skills/security-audit/SKILL.md`.
 - Pen-testing tools like Strix: only ever point them at a local copy, never at the live site, and read their code first.
 
 ## Findings log (newest first)
+- 2026-11-13: audit of the new PowerPoint drawing, QR and home-page code (independent reviewer agent + own checks). Fixed: a deck's theme colour could put markup (a fake sign-in form) into a slide drawing served on our own address; unclosed `<!`/`<a:p`/`<p:sldId` made reading a file take minutes to hours (one upload could freeze the site); zip parts trusted the size the file claims. Left for later (roadmap): slide drawings can be big in storage (a picture repeated on every slide is copied into each); Word files go through mammoth's own unzip without our byte cap; slide size from the file is not clamped (only the uploader's own tab can crash); legal pages have no canonical link.
 - 2026-11-12: first full audit. Fixed: no CSP/HSTS, cross-site writes, uploads read before sign-in check, per-address limit that would block a whole venue, plain session tokens in the database, sign-in timing leak, unchecked database certificate, open-redirect edge in `next=`, zip-bomb guard, no retention. Voice input was blocked by our own `microphone=()` rule.

@@ -6,10 +6,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import JSZip from 'jszip';
-import { renderPptx, parseXml } from '../lib/pptx-render.js';
-import { parseFile } from '../lib/parse.js';
-import { readPart } from '../lib/zip.js';
 
 let server = null, SITE = process.env.SITE?.replace(/\/$/, '');
 if (!SITE) {
@@ -123,8 +119,13 @@ await step('PowerPoint slides become pictures; the audience code is the Auto Q&A
   const key = await call(`/api/talks/${talk.id}/files`, { method: 'POST', form });
   assert.match(key.data.problems.join(' '), /Export To → PowerPoint/);
 });
-// Code-level: a speaker could upload a PowerPoint built to attack us. These files run on this machine only.
-await step('a hostile PowerPoint file cannot inject markup, stall the server or unpack into gigabytes', async () => {
+// Code-level: a speaker could upload a PowerPoint built to attack us. Local only: never sent to the live site,
+// and the live check runs without installed packages.
+if (!process.env.SITE) await step('a hostile PowerPoint file cannot inject markup, stall the server or unpack into gigabytes', async () => {
+  const { default: JSZip } = await import('jszip');
+  const { renderPptx, parseXml } = await import('../lib/pptx-render.js');
+  const { parseFile } = await import('../lib/parse.js');
+  const { readPart } = await import('../lib/zip.js');
   const sample = await JSZip.loadAsync(fs.readFileSync('samples/rooftop-rain.pptx'));
   const themeFile = Object.keys(sample.files).find((f) => /^ppt\/theme\/theme\d+\.xml$/.test(f));
   const theme = (await sample.file(themeFile).async('string'))

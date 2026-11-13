@@ -3,6 +3,7 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Security (2026-11-13): hostile PowerPoint files can't inject markup into slide drawings, stall the server with unclosed tags, or unpack into gigabytes by lying about sizes.
 - [x] Home page film: talk → scan → ask → slide answer → hand-off → speaker reply, looping, with pause and reduce-motion still (2026-11-13). Covers audit A01.
 - [x] Morning email redesigned: status, four numbers, a card per session, score bars, what was learned online, needs you, quick links (`docs/email-template.html`).
 - [x] Real slide pictures for PowerPoint (drawn on the server: shapes, photos, tables, charts, text); Keynote/Google Slides via PowerPoint export (2026-11-13).
@@ -40,6 +41,10 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] A slide label written at the end of an answer, or with a made-up file name, is put right so the slide still shows.
 
 ## Next
+- [ ] Security: keep slide drawings small in storage (cap a deck's drawings at ~40 MB, or store each picture once instead of copying it into every slide).
+- [ ] Security: Word files are unzipped by mammoth without our byte cap; check the real size first (`lib/zip.js`) or unzip them ourselves.
+- [ ] Security: clamp the slide size a PowerPoint file states (very tall or thin decks can crash the speaker's own tab).
+- [ ] SEO: give /privacy, /terms and /how-answers-work a canonical link like the other public pages.
 From the UX/UI audit of 2026-11-12 (`docs/` has no copy; Vamsi shared it in chat). Open items worth doing, in order:
 - [ ] A27 A public demo talk anyone can try without an account (a fixed sample talk, reset nightly).
 - [ ] A15 Speaker inbox: sort by most "Me too", oldest unanswered; "Needs your reply" count at the top.

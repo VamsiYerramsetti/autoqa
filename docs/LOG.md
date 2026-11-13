@@ -1,5 +1,38 @@
 # Log (newest first)
 
+## 2026-11-13 (night): Security
+Checked the new PowerPoint slide pictures, the branded QR code and the home page film, plus current advice on EU privacy, the AI Act and our software's known weaknesses.
+Fixed three ways a booby-trapped PowerPoint upload could hurt the site (a fake sign-in form on our own address, freezing the server, filling its memory); nothing risky is left open, two smaller storage limits are on the roadmap.
+- An independent reviewer agent read everything changed since the last Security pass (`8bffb11..HEAD`); I proved its findings
+  with small test files before fixing them.
+- **Markup through theme colours.** A deck's theme colour went into the slide drawing unchecked, so a crafted file could add
+  a form or link to the SVG served at `/j/<code>/slide/...`. Now only six-digit colours are accepted, and drawn slides are
+  served with `sandbox; form-action 'none'; frame-ancestors 'none'` on top of `default-src 'none'`.
+- **Freezing the server.** Unclosed `<!`, `<a:p` or `<p:sldId` repeated in a slide made reading take time growing with the
+  square of the size (40,000 repeats: 0.5–5.6 s; a 19 MB part: hours). `parseXml` is now a one-pass reader and the slide text
+  reader uses plain splits; the same 4 MB attack now takes milliseconds.
+- **Zip sizes that lie.** We trusted the size a zip says a part has. New `lib/zip.js` counts the bytes that really come out
+  and stops at the cap. Used by both the text reader and the slide drawer.
+- Checked and fine: every new route's access check (`/drawn/` needs the owner; the public slide route only serves listed
+  slides; the `/j/` redirect stays on site), all user text still placed as text, no secrets in code or new commits,
+  headers on a local run, `npm audit` 0, multer 2.5.0 is past the August fixes, public pages' titles/h1/404, sitemap, robots.
+
+**Tested.** `npm test` 19/19, with a new check that builds hostile decks (injected theme colour, unclosed tags, a part
+that claims 10 bytes but unpacks to 30 MB) and the header check for drawn slides. The sample deck draws and reads
+exactly as before (outputs compared byte for byte). The first live check failed before testing anything: the new check
+imported packages the live runner does not install. Made it local-only (like the other code-level check) and re-ran.
+
+**Unfinished (roadmap).** Slide drawings can be large in storage; Word files use mammoth's own unzip without our byte cap;
+the slide size from a file is not clamped; the legal pages lack a canonical link.
+
+### For Vamsi
+- Still open: set `CONTACT_EMAIL` and `OPERATOR_NAME` on Render; rotate the Anthropic API key and the Neon password.
+
+### Researched
+- [Express security releases, 31 Aug 2026](https://expressjs.com/en/blog/2026-08-31-security-releases): multer fixes up to 2.3.0 → we run 2.5.0, nothing to do.
+- [Cooley: AI Act transparency duties from 2 Aug 2026](https://www.cooley.com/news/insight/2026/2026-08-03-eu-ai-act-transparency-obligations-take-effect-2-august-2026): people must be told they are talking to an automated system → already done on every answer, no change.
+- [ICTRecht: what the Dutch DPA watches in 2026](https://www.ictrecht.nl/en/blog/waar-de-autoriteit-persoonsgegevens-in-2026-op-gaat-letten): tracking, AI that judges people, supplier dependencies → we have no tracking and list our processors; nothing new to build.
+
 ## 2026-11-13 (night, later): home page film and a visual morning email
 The home page now plays a short looping film of a talk: someone scans the code, asks on their phone, gets the slide and an answer, a harder question goes to the speaker and her reply comes back.
 The morning email is now a visual summary: status, four numbers, one card per session, a chart of answer scores, what was learned online, and what needs Vamsi.
