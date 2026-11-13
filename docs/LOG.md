@@ -1,5 +1,29 @@
 # Log (newest first)
 
+## 2026-11-13 (morning): Test and improve
+Today's made-up talk was a machine-learning workshop paper on spotting unknown animals in camera-trap photos, with five very different listeners; answers scored 90% before and 90% after the fix, judged more strictly the second time.
+The worst fault was ours, not the model's: a cleanup rule turned a correct "1.5 hours" into "5 hours" in front of the audience; that is fixed, answers no longer promise to pass questions on, and the speaker's card now always gets a line in the talk's language.
+- Scenario, deck (20 slides: energy-score and ECE equations, mean ± SD over 5 seeds, a per-site table that qualifies the
+  headline, a figure explained only by its caption), answer key and both transcripts: `test/scenarios/2026-11-13-unknown-animal/`.
+  Report: `docs/persona-runs/2026-11-13-unknown-animal.md`. Each persona's questions were written by its own helper; each run
+  was scored by a fresh answer-judge.
+- **Found.** The rule that removes "I've flagged this" sentences deleted any sentence with "flagged" and split "1.5" at its
+  point, so "[Slide 14] ... are flagged, which takes 1." vanished: the person saw "5 hours ... 5 × 5 = 7.5" and no slide.
+  Also: "Vou encaminhar essa dúvida para a Amara" (a promise in Portuguese), "not covered" said where a slide helped,
+  withheld coordinates offered to the speaker, a Portuguese card with no English line.
+- **Changed.** `lib/ai.js`: `dropPromises` removes only first-person promises, in several languages, and keeps numbers whole;
+  a stray last slide label joins the first; three answering lines (use what the slides and notes offer first; offer a named
+  missing fact; don't offer withheld information). `toTalkLanguage`: when a sent question has no line in the talk's
+  language, one small check adds it (`server.js`, at sending). Docs: `docs/HOW-IT-WORKS.md`.
+- **A/B.** Lin's calculation right with its slide; no promises; coordinates refused without an offer; occupancy answer led
+  with slide 12. New slip: a flat "No." to "AI makes ecologists obsolete, yes or no". Kept (see the report).
+- **Tested.** `npm test` 21/21 (three new checks: numbers survive, promises dropped in English and Portuguese, translation
+  read correctly; a trailing-label check). "Live site" passed for 4bbd35e and for cbedf25 (the translation change). 32 questions on the live site; both test accounts closed.
+- **Walked the screens** locally at 1280x860 and 390 wide with today's deck: phone scroll after "not covered" and a cut-off
+  LinkedIn placeholder (roadmap, for the design session).
+- **Unfinished.** The translated card has not yet been seen in a live persona run. Part 2 of the session was the
+  translation fix (a roadmap item seen failing again today); no web research today.
+
 ## 2026-11-13 (night): Security
 Checked the new PowerPoint slide pictures, the branded QR code and the home page film, plus current advice on EU privacy, the AI Act and our software's known weaknesses.
 Fixed three ways a booby-trapped PowerPoint upload could hurt the site (a fake sign-in form on our own address, freezing the server, filling its memory); nothing risky is left open, two smaller storage limits are on the roadmap.

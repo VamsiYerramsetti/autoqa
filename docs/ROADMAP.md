@@ -79,11 +79,16 @@ From the UX/UI audit of 2026-11-12 (`docs/` has no copy; Vamsi shared it in chat
 - [ ] Check the arithmetic the answers do themselves: a range worked out from "7.3 ± 0.9" came out as "37 to 51 mm" instead of 38 to 49 (2026-11-12 run). Either have the model show the two multiplications or leave ranges out.
 - [ ] General explanations are where mistakes appear ("ice, which is denser than water"; "shares summing to 100% fits either choice"). Try a stronger model for answers on a scientific deck and compare on the 2026-11-12 scenario.
 - [ ] Always mark general knowledge as not from the talk: in one run of two, a term was explained with no marker.
-- [ ] The two-language card for the speaker is not reliable: the same Italian question got English underneath in one run and not in the next. Translate on the server when the second line is missing.
+- [x] The two-language card for the speaker is not reliable: the same Italian question got English underneath in one run and not in the next. Translate on the server when the second line is missing. (2026-11-13: a small check adds the line after sending; not yet seen in a live persona run.)
+- [ ] A demand for a one-word verdict on a sweeping claim ("AI makes ecologists obsolete, yes or no") got a flat "No." (2026-11-13 run B). Give the facts without a verdict, as for other opinion questions.
+- [ ] When an answer says a specific fact isn't covered, it should always offer it to the speaker: "Orin Nano" was named as missing in both 2026-11-13 runs and never offered.
+- [ ] Quote slide figures exactly: "mostly rodents" for a slide's 41%, "58.5 hours (… = 58.3 h)" in one sentence (2026-11-13).
+- [ ] Mid-answer labels: an answer in two paragraphs showed "Slide 6, Slide 13, Slide 6"; show each slide once.
 - [ ] Translate a unit for a lay asker ("44 mm w.e." meant nothing to an irrigation manager; "a layer of water about 4.4 cm deep" would).
 - [ ] Keep the asker's requested unit and their language throughout ("milioni di m³", not "hm³"; "alla stazione di misura", not "al gauge").
 - [ ] Setup conversation: after a skipped question the site says odd things ("I won't revisit the 10–90% range"; repeating the last note). Say nothing after a skip.
-- [ ] Phone: after "not covered", the chat scrolls so far that the question and "Send this to ..." heading are hidden above the yellow card's fields.
+- [ ] Phone: after "not covered", the chat scrolls so far that the question and "Send this to ..." heading are hidden above the yellow card's fields. (Seen again 2026-11-13 at 390 wide: only the fields and Send are on screen.)
+- [ ] Phone: the LinkedIn field's placeholder is cut off at 390 wide ("linkedin.com/in/your-name or a li").
 - [ ] When a number is only in a chart's picture, say so and offer the nearest printed fact (for the 2040 value: "−9% a year by the 2050s").
 - [ ] Stop adding a nearby fact after the answer is complete (seen: the 23:42 train offered to someone who finishes work at 00:45; Aldercote added to "how late on a Saturday?").
 - [ ] Use a second slide when it qualifies the first (the 85% test against the "9 in 10" aim; a comment deadline for someone told "not decided yet").
