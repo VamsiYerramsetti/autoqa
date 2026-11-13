@@ -20,7 +20,7 @@ Fixed three ways a booby-trapped PowerPoint upload could hurt the site (a fake s
 **Tested.** `npm test` 19/19, with a new check that builds hostile decks (injected theme colour, unclosed tags, a part
 that claims 10 bytes but unpacks to 30 MB) and the header check for drawn slides. The sample deck draws and reads
 exactly as before (outputs compared byte for byte). The first live check failed before testing anything: the new check
-imported packages the live runner does not install. Made it local-only (like the other code-level check) and re-ran.
+imported packages the live runner does not install. Made it local-only (like the other code-level check); the re-run on the live site passed.
 
 **Unfinished (roadmap).** Slide drawings can be large in storage; Word files use mammoth's own unzip without our byte cap;
 the slide size from a file is not clamped; the legal pages lack a canonical link.
