@@ -37,6 +37,10 @@ let talk, seat, seat2, seat4, w0, handoffMsg;
 await step('pages load', async () => {
   for (const p of ['/', '/why', '/how-it-works', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
+  for (const p of ['/', '/why', '/how-it-works', '/privacy', '/terms', '/how-answers-work']) {
+    const html = (await call(p)).data;
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://[^"]+${p === '/' ? '/' : p}">`), 'every public page names its own address: ' + p);
+  }
   // The home page: the promise as the headline, a still of the real audience screen (marked automated).
   const home = await (await call('/', { raw: true })).text();
   assert.match(home, /<h1>Every question gets an answer\.<\/h1>/);
@@ -425,6 +429,26 @@ await step("the speaker's own test seat: not counted, can't send to themselves, 
   jar = mine;
   const gone = await call(`/api/talks/${talk.id}/corrections/${fixed.data.corrections[0].id}`, { method: 'DELETE' });
   assert.equal(gone.data.corrections.length, 0);
+});
+await step("a speaker's fixes have a total size limit and never override the answering rules", async () => {
+  const big = (i) => ({ q: `Question number ${i} ` + 'q'.repeat(560), fix: 'f'.repeat(2000) });
+  const ids = []; let full = null;
+  for (let i = 0; i < 9 && !full; i++) {
+    const r = await call(`/api/talks/${talk.id}/corrections`, { method: 'POST', body: big(i) });
+    if (r.status === 413) full = r; else { assert.equal(r.status, 200); ids.push(r.data.corrections.at(-1).id); }
+  }
+  assert.ok(full && ids.length >= 5 && ids.length <= 8, 'refused once the fixes reach about 20,000 characters');
+  for (const c of ids) await call(`/api/talks/${talk.id}/corrections/${c}`, { method: 'DELETE' });
+  if (server) assert.ok(!fs.readFileSync(new URL('../lib/ai.js', import.meta.url), 'utf8').includes('override the material and everything above'), 'fixes do not override the rules');
+});
+if (server && !process.env.DATABASE_URL) await step('a flood of visit beacons cannot push out the record of questions and costs', async () => {
+  process.env.AUTOQA_DATA = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'autoqa-trim-')), 'db.json');
+  const { trimEvents } = await import('../lib/store.js');
+  const events = [{ name: 'question' }, { name: 'model_call' }, ...Array.from({ length: 6000 }, () => ({ name: 'view' }))];
+  const kept = trimEvents(events);
+  assert.equal(kept.length, events.length - 5000);
+  assert.deepEqual(kept.slice(0, 2).map((e) => e.name), ['question', 'model_call']);
+  assert.equal(trimEvents([{ name: 'question' }, { name: 'answer' }, { name: 'view' }], 2).map((e) => e.name).join(), 'answer', 'falls back to the oldest when there are too few beacons');
 });
 if (server) await step('visits are counted without cookies, "do not track" is respected, the portal adds them up', async () => {
   const beacon = (body, headers = {}) => fetch(SITE + '/api/t', { method: 'POST', headers: { 'content-type': 'text/plain', 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', ...headers }, body: JSON.stringify(body) });

@@ -123,6 +123,7 @@ const LIMITS = {
   seatsPerAddress: 1500,      // new audience seats per hour
   seatsPerTalk: 10_000,
   talksPerAccount: 200,
+  correctionChars: 20_000,    // all of a talk's fixes together: they are sent in full with every question
   uploadsPerAccount: 60,      // files per hour
 };
 function tooFast(req, asker, talk) {
@@ -637,7 +638,10 @@ app.post('/api/talks/:id/corrections', (req, res) => {
   if (!q || !fix) return fail(res, 400, 'Write the right answer first.');
   if ((talk.corrections || []).length >= 200) return fail(res, 429, 'That is a lot of fixes. Add a note to your slides instead.');
   const c = { id: id(6), q, fix, wrong: text(req.body.wrong, 2000), createdAt: Date.now() };
-  talk.corrections = [...(talk.corrections || []).filter((x) => x.q.toLowerCase() !== q.toLowerCase()), c];
+  const kept = (talk.corrections || []).filter((x) => x.q.toLowerCase() !== q.toLowerCase());
+  // Fixes go uncached into every answer's prompt, so their total size decides the cost of each question.
+  if ([...kept, c].reduce((n, x) => n + x.q.length + x.fix.length, 0) > LIMITS.correctionChars) return fail(res, 413, 'Your fixes are full. Remove one, or add a note to your slides instead.');
+  talk.corrections = [...kept, c];
   const m = db.messages.find((x) => x.id === req.body.messageId && x.talkId === talk.id);
   if (m) m.fixed = true;
   track('correction_added', talk.id);
