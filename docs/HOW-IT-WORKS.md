@@ -76,6 +76,8 @@ leak into another's.
 
 ## Privacy, briefly
 The full notice is at /privacy; how answers are made is at /how-answers-work; the rules of use are at /terms.
+Every feature, for speakers and for the audience, is explained in plain words at /how-it-works (before, during and
+after a talk, and privacy); /why says why the product exists.
 Names, emails and LinkedIn links people send with a question are removed automatically after 90 days.
 When a speaker replies, the asker's open page shows a blue notice and the tab title changes; if they allowed it,
 their phone also shows a notification. No email is sent.

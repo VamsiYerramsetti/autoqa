@@ -20,7 +20,8 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
 - **Type:** Bricolage Grotesque for headlines (bundled), Instrument Sans for text (bundled). No other fonts.
 - **Logo:** two overlapping dots, yellow and cobalt: a question waiting, and a question answered.
 - **Signature:** the room of dots: curved rows facing a stage, filling as people join; cobalt when answered, yellow when
-  waiting.
+  waiting. On the marketing pages the room is drawn as people seen from behind (head and shoulders), with a dot
+  above each head at the end of the film.
 - **Chat:** reads like a transcript (bold question, plain answer), not speech bubbles. The slide sits above the answer.
 - **Forms:** a field's label is always in view (never a placeholder); a problem is written under the field it belongs
   to, in ink, with the field outlined; on yellow, red is never used for text.
@@ -48,6 +49,34 @@ The design session may evolve colour, type, logo and motion, but:
   with a mock-up, unless he has asked for it.
 
 ## Design log (newest first)
+
+### 2026-11-14: the home page, the Why page and /how-it-works, rewritten around the message (Vamsi's request)
+| Before | After | Why |
+|---|---|---|
+| Headline "Your slides, ready for every question." and a three-sentence lede | "Every question gets an answer." with the line "The Q&A that doesn't end when the talk does." above it, and one sentence with the mechanism: "Your audience scans a code and asks. Answers come from your slides, with the exact line shown. Anything else comes to you." | Vamsi's words. An outcome headline needs a mechanism right under it (Copyhackers); visitors decide in about ten seconds and spend most of their time above the fold (NN/g) |
+| The room of dots as the hero picture | A still of the real audience screen: question, the slide with the answering line marked, the answer, a question sent to Maya | Taste: show the real product. The picture says what the subhead says |
+| Nav: Why, Sign in, Start a talk | "How it works" first, scrolling (smoothly, unless reduce motion) to the film | Vamsi's request |
+| Steps without numbers, beside a narrow film | Four numbered steps (Upload your slides / Show the QR code / They ask, it answers / You answer the rest), the number turns cobalt as the film plays it; "See everything it does →" under step 4; the film column is 1.5x wider and 580px tall | Vamsi asked for 1-4 and more room. The numbers are big type, not badges |
+| The film started on a room of dots and pressed with a round "finger" | It starts from a seat in the audience: rows of people from behind (hair, head, shoulders, small differences), Maya on stage, her slide with the code; your phone comes up, frames the code, "Open talk" is clicked by an ordinary arrow pointer, then the zoom into the phone. The answering line is swept in cobalt before the answer writes itself. Maya's phone shows what was already answered. The end: dots over heads, cobalt answered, yellow waiting. Topic: AI code review | Vamsi's request. The room is drawn to the stage's own shape, so on a phone Maya stands below the screen instead of covering it. In dark mode the crowd steps down in tone so the slide and phones stay brightest |
+| Footer said "Answers are automated and come from the speaker's own material." | Gone from the home page; the hero still and the film still say "automated" on the answer, as the chat itself does | Vamsi's request; the chat keeps the transparency line |
+| Why: three text cards and a "Who it's for" list | "A talk should start a conversation." Six drawn pictures with one line each in a strip the reader moves (arrows, swipe, arrow keys, "1 of 6"; nothing turns by itself); then "Auto Q&A keeps the conversation going." with six real product pieces (anonymous asking, the marked slide, the yellow card, the reply with "Connect", feedback, another language). "Who it's for" removed | Vamsi: more pictures, fewer words, don't limit who it's for. Carousels that rotate on their own are ignored and take control away (Silktide, NN/g), so the person drives it |
+| No page explained every feature | /how-it-works: before the talk, during, after, privacy and trust, each feature with a small real piece of the interface | Vamsi's request |
+
+- Rules kept: flat colour (the logo's gradient is the one exception Vamsi asked for), only opacity and transform
+  animate in the film, plays only on screen, pause button, one still frame under reduce motion, no scrolljacking.
+- Sources: https://www.nngroup.com/articles/how-long-do-users-stay-on-web-pages/ ;
+  https://www.nngroup.com/articles/scrolling-and-attention/ ; https://cxl.com/how-to-design-a-home-page-that-converts/ ;
+  https://copyhackers.com/2022/07/headline-formulas/ ; https://aprildunford.substack.com/p/understanding-the-job-of-a-market/comments ;
+  https://silktide.com/blog/stop-using-carousels-on-websites/ ; https://www.nngroup.com/articles/auto-forwarding/ ;
+  https://www.nngroup.com/articles/scroll-animations/ ; https://www.nngroup.com/articles/scrolljacking-101/ ;
+  https://www.cam.ac.uk/research/news/women-much-less-likely-to-ask-questions-in-academic-seminars-than-men (Carter et
+  al., PLOS ONE 2018: men 2.5x more likely to ask at seminars; shown with its source on the Why page) ;
+  https://ctl.ox.ac.uk/sites/default/files/ctl/documents/media/research_on_mentimeters_impact_in_an_educational_environment.pdf
+  (72% of 204 students more confident with an anonymous tool; informed the "ask anonymously" emphasis, not quoted).
+- Rejected: the film as the hero (Vamsi wants "How it works" to scroll to it, and a still reads faster above the
+  fold); a "X% of questions go unasked" figure (no credible source); naming other Q&A tools.
+- Next: the Why strip could get a short caption track for screen readers per picture (alt text is on the figure
+  captions today); the film could show both phones side by side on wide screens.
 
 ### 2026-11-13 (night): the home page film (Vamsi's request)
 - Before: a still card with two example questions beside three steps.

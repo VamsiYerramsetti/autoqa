@@ -330,6 +330,8 @@ function build() {
 
   drawRoom();
   if (still) { stillFrame(); return; }
+  // Before it comes into view, the first step is lit and captioned, so the section never looks greyed out.
+  step(1, 'You’re at Maya’s talk. Her code is on the screen.');
   // Play only while it can be seen; start from the beginning the first time it comes into view.
   let started = false;
   new IntersectionObserver(([e]) => {
