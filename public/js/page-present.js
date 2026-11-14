@@ -1,7 +1,10 @@
 import { api, keys } from '/js/common.js';
 const id = location.pathname.split('/').pop();
 const key = keys.get(id);
-document.getElementById('qr').src = '/api/talks/' + id + '/qr.svg';
+// The code style the speaker last picked in "Put it on a slide" (stored on this device). Only the plain styles:
+// the framed ones carry their own words, which this page already says.
+let style = null; try { style = localStorage.getItem('autoqa-qr-style'); } catch {}
+document.getElementById('qr').src = '/api/talks/' + id + '/qr.svg' + (['ink', 'room'].includes(style) ? '?style=' + style : '');
 const talk = await api('/api/talks/' + id, { headers: { 'x-key': key || '' } });
 keys.set(id, talk.key);
 const u = new URL(talk.joinUrl);

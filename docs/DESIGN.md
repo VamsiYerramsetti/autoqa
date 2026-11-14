@@ -18,7 +18,7 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
   signal yellow `#ffc83d` (a question waiting for the speaker), tint `#e7e9ff`, muted `#6b6a7b`, line `#e2e1ea`.
   Defined once in `public/css/app.css` under `:root`.
 - **Type:** Bricolage Grotesque for headlines (bundled), Instrument Sans for text (bundled). No other fonts.
-- **Logo:** two overlapping dots, yellow and cobalt: a question waiting, and a question answered.
+- **Logo:** a Q and an A merged into one mark (`public/logo.svg`): the A's legs flow into the Q's ring, its right leg is the Q's tail, and the crossbar is the yellow raised hand. The only gradient in the product, a quiet cobalt one, on Vamsi's request (2026-11-14).
 - **Signature:** the room of dots: curved rows facing a stage, filling as people join; cobalt when answered, yellow when
   waiting. On the marketing pages the room is drawn as people seen from behind (head and shoulders), with a dot
   above each head at the end of the film.
@@ -31,9 +31,28 @@ How Auto Q&A looks and feels, and why. The design session updates this file ever
   mouse only. With "reduce motion" on, a 120ms fade replaces travel, growth and loops.
 - **Theme switch:** light and dark cross-fade in about 0.65 s (the whole page as one picture where the browser can,
   colour by colour elsewhere). Sheets rise in (260 ms), new suggestion chips rise in, the reply banner drops in.
-- **The Auto Q&A code:** the audience QR code is drawn in our look: cobalt round dots, ink corner markers with
-  rounded corners and a cobalt centre, the two-dot logo in the middle (`lib/qr.js`). Highest error correction; tested
-  to scan from 90 px to 600 px. The speaker's private phone code stays a plain black square on purpose.
+- **The Auto Q&A code:** the audience QR code is drawn in our look (`lib/qr.js`), in five still styles and one moving
+  one, all picked from "Put it on a slide" on the speaker page:
+  - *Auto Q&A* (the default, unchanged): cobalt round dots, ink corner markers with rounded corners and a cobalt centre,
+    the Q+A mark in the middle.
+  - *Ink*: classic square modules in ink, the most contrast, for dim projectors.
+  - *Ask frame*: the code inside a cobalt speech bubble whose band says "Scan to ask."
+  - *Cobalt card*: the code on a white square inside a cobalt card that says "Ask me anything."
+  - *Room*: a crowd of dots of slightly different sizes (never under 3/4 of a module), most cobalt, some ink.
+  - *Animated (GIF)*: the Ask frame drawn in the browser (`public/js/qrkit.js`, GIF writer `public/js/gif.js`), 720×720,
+    16 frames, 2 s loop, 16 colours. Only things that never change a module move: a soft wave of colour runs across
+    the dots from cobalt to ink and back (both dark on white), the mark bobs inside its own white disc, a yellow cursor
+    blinks after "Scan to ask". A still code stays the default: animated codes have no reliability data.
+  Rules for every style: error correction H; at least 4 modules of white quiet margin, also inside a frame or card;
+  dark on light, never inverted; the mark covers under a tenth of the code and never a corner or alignment square.
+  `/api/talks/:id/qr.svg?style=` serves the still styles; `/api/talks/:id/qr.json` gives the module grid for the
+  moving one. The full-screen code page uses the last plain style picked on that device (Auto Q&A, Ink or Room).
+  The speaker's private phone code stays a plain black square on purpose.
+- **Slides with the code:** four 1920×1080 designs drawn in the browser with the bundled fonts, each in the chosen code
+  style: *Cobalt* (to open Q&A), *Light*, *Closing* ("Thank you." / "Still have a question?") and *Corner card*
+  (transparent, to paste over any slide). Each says what to do ("Scan with your phone camera. No app, no sign-up."),
+  what happens ("My slides answer straight away. Anything else comes to me, and I'll reply."), the short address with
+  the code picked out, and the talk title and speaker. The code is 55–60% of the slide's height (the corner card 48%).
 - **Contact buttons:** LinkedIn with LinkedIn's own mark (allowed for linking to a profile), website with a globe,
   email with an envelope. Icons are 24-unit line drawings at 1.8 stroke (`icon()` in `common.js`).
 - **Outside skills:** every design session works from `docs/DESIGN-SKILLS.md` (Emil Kowalski's design engineering,
@@ -77,6 +96,30 @@ The design session may evolve colour, type, logo and motion, but:
   fold); a "X% of questions go unasked" figure (no credible source); naming other Q&A tools.
 - Next: the Why strip could get a short caption track for screen readers per picture (alt text is on the figure
   captions today); the film could show both phones side by side on wide screens.
+
+### 2026-11-14: code styles, a moving code and a slide chooser (Vamsi's request)
+- Before: one code style; "Put it on a slide" showed the code with Copy / PNG / SVG / "Ready-made slide", and the
+  slide button downloaded at once a white slide saying "Questions?" and "Scan to ask".
+- After: the sheet opens on two rows of previews that scroll sideways and snap: **Code style** (Auto Q&A, Ink, Ask
+  frame, Cobalt card, Room, Animated) and **Slide** (Cobalt, Light, Closing, Corner card, each redrawn in the chosen
+  code style). Both rows are radio groups (arrow keys move, one Tab stop). Nothing downloads until "Download slide
+  (PNG)" or "Download code (PNG / SVG, or GIF)" is pressed. The animated preview stands still under reduce motion.
+  On a phone the sheet rises from the bottom. Files: `lib/qr.js`, `public/js/qrkit.js`, `public/js/qrchooser.js`,
+  `public/js/gif.js`.
+- Scanning test (jsQR, every file downloaded from the chooser): each still style as SVG and PNG decodes at 90, 160,
+  300 and 600 px; all 16 frames of the GIF decode at 160 and 600 px (403 KB); all 24 slides (4 designs × 6 code
+  styles) decode at 300, 600 and 1080 px high. Misses: slides drawn only 160 px high (the code is then ~80 px; the
+  Closing, Corner card and some Animated ones), and the Corner card with the Auto Q&A code at exactly 1080 px (it
+  reads at 500–1400 px around it). jsQR is stricter than phone cameras; the next step is a check on real phones.
+- Sources: [QR code design rules](https://www.qr-code-generator.com/blog/qr-code-design-rules/) (quiet zone, dark on
+  light, error correction, logo size) ; [QR codes in presentations](https://www.qr-code-generator.com/blog/qr-codes-in-presentations/)
+  (scan distance about 10× the code's width, so on a slide the code is at least ~40% of the slide's height) ;
+  [Animated QR codes](https://www.bleepingcomputer.com/news/technology/animated-qr-codes-how-do-they-work-and-how-to-create-your-own/amp/)
+  (they work because readers sample module centres, but there is no reliability data → a still code stays the default).
+- Rejected: animating the dots' size or position (would change what a reader samples); a light-on-dark code for the
+  Cobalt card (many readers cannot read inverted codes, so the code sits on its own white square); yellow data dots
+  in the Room style (too light to read as dark).
+- Next: try each style on two or three real phones from 5 m; a moving preview on the full-screen code page.
 
 ### 2026-11-13 (night): the home page film (Vamsi's request)
 - Before: a still card with two example questions beside three steps.
