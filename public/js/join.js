@@ -1,4 +1,4 @@
-import { $, el, api, first, linkedinField, sheet as openSheet, icon } from '/js/common.js';
+import { $, el, api, first, linkedinField, sheet as openSheet, icon, keys, writer, reveal } from '/js/common.js';
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Website'; } };
 
 const code = location.pathname.split('/').pop().toUpperCase();
@@ -9,7 +9,9 @@ try { token = localStorage.getItem(store); } catch {}
 
 let talk;
 try {
-  talk = await api('/api/join/' + code, { headers: token ? { 'x-token': token } : {} });
+  // This device holds the speaker's key for this talk: the server opens a test seat (left out of every number).
+  const speakerKey = keys.byCode(code);
+  talk = await api('/api/join/' + code, { headers: { ...(token ? { 'x-token': token } : {}), ...(speakerKey ? { 'x-key': speakerKey } : {}) } });
 } catch (x) {
   // Wrong code: let people type it again from the screen. Not open yet: say so and keep it simple.
   const wrong = x.status === 404;
@@ -26,19 +28,29 @@ token = talk.token;
 try { localStorage.setItem(store, token); } catch {}
 const auth = { 'x-token': token };
 const speaker = first(talk.speaker.name);
-let me = talk.me, busy = false, seen = 0;
+let me = talk.me, busy = false, seen = 0, mode = 'ask';
+const testing = talk.test; // the speaker's own test seat: answers can be fixed here
+const tell = (name) => api('/api/event', { method: 'POST', headers: auth, body: { name } }).catch(() => {});
 const shown = new Set();
 document.title = talk.title;
 
 const thread = el('main', { class: 'thread', 'aria-live': 'polite' });
-const welcome = el('div', { class: 'welcome' },
-  el('h2', {}, 'Ask about this talk.'),
-  el('p', {}, `Automated answers, drawn from ${speaker}'s slides. Anything they can't answer, you can send to ${speaker}. `, el('a', { href: '/how-answers-work', target: '_blank' }, 'How answers work')));
+const welcomeTitle = el('h2', {});
+const welcome = el('div', { class: 'welcome' }, welcomeTitle,
+  testing
+    ? el('p', {}, 'Your test seat. Ask what your audience would ask. A wrong answer? Tap "Fix this answer" under it. Nothing here is counted.')
+    : el('p', {}, `Automated answers, drawn from ${speaker}'s slides. Anything they can't answer, you can send to ${speaker}. `, el('a', { href: '/how-answers-work', target: '_blank' }, 'How answers work')));
 const suggest = el('div', { class: 'suggest' });
 const input = el('textarea', { rows: 1, placeholder: 'Your question', 'aria-label': 'Your question', enterkeyhint: 'send' });
 const sendBtn = el('button', { class: 'send', 'aria-label': 'Ask', disabled: true });
 sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 18V4m0 0-6 6m6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const form = el('form', { onsubmit: (e) => { e.preventDefault(); ask(input.value); } }, input, sendBtn);
+const form = el('form', { onsubmit: (e) => { e.preventDefault(); submit(); } }, input, sendBtn);
+// Feedback for the speaker: the same box, switched by a button in the header. Anonymous, and a short nudge to be kind.
+const HINT = 'Anonymous. Kind and specific helps most.';
+const hintText = el('span', {}, HINT);
+const hint = el('div', { class: 'hint', hidden: true }, el('div', {}, el('b', {}, `Feedback for ${speaker}`), hintText),
+  el('button', { type: 'button', class: 'x', 'aria-label': 'Back to questions', onclick: () => setMode('ask') }, '×'));
+const fbBtn = el('button', { class: 'fbbtn', type: 'button', 'aria-pressed': 'false', onclick: () => setMode(mode === 'ask' ? 'feedback' : 'ask') }, 'Feedback');
 // A question being typed survives a reload or a dropped connection (this tab only).
 const DRAFT = 'autoqa:draft:' + location.pathname;
 try { input.value = sessionStorage.getItem(DRAFT) || ''; sendBtn.disabled = !input.value.trim(); } catch {}
@@ -49,16 +61,29 @@ const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'ar
 let waiting = [];
 
 app.append(el('div', { class: 'ask' },
-  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, whoButton(), waitBtn, window.themeSwitch?.())),
+  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, whoButton(), testing && el('span', { class: 'tag' }, 'Test seat'), waitBtn, testing ? null : fbBtn, window.themeSwitch?.())),
   thread,
-  el('div', { class: 'composer' }, suggest, form)));
+  el('div', { class: 'composer' }, suggest, hint, form)));
 thread.append(welcome);
+reveal(welcomeTitle, 'Ask about this talk.', { gap: 70 });
+
+function setMode(m) {
+  mode = m;
+  fbBtn.setAttribute('aria-pressed', String(m === 'feedback'));
+  input.placeholder = m === 'ask' ? 'Your question' : 'Your feedback';
+  input.setAttribute('aria-label', input.placeholder);
+  hint.hidden = m === 'ask';
+  suggest.hidden = m !== 'ask' || !chips.length;
+  if (m === 'feedback') tell('feedback_opened');
+  input.focus();
+}
+const submit = () => (mode === 'ask' ? ask(input.value) : feedback(input.value));
 
 input.addEventListener('input', () => {
   sendBtn.disabled = busy || !input.value.trim();
   input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px';
 });
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(input.value); } });
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } });
 
 // The speaker's name in the header opens a small "about" panel: who they are and how to reach them.
 // Shown as a button only when the speaker has put something on their profile.
@@ -96,33 +121,32 @@ function drawChips() {
   const now = chips.slice(0, 3);
   suggest.replaceChildren(...now.map((q) => el('button', { type: 'button', class: chipsShown.size && !chipsShown.has(q) ? 'fresh' : '', onclick: () => { api('/api/event', { method: 'POST', headers: auth, body: { name: 'suggestion_tapped' } }).catch(() => {}); ask(q); } }, q)));
   chipsShown = new Set(now);
-  suggest.hidden = !chips.length;
+  suggest.hidden = !chips.length || mode !== 'ask';
 }
 drawChips();
 
-// An answer opens with the slide it rests on, e.g. "[Slide 4] ...". We show that slide, then the words.
-const LABEL = /\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n]{1,40})?)\]/g;
+// An answer that rests on a slide opens with it, and with the words on it that answer the question:
+// [Slide 4: "Peak runoff reduced by 62%"]. We show that slide with those words marked, then the answer.
+// General answers have no label and no slide.
+const LEAD = /^\s*\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n:"]{1,40})?)(?::\s*"([^"\]\n]*)"?)?\]\s*/;
 function split(text) {
-  const labels = [];
+  const labels = [], quotes = [];
   let rest = text;
   for (;;) {
-    const m = rest.match(/^\s*\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n]{1,40})?)\]\s*/);
+    const m = rest.match(LEAD);
     if (!m) break;
-    labels.push(m[1]); rest = rest.slice(m[0].length);
+    labels.push(m[1]); quotes.push((m[2] || '').trim()); rest = rest.slice(m[0].length);
   }
   // While the answer is still arriving, don't flash a half-written label.
   if (/^\s*\[[^\]]*$/.test(rest)) rest = '';
-  return { labels, rest };
+  return { labels, quotes, rest };
 }
 
-function fill(parts, text) {
-  const { labels, rest } = split(text);
-  labels.slice(0, 2).forEach((l) => slide(parts, l));
-  parts.a.replaceChildren();
-  rest.split(LABEL).forEach((piece, i) => {
-    if (i % 2 === 0) { if (piece) parts.a.append(piece); return; }
-    parts.a.append(el('button', { class: 'chip', type: 'button', onclick: () => slide(parts, piece, true) }, piece));
-  });
+// Called again and again as the answer streams in; final when it's complete. Returns when the words are all in.
+function fill(parts, text, final = false) {
+  const { labels, quotes, rest } = split(text);
+  labels.slice(0, 2).forEach((l, i) => slide(parts, l, false, quotes[i]));
+  return parts.w.set(rest, final);
 }
 
 // Under each finished answer, in a few words: where it came from, and that it's automated.
@@ -136,30 +160,48 @@ function provenance(parts, message) {
 }
 
 const sources = new Map();
-function source(label) {
-  if (!sources.has(label)) sources.set(label, api('/api/source?label=' + encodeURIComponent(label), { headers: auth }).catch(() => null));
-  return sources.get(label);
+function source(label, quote = '') {
+  const k = label + '\n' + quote;
+  if (!sources.has(k)) sources.set(k, api('/api/source?label=' + encodeURIComponent(label) + (quote ? '&quote=' + encodeURIComponent(quote) : ''), { headers: auth }).catch(() => null));
+  return sources.get(k);
+}
+
+// The words the answer rests on, marked on the slide picture: a soft cobalt marker that sweeps across them
+// once the slide is in focus. Boxes are fractions of the slide, so they sit right at any size.
+function marks(boxes, delay) {
+  return el('div', { class: 'marks', 'aria-hidden': 'true' }, boxes.map((b, i) => {
+    const m = el('i', {}), pad = 0.012;
+    Object.assign(m.style, { left: (b.x - pad) * 100 + '%', top: (b.y - pad) * 100 + '%', width: (b.w + 2 * pad) * 100 + '%', height: (b.h + 2 * pad) * 100 + '%', animationDelay: delay + i * 260 + 'ms' });
+    return m;
+  }));
 }
 
 // Add a slide to the strip above an answer (once), and optionally bring it into view.
-function slide(parts, label, reveal) {
+function slide(parts, label, reveal, quote = '') {
   let fig = [...parts.deck.children].find((f) => f.dataset.label === label);
   if (!fig) {
     fig = el('figure', { class: 'slide', 'data-label': label }, el('div', { class: 'frame' }), el('figcaption', {}, label));
     parts.deck.append(fig);
     parts.deck.hidden = false;
     parts.deck.classList.toggle('many', parts.deck.children.length > 1);
-    source(label).then((src) => {
-      if (!src) return fig.remove();
+    source(label, quote).then((src) => {
+      if (!src) { fig.remove(); if (!parts.deck.children.length) parts.deck.hidden = true; return; }
       const frame = fig.firstElementChild;
       if (src.image) {
         const img = el('img', { src: src.image, alt: '', loading: 'lazy' });
-        img.addEventListener('load', () => frame.classList.add('ready'));
+        img.addEventListener('load', () => {
+          // The frame takes the slide's own shape, so the marked boxes line up with the words.
+          if (img.naturalWidth) frame.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+          frame.classList.add('ready');
+          if (src.marks?.length) frame.append(marks(src.marks, 650));
+        });
         frame.append(img);
       } else {
         frame.classList.add('ready', 'text');
-        frame.append(el('strong', {}, src.title), el('ul', {}, src.lines.map((l) => el('li', {}, l))));
+        const hit = new Set(src.mark || []);
+        frame.append(el('strong', { class: hit.has(-1) ? 'hit' : '' }, src.title), el('ul', {}, src.lines.map((l, i) => el('li', { class: hit.has(i) ? 'hit' : '' }, el('span', {}, l)))));
       }
+      frame.src = src;
       // Every slide opens larger, whether it is a picture (PDF) or laid-out text (PowerPoint).
       frame.append(el('span', { class: 'cue', 'aria-hidden': 'true' }));
       frame.setAttribute('role', 'button'); frame.tabIndex = 0;
@@ -187,7 +229,7 @@ function zoom(src, frame) {
   const picture = frame.querySelector('img');
   const ratio = picture ? picture.naturalWidth / picture.naturalHeight || 16 / 9 : 16 / 9;
   // A picture is simply shown bigger. A text slide is a copy of the small one, scaled up so it keeps its layout.
-  const big = picture ? el('img', { src: src.image, alt: `${src.label}: ${src.title}` }) : frame.cloneNode(true);
+  const big = picture ? el('div', { class: 'pic' }, el('img', { src: src.image, alt: `${src.label}: ${src.title}` }), src.marks?.length && marks(src.marks, 300)) : frame.cloneNode(true);
   const small = frame.offsetWidth;
   if (!picture) {
     for (const name of ['role', 'tabindex', 'aria-label']) big.removeAttribute(name);
@@ -266,13 +308,84 @@ function zoom(src, frame) {
   shut.focus({ preventScroll: true });
 }
 
-function turn(question) {
+function turn(question, instant = false) {
   welcome.remove();
-  const a = el('div', { class: 'a' }), deck = el('div', { class: 'deck', hidden: true });
+  const a = el('div', { class: 'a' }), deck = el('div', { class: 'deck', hidden: true }), foot = el('div', { class: 'foot' });
   // Long questions are set as text, not as a headline, so the answer is still on screen (see .q.long).
-  const node = el('section', { class: 'turn' }, el('h2', { class: question.length > 110 ? 'q long' : 'q' }, question), deck, a);
+  const node = el('section', { class: 'turn' }, el('h2', { class: question.length > 110 ? 'q long' : 'q' }, question), deck, a, foot);
   thread.append(node);
-  return { node, a, deck };
+  const parts = { node, a, deck, foot };
+  parts.w = writer(a, { instant, onChip: (label) => slide(parts, label, true) });
+  return parts;
+}
+
+// Under a finished answer: "Not what you needed? Ask Maya" (opens the card to send it), or, on the speaker's own
+// test seat, "Fix this answer" (the fix is used for everyone from then on).
+function after(parts, msg) {
+  parts.foot.replaceChildren();
+  if (testing) {
+    if (msg.fixed) return parts.foot.append(el('p', { class: 'done' }, 'Fixed. Ask again to check.'));
+    return parts.foot.append(el('button', { class: 'more', type: 'button', onclick: () => fix(parts, msg) }, msg.missing ? 'Add the answer' : 'Fix this answer'));
+  }
+  if (msg.handoff || msg.alsoAnswered) return;
+  parts.foot.append(el('button', { class: 'more', type: 'button', onclick: async (e) => {
+    e.currentTarget.disabled = true;
+    try {
+      const { message } = await api('/api/unhappy', { method: 'POST', headers: auth, body: { messageId: msg.id } });
+      parts.foot.replaceChildren();
+      handoff(parts.node, message, 0, true);
+      parts.node.querySelector('.hand')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch { e.currentTarget.disabled = false; }
+  } }, `Not what you needed? Ask ${speaker}`));
+}
+
+function fix(parts, msg) {
+  const q = parts.node.querySelector('.q').textContent;
+  const box = el('textarea', { placeholder: 'The right answer, in your words', 'aria-label': 'The right answer' });
+  const err = el('p', { class: 'problem', role: 'alert' });
+  const formFix = el('form', { class: 'fix', onsubmit: async (e) => {
+    e.preventDefault();
+    if (!box.value.trim()) return box.focus();
+    try {
+      const k = keys.byCode(code);
+      await api(`/api/talks/${talk.talkId}/corrections`, { method: 'POST', headers: k ? { 'x-key': k } : {}, body: { q, fix: box.value, wrong: msg.text, messageId: msg.id } });
+      msg.fixed = true; after(parts, msg);
+    } catch (x) { err.textContent = x.message; }
+  } },
+    el('h3', {}, msg.missing ? 'Add the answer' : 'Fix this answer'),
+    el('p', { class: 'fine' }, 'Used from now on, for everyone who asks this.'),
+    box, err,
+    el('div', { class: 'row' }, el('button', { class: 'btn plain', type: 'button', onclick: () => after(parts, msg) }, 'Cancel'), el('button', { class: 'btn' }, 'Save')));
+  parts.foot.replaceChildren(formFix);
+  box.focus({ preventScroll: true });
+  formFix.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Feedback sent from this phone, shown in the chat so the person sees it went.
+function feedbackNote(msg, quiet) {
+  welcome.remove();
+  const words = el('p', {});
+  const node = el('section', { class: 'turn fb' }, el('b', {}, `Feedback for ${speaker}`), words, el('span', { class: 'sentline' }, 'Sent, without your name.'));
+  thread.append(node);
+  writer(words, { instant: quiet }).set(msg.text, true);
+  if (!quiet) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function feedback(text) {
+  text = (text || '').trim();
+  if (!text || busy) return;
+  busy = true; sendBtn.disabled = true;
+  try {
+    const { message } = await api('/api/feedback', { method: 'POST', headers: auth, body: { text } });
+    input.value = ''; input.style.height = 'auto';
+    try { sessionStorage.removeItem(DRAFT); } catch {}
+    shown.add(message.id);
+    feedbackNote(message);
+    setMode('ask');
+  } catch (x) {
+    hintText.textContent = x.message; hint.classList.add('bad');
+    setTimeout(() => { hintText.textContent = HINT; hint.classList.remove('bad'); }, 4000);
+  }
+  busy = false; sendBtn.disabled = !input.value.trim();
 }
 
 const asked = new Map(); // message id of an unanswered question -> its place in the chat
@@ -406,7 +519,9 @@ addEventListener('visibilitychange', () => { if (!document.hidden) checkThread()
 function speakerReply(msg, quiet) {
   // Under the reply: the quickest ways to reach the speaker, and who they are.
   const reach = [...contactLinks('reply').slice(0, 2), hasProfile() && el('button', { class: 'btn plain', type: 'button', onclick: openProfile }, `About ${speaker}`)].filter(Boolean);
-  const reply = el('div', { class: 'from' }, el('b', {}, `${talk.speaker.name} replied`), el('p', {}, msg.text), reach.length ? el('div', { class: 'reach' }, reach) : null);
+  const words = el('p', {});
+  writer(words, { instant: quiet }).set(msg.text, true);
+  const reply = el('div', { class: 'from' }, el('b', {}, `${talk.speaker.name} replied`), words, reach.length ? el('div', { class: 'reach' }, reach) : null);
   if (!quiet) setTimeout(() => announceReply(reply));
   welcome.remove();
   // Under the person's own question when we can find it; otherwise as a new entry with the question on top.
@@ -484,26 +599,31 @@ async function ask(text) {
     const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ text }) });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Something went wrong. Try again.');
     const reader = res.body.getReader(), dec = new TextDecoder();
-    let buf = '';
-    a.classList.add('caret');
+    let buf = '', done = null, others = 0;
+    a.classList.add('thinking'); // three soft dots until the first word
     for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
+      const r = await reader.read();
+      if (r.done) break;
+      buf += dec.decode(r.value, { stream: true });
       const lines = buf.split('\n'); buf = lines.pop();
       for (const line of lines) {
         if (!line) continue;
         const ev = JSON.parse(line);
-        if (ev.t === 'delta') { answer += ev.text; fill(parts, answer); }
-        if (ev.t === 'done') {
-          a.classList.remove('caret'); fill(parts, ev.message.text); provenance(parts, ev.message);
-          shown.add(ev.message.id); seen = Math.max(seen, ev.message.createdAt);
-          if (ev.message.handoff) { handoff(node, ev.message, ev.others); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-        }
+        if (ev.t === 'delta') { answer += ev.text; if (split(answer).rest.trim()) a.classList.remove('thinking'); fill(parts, answer); }
+        if (ev.t === 'done') { done = ev.message; others = ev.others; }
       }
     }
+    a.classList.remove('thinking');
+    if (done) {
+      shown.add(done.id); seen = Math.max(seen, done.createdAt);
+      // Let the last words arrive before what goes under the answer.
+      await fill(parts, done.text, true);
+      provenance(parts, done);
+      after(parts, done);
+      if (done.handoff) { handoff(node, done, others); node.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    }
   } catch (x) {
-    a.classList.remove('caret');
+    a.classList.remove('thinking');
     // Nothing is lost: the question goes back in the box and one tap sends it again.
     a.replaceChildren(el('span', { class: 'error' }, x.message === 'Failed to fetch' ? 'No connection just now.' : x.message), ' ',
       el('button', { class: 'chip', type: 'button', onclick: () => { node.remove(); ask(text); } }, 'Try again'));
@@ -516,9 +636,10 @@ async function ask(text) {
 let pending = null;
 for (const m of talk.messages) {
   shown.add(m.id); seen = Math.max(seen, m.createdAt);
-  if (m.role === 'user') pending = turn(m.text);
-  else if (m.role === 'assistant' && pending) { fill(pending, m.text); provenance(pending, m); if (m.handoff) handoff(pending.node, m); pending = null; }
+  if (m.role === 'user') pending = turn(m.text, true);
+  else if (m.role === 'assistant' && pending) { fill(pending, m.text, true); provenance(pending, m); after(pending, m); if (m.handoff) handoff(pending.node, m); pending = null; }
   else if (m.role === 'speaker') speakerReply(m, true);
+  else if (m.role === 'feedback') feedbackNote(m, true);
 }
 chips = chips.filter((c) => !talk.messages.some((m) => m.text === c)); drawChips();
 showWaiting(talk.waiting || []);

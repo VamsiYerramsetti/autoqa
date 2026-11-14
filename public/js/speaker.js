@@ -16,6 +16,7 @@ try {
   throw new Error('no access');
 }
 if (talk.status !== 'ready') location.replace('/new?talk=' + id);
+keys.setCode(talk.code, key); // scanning your own code on this device then opens a test seat
 document.title = talk.title + ' · Auto Q&A';
 $('#code').replaceChildren('Code ' + talk.code, ' · ', el('a', { href: '/talks' }, 'Your talks'));
 
@@ -23,7 +24,10 @@ const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 const nums = { people: el('b', {}, '0'), questions: el('b', {}, '0'), waiting: el('b', {}, '0') };
 const waitingBox = el('div', {}, nums.waiting, el('span', {}, 'need you'));
 const cards = el('div', { class: 'cards' });
-const summary = el('div', { class: 'summary', hidden: true });
+const summary = el('div', { class: 'summary trends', hidden: true });
+const feedbackBox = el('section', { class: 'feedback', hidden: true });
+const knows = el('section', { class: 'knows' });
+let lastFb = '';
 
 // "How the audience sees you": a short profile people can open from the chat, with ways to reach you.
 const profileLine = el('span', { class: 'small muted' });
@@ -75,12 +79,12 @@ view.append(el('div', { class: 'desk' },
       el('a', { class: 'btn', href: '/present/' + id, target: '_blank' }, 'Show QR code'),
       el('button', { class: 'btn quiet', type: 'button', onclick: share }, 'Put it on a slide'),
       el('button', { class: 'btn quiet', onclick: phone }, 'Open on my phone'),
-      el('a', { class: 'btn quiet', href: '/j/' + talk.code, target: '_blank' }, 'Try it as the audience')),
+      el('a', { class: 'btn quiet', href: '/j/' + talk.code, target: '_blank' }, 'Test it yourself')),
     summary,
     el('div', { class: 'connect' }, el('button', { class: 'btn quiet', type: 'button', onclick: editProfile }, 'Your profile'), profileLine),
     !talk.fullAnswers && el('p', { class: 'note' }, 'Practice mode: answers are simple word matches. Add your key to the .env file for real answers.'),
   ),
-  el('section', { class: 'inbox' }, el('h2', {}, 'Questions for you'), cards),
+  el('div', { class: 'main' }, el('section', { class: 'inbox' }, el('h2', {}, 'Questions for you'), cards), feedbackBox, knows),
 ));
 
 // "Put it on a slide": a chooser of code styles and ready-made slides (qrchooser.js), loaded when first opened.
@@ -139,11 +143,8 @@ async function refresh() {
   nums.waiting.textContent = data.stats.waiting;
   waitingBox.className = data.stats.waiting ? 'hot' : '';
   room(svg, data.seats, { min: 45 });
-  summary.hidden = data.stats.straightAway == null;
-  if (!summary.hidden) summary.replaceChildren(
-    el('div', { class: 'meter' }, el('i', { style: `width:${data.stats.straightAway}%` })),
-    el('p', {}, el('b', {}, data.stats.straightAway + '%'), ' answered straight away'),
-    data.top.length > 0 && el('ol', {}, data.top.slice(0, 3).map((q) => el('li', {}, el('span', { class: 't' }, q.text, q.n > 1 && el('span', { class: 'n' }, ' ×' + q.n))))));
+  drawTrends(data);
+  drawFeedback(data.feedback || []);
   document.title = (data.stats.waiting ? `(${data.stats.waiting}) ` : '') + talk.title + ' · Auto Q&A';
   // Only rebuild the list when it changed, so typing a reply is never interrupted.
   const sig = JSON.stringify(data.items.map((i) => [i.id, i.status, i.people.length, i.backers]));
@@ -159,5 +160,66 @@ async function refresh() {
   cards.replaceChildren(...open.map(card), ...done.map(card));
   if (focused) cards.querySelector(`[data-id="${focused}"] textarea`)?.focus();
 }
+/* ---------- How it went: a glance, not a report ---------- */
+const clock = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function drawTrends(data) {
+  const t = data.trend, s = data.stats;
+  summary.hidden = !t;
+  if (!t) return;
+  const peak = Math.max(1, ...t.buckets.map((b) => b.asked));
+  const chart = t.buckets.length > 1; // one bar is not a trend: then only the facts
+  summary.replaceChildren(...[
+    el('h3', {}, 'How it went'),
+    chart && el('div', { class: 'spark', role: 'img', 'aria-label': `Questions every ${t.step} minutes` },
+      t.buckets.map((b) => el('div', { title: `${clock(b.t)}: ${b.asked} asked, ${b.straight} answered straight away` },
+        el('i', { class: 'need', style: `height:${((b.asked - Math.min(b.straight, b.asked)) / peak) * 100}%` }),
+        el('i', { style: `height:${(Math.min(b.straight, b.asked) / peak) * 100}%` })))),
+    chart && el('div', { class: 'axis small muted' }, el('span', {}, clock(t.buckets[0].t)), el('span', {}, `every ${t.step} min`), el('span', {}, clock(t.buckets.at(-1).t))),
+    chart && el('div', { class: 'key' }, el('b', { style: '--c:var(--cobalt)' }, 'Answered straight away'), el('b', { style: '--c:var(--signal)' }, 'Needed you')),
+    el('ul', { class: 'facts' },
+      s.straightAway != null && el('li', {}, el('b', {}, s.straightAway + '%'), ' answered straight away'),
+      data.items.length > 0 && el('li', {}, el('b', {}, String(t.replied)), ` of ${data.items.length} sent to you replied`),
+      t.slides[0] && el('li', {}, 'Most shown: ', el('b', {}, t.slides[0].label), t.slides[0].n > 1 ? ` (${t.slides[0].n}×)` : ''),
+      t.notSatisfied > 0 && el('li', {}, el('b', {}, String(t.notSatisfied)), ' wanted you instead of the answer'),
+      s.feedback > 0 && el('li', {}, el('b', {}, String(s.feedback)), ' left feedback')),
+    data.top.length > 0 && el('div', {}, el('span', { class: 'small muted' }, 'Asked most'),
+      el('ol', {}, data.top.slice(0, 3).map((q) => el('li', {}, el('span', { class: 't' }, q.text, q.n > 1 && el('span', { class: 'n' }, ' ×' + q.n)))))),
+  ].filter(Boolean));
+}
+
+/* ---------- Feedback from the audience (anonymous) ---------- */
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60e3); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
+function drawFeedback(list) {
+  const sig = list.map((f) => f.id).join();
+  if (sig === lastFb) return;
+  lastFb = sig;
+  feedbackBox.hidden = !list.length;
+  feedbackBox.replaceChildren(el('h2', {}, 'Feedback', el('span', { class: 'count-pill' }, String(list.length))),
+    el('div', { class: 'fbs' }, list.map((f) => el('blockquote', {}, f.text, el('cite', {}, ago(f.createdAt))))));
+}
+
+/* ---------- Teach it: fixes made while testing, and extra notes ---------- */
+function drawKnows() {
+  const fixes = talk.corrections || [];
+  const box = el('textarea', { placeholder: 'Anything else it should know: a result, a price, a link, how to get in touch.', 'aria-label': 'Add a note' });
+  const add = el('button', { class: 'btn quiet', type: 'button', onclick: async () => {
+    if (!box.value.trim()) return box.focus();
+    add.disabled = true;
+    try { await api(`/api/talks/${id}/notes`, { method: 'POST', headers: auth, body: { text: box.value } }); box.value = ''; add.textContent = 'Added'; setTimeout(() => { add.textContent = 'Add'; add.disabled = false; }, 1500); }
+    catch (x) { add.disabled = false; box.setCustomValidity(x.message); box.reportValidity(); }
+  } }, 'Add');
+  knows.replaceChildren(...[
+    el('h2', {}, 'Teach it'),
+    el('p', { class: 'small muted' }, 'Test it yourself. When an answer is wrong, tap "Fix this answer" under it. Your fix is used for everyone from then on.'),
+    fixes.length > 0 && el('ul', { class: 'taught' }, fixes.map((c) => el('li', {},
+      el('div', {}, el('b', {}, c.q), el('p', {}, c.fix)),
+      el('button', { class: 'x', type: 'button', 'aria-label': 'Remove this fix', onclick: async () => { talk = await api(`/api/talks/${id}/corrections/${c.id}`, { method: 'DELETE', headers: auth }); drawKnows(); } }, '×')))),
+    el('div', { class: 'addnote' }, box, add),
+  ].filter(Boolean));
+}
+drawKnows();
+// Coming back from testing in another tab: show the new fixes.
+addEventListener('focus', async () => { try { talk = await api('/api/talks/' + id, { headers: auth }); if (!knows.contains(document.activeElement)) drawKnows(); } catch {} });
+
 refresh();
 setInterval(refresh, 3000);

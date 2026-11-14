@@ -34,10 +34,81 @@ export const first = (name) => {
 };
 
 // Where the speaker's private link lives on this device.
+// The same key is also filed under the join code, so scanning your own code on this device opens a test seat.
 export const keys = {
   get: (id) => { try { return localStorage.getItem('autoqa:key:' + id); } catch { return null; } },
   set: (id, key) => { try { localStorage.setItem('autoqa:key:' + id, key); } catch {} },
+  byCode: (code) => { try { return localStorage.getItem('autoqa:code:' + code); } catch { return null; } },
+  setCode: (code, key) => { try { localStorage.setItem('autoqa:code:' + code, key); } catch {} },
 };
+
+const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Text that writes itself in: each word rises out of a soft cobalt blur into ink, a few at a time, at an even
+   pace however unevenly the answer arrives. Call set(text) again and again as more text streams in, and
+   set(text, true) when it's complete (that returns a promise for when the last word is in). Inline labels such
+   as [Slide 4] become small buttons. With instant (a reload) or "reduce motion", the text is simply there. */
+const INLINE = /\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n:"]{1,40})?)(?::\s*"[^"\]\n]*")?\]/g;
+export function writer(node, { onChip, instant = false } = {}) {
+  let target = [], shown = 0, timer = 0, finished = false, wait = null;
+  const key = (t) => (t.chip ? '[' + t.chip : t.word);
+  function tokens(text, final) {
+    const out = [];
+    text.split(INLINE).forEach((piece, i) => {
+      if (i % 2) return out.push({ chip: piece });
+      for (const w of piece.match(/\S+\s*|\s+/g) || []) out.push({ word: w });
+    });
+    if (!final) {
+      while (out.length && out.at(-1).word && /\[[^\]]*$/.test(out.at(-1).word)) out.pop(); // half-written label
+      if (out.length && out.at(-1).word && !/\s$/.test(out.at(-1).word)) out.pop(); // half-written word
+    }
+    return out;
+  }
+  function make(t, animate, delay) {
+    const n = t.chip
+      ? el('button', { class: 'chip', type: 'button', onclick: () => onChip?.(t.chip) }, t.chip)
+      : el('span', { class: 'w' }, t.word);
+    n.dataset.k = key(t);
+    if (animate) { n.classList.add('in'); n.style.animationDelay = delay + 'ms'; }
+    return n;
+  }
+  function step() {
+    timer = 0;
+    const backlog = target.length - shown;
+    if (backlog <= 0) { if (finished) { node.classList.remove('writing'); wait?.(); } return; }
+    const n = Math.max(1, Math.ceil(backlog / 8));
+    for (let i = 0; i < n; i++) node.append(make(target[shown++], true, i * 28));
+    timer = setTimeout(step, 55);
+  }
+  return {
+    set(text, final = false) {
+      target = tokens(text, final);
+      finished = final;
+      // If something earlier changed (rare: a label tidied at the end), redraw from there.
+      let i = 0;
+      while (i < shown && i < target.length && node.children[i]?.dataset.k === key(target[i])) i++;
+      if (i < shown) { while (node.children.length > i) node.lastChild.remove(); shown = i; }
+      if (instant || still()) {
+        while (shown < target.length) node.append(make(target[shown++], false));
+        if (final) node.classList.remove('writing');
+        return Promise.resolve();
+      }
+      node.classList.add('writing');
+      if (!timer) step();
+      if (!final) return Promise.resolve();
+      return new Promise((done) => { wait = done; if (shown >= target.length && !timer) { node.classList.remove('writing'); done(); } });
+    },
+  };
+}
+
+// A heading or line that writes itself in, word by word. Returns roughly when it's done (ms).
+export function reveal(node, text, { gap = 45, start = 0 } = {}) {
+  node.replaceChildren();
+  const words = String(text).match(/\S+\s*/g) || [];
+  if (still()) { node.textContent = text; return 0; }
+  words.forEach((w, i) => { const s = el('span', { class: 'w in' }, w); s.style.animationDelay = start + i * gap + 'ms'; node.append(s); });
+  return start + words.length * gap + 500;
+}
 
 // The room: curved rows of seats facing a stage. states = ['here' | 'answered' | 'waiting' | 'replied' | '']
 export function room(svg, states, { min = 60 } = {}) {

@@ -370,6 +370,81 @@ if (server) await step("a card sent without the talk's language gets a translati
   assert.equal(readTranslation('"Are jaguar, tapir and capybara among the 38 species?"', 'Onça, anta e capivara estão entre as 38 espécies?'), 'Are jaguar, tapir and capybara among the 38 species?');
   if (!process.env.ANTHROPIC_API_KEY) assert.equal(await toTalkLanguage({ sources: [] }, 'Olá?'), '', 'practice mode adds nothing');
 });
+await step('an answer on a slide marks its words there; a general question shows no slide', async () => {
+  const mine = jar; jar = '';
+  const s = (await call('/api/join/' + talk.code)).data;
+  const a = await ask(s.token, 'How much did peak runoff drop in the pilot?');
+  const m = a.text.match(/^\[(Slide 4)(?: · [^:\]]+)?: "([^"]+)"\]/);
+  assert.ok(m, 'the label carries the words it rests on: ' + a.text.slice(0, 80));
+  const src = (await call(`/api/source?label=${encodeURIComponent(m[1])}&quote=${encodeURIComponent(m[2])}`, { headers: { 'x-token': s.token } })).data;
+  assert.ok(src.marks?.length >= 1, 'boxes to mark on the slide picture');
+  for (const b of src.marks) assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= 1.05 && b.y + b.h <= 1.05, 'boxes are fractions of the slide');
+  const gist = await ask(s.token, 'What is this talk about?');
+  assert.doesNotMatch(gist.text, /^\s*\[/, 'no slide for the gist');
+  jar = mine;
+});
+await step('"Not what you needed?" turns an answer into a question for the speaker', async () => {
+  const mine = jar; jar = '';
+  const s = (await call('/api/join/' + talk.code)).data;
+  const a = await ask(s.token, 'How much did peak runoff drop in the pilot?'); assert.ok(!a.handoff);
+  const out = (await call('/api/unhappy', { method: 'POST', headers: { 'x-token': s.token }, body: { messageId: a.id } })).data;
+  assert.equal(out.message.handoff, 'How much did peak runoff drop in the pilot?'); assert.equal(out.message.unhappy, true);
+  assert.equal((await call('/api/handoff', { method: 'POST', headers: { 'x-token': s.token }, body: { messageId: a.id, anonymous: true } })).status, 200);
+  jar = mine;
+  const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
+  assert.ok(inbox.items.some((i) => /peak runoff/.test(i.question)));
+  assert.ok(inbox.trend?.buckets?.length >= 1 && inbox.trend.notSatisfied >= 1, 'how it went counts it');
+});
+await step('feedback reaches the speaker without a name', async () => {
+  const mine = jar; jar = '';
+  const s = (await call('/api/join/' + talk.code)).data;
+  assert.equal((await call('/api/feedback', { method: 'POST', headers: { 'x-token': s.token }, body: { text: 'x' } })).status, 400);
+  const sent = await call('/api/feedback', { method: 'POST', headers: { 'x-token': s.token }, body: { text: 'Clear numbers. A slide on cost would help.' } });
+  assert.equal(sent.status, 200); assert.equal(sent.data.message.role, 'feedback');
+  assert.ok((await call('/api/join/' + talk.code, { headers: { 'x-token': s.token } })).data.messages.some((m) => m.role === 'feedback'), 'kept in the chat after a reload');
+  jar = mine;
+  const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
+  const fb = inbox.feedback.find((f) => /slide on cost/.test(f.text));
+  assert.ok(fb); assert.deepEqual(Object.keys(fb).sort(), ['createdAt', 'id', 'text'], 'no name, email or seat');
+  assert.ok(inbox.stats.feedback >= 1);
+});
+await step("the speaker's own test seat: not counted, can't send to themselves, and a fix teaches every seat", async () => {
+  const before = (await call(`/api/talks/${talk.id}/inbox`)).data.stats.people;
+  const t = (await call('/api/join/' + talk.code)).data; // signed in as the owner
+  assert.equal(t.test, true); assert.equal(t.talkId, talk.id);
+  const a = await ask(t.token, 'Who maintains the roofs after installation?');
+  assert.ok(!a.handoff, 'a test seat never hands off');
+  assert.equal((await call('/api/unhappy', { method: 'POST', headers: { 'x-token': t.token }, body: { messageId: a.id } })).status, 400);
+  const fixed = await call(`/api/talks/${talk.id}/corrections`, { method: 'POST', body: { q: 'Who maintains the roofs after installation?', fix: 'The school caretaker, with a yearly check by our team.', messageId: a.id } });
+  assert.equal(fixed.status, 200); assert.equal(fixed.data.corrections.length, 1);
+  assert.equal((await call(`/api/talks/${talk.id}/inbox`)).data.stats.people, before, 'the test seat is not counted');
+  const mine = jar; jar = '';
+  assert.equal((await call(`/api/talks/${talk.id}/corrections`, { method: 'POST', body: { q: 'x', fix: 'y' } })).status, 404, 'only the speaker can teach');
+  const s = (await call('/api/join/' + talk.code)).data; assert.ok(!s.test);
+  assert.match((await ask(s.token, 'Who maintains the roofs after installation?')).text, /caretaker/);
+  jar = mine;
+  const gone = await call(`/api/talks/${talk.id}/corrections/${fixed.data.corrections[0].id}`, { method: 'DELETE' });
+  assert.equal(gone.data.corrections.length, 0);
+});
+if (server) await step('visits are counted without cookies, "do not track" is respected, the portal adds them up', async () => {
+  const beacon = (body, headers = {}) => fetch(SITE + '/api/t', { method: 'POST', headers: { 'content-type': 'text/plain', 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', ...headers }, body: JSON.stringify(body) });
+  const res = await beacon({ e: 'view', p: '/why', r: 'https://www.linkedin.com/feed/', w: 390 });
+  assert.equal(res.status, 204); assert.equal(res.headers.get('set-cookie'), null, 'no cookie');
+  await beacon({ e: 'leave', p: '/why', d: 42000, s: 80 });
+  await beacon({ e: 'view', p: '/why' }, { 'sec-gpc': '1' });
+  const m = (await call('/api/admin/metrics?days=1')).data;
+  const why = m.pages.find((p) => p.page === 'why');
+  assert.equal(why.views, 1, 'the Global Privacy Control visit is not counted'); assert.equal(why.avgSec, 42); assert.equal(why.scroll, 80);
+  assert.ok(m.sources.some((x) => x.name === 'linkedin.com')); assert.ok(m.devices.type.some((x) => x.name === 'mobile'));
+  assert.ok(m.funnels.audience[0][1] >= 1 && 'cost' in m && 'health' in m);
+});
+if (server) await step('a slide label keeps the words it rests on', async () => {
+  const { tidyLabels } = await import('../lib/ai.js');
+  const deck = ['Slide 4', 'Slide 5'];
+  assert.equal(tidyLabels('[Slide 4: "Peak runoff reduced by 62%"] Down 62%.', deck), '[Slide 4: "Peak runoff reduced by 62%"] Down 62%.');
+  assert.equal(tidyLabels('[Slide 4 · deck.pdf: "62%"] Down.', deck), '[Slide 4: "62%"] Down.');
+  assert.equal(tidyLabels('[Slide 9: "nope"] Hi.', deck), 'Hi.');
+});
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password } })).status, 200);

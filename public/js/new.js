@@ -1,4 +1,4 @@
-import { $, el, api, keys } from '/js/common.js';
+import { $, el, api, keys, reveal } from '/js/common.js';
 
 const view = $('#view'), picker = $('#picker');
 let talk = null, key = null;
@@ -177,8 +177,11 @@ function conversation() {
   attach.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M15.5 10.5 10 16a3.5 3.5 0 0 1-5-5l6.5-6.5a2.3 2.3 0 0 1 3.3 3.3L8.6 14a1.1 1.1 0 0 1-1.6-1.6l5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const more = el('input', { type: 'file', multiple: true, hidden: true, accept: '.pdf,.pptx,.key,.ppt,.odp,.docx,.txt,.md' });
   const err = el('p', { class: 'error', role: 'alert' });
-  const done = el('button', { class: 'btn', type: 'button', onclick: finish }, 'Finish');
-  const skip = el('button', { class: 'btn plain', type: 'button', onclick: () => reply('') }, 'Skip');
+  // The arrow sends an answer and brings the next question. Two plain words for the rest (Vamsi found "Finish" next
+  // to the arrow confusing): skip just this question, or stop here and open the talk.
+  const done = el('button', { class: 'btn quiet', type: 'button', onclick: finish }, 'Done, open my talk');
+  const skip = el('button', { class: 'btn plain', type: 'button', onclick: () => reply('') }, 'Skip this question');
+  const count = el('span', { class: 'small muted qcount' });
   let waiting = false, voiceUsed = false;
   mic?.addEventListener('voice', () => { voiceUsed = true; err.textContent = ''; });
   mic?.addEventListener('voiceproblem', (e) => { err.textContent = e.detail; });
@@ -193,7 +196,7 @@ function conversation() {
     el('h1', { class: 'question', style: 'margin-bottom:8px' }, 'Tell us about your talk'),
     el('p', { class: 'sub' }, 'A few questions, one at a time, so answers go beyond the slides. Type or speak. Stop whenever you like.'),
     thread, err, form, more,
-    el('div', { class: 'row', style: 'margin-top:14px' }, skip, done));
+    el('div', { class: 'row qrow', style: 'margin-top:14px' }, skip, count, done));
 
   const say = (text, kind) => { const p = el('p', { class: 'turn-' + kind }, text); thread.append(p); p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return p; };
   const thinking = () => say('', 'thinking');
@@ -205,8 +208,11 @@ function conversation() {
       const out = await api(`/api/talks/${talk.id}/interview`, { method: 'POST', headers: auth(), body });
       dotsLine.remove();
       if (out.note) say(out.note, 'note');
-      if (out.done) { say("That's what we needed. Your talk is ready.", 'site'); done.textContent = 'Open my talk'; form.hidden = skip.hidden = true; done.focus(); return; }
-      say(out.question, 'site');
+      if (out.done) { reveal(say('', 'site'), "That's what we needed. Your talk is ready."); done.textContent = 'Open my talk'; done.className = 'btn'; form.hidden = skip.hidden = count.hidden = true; done.focus(); return; }
+      // The question writes itself in; a short line under it says why it's asked.
+      const shown = reveal(say('', 'site'), out.question, { gap: 38 });
+      if (out.why) { const why = say(out.why, 'why'); why.style.animationDelay = Math.min(shown, 1100) + 'ms'; }
+      count.textContent = out.asked ? `${out.asked} answered` : '';
       box.focus();
     } catch (x) { dotsLine.remove(); err.textContent = x.message; }
     waiting = false; send.disabled = skip.disabled = false;

@@ -40,6 +40,7 @@
       <tr><td>A random code kept in your browser</td><td>So a refresh doesn't lose your place. It is not linked to your identity</td><td>Needed for the service you asked for</td></tr>
       <tr><td>Your name, email and (optional) LinkedIn link, only if you choose "Send to the speaker" with your name</td><td>So the speaker can reply to you and connect with you</td><td>Your consent, given by filling in the form and sending it</td></tr>
       <tr><td>Nothing about who you are, if you switch on "Ask anonymously" or tap "Me too"</td><td>The speaker sees the question, or how many people want it answered, and no name</td><td>None needed</td></tr>
+      <tr><td>Feedback you write for the speaker</td><td>The speaker reads it, with the time it was sent and nothing about who wrote it</td><td>Our legitimate interest in providing the service you used</td></tr>
     </tbody>
   </table>
   <p>Other people in the room can see questions that are waiting for the speaker, so they can tap "Me too". They never see your name.</p>
@@ -87,11 +88,14 @@
     <tbody>
       <tr><td>aq_session (cookie)</td><td>Keeps a speaker signed in. Readable only by our server, sent only over an encrypted connection</td><td>30 days</td></tr>
       <tr><td>autoqa:seat:… (browser storage)</td><td>Your place in a talk as an audience member</td><td>Until you delete it below or clear your browser</td></tr>
-      <tr><td>autoqa:key:… (browser storage)</td><td>Lets a speaker reopen their own talk on this device</td><td>Until cleared</td></tr>
+      <tr><td>autoqa:key:… and autoqa:code:… (browser storage)</td><td>Lets a speaker reopen their own talk on this device, and test it there without being counted</td><td>Until cleared</td></tr>
       <tr><td>autoqa:theme (browser storage)</td><td>Remembers light or dark mode</td><td>Until cleared</td></tr>
     </tbody>
   </table>
-  <p>We count visits without cookies: each visit is turned into a scrambled code that changes every day, so we can count visitors in a day but cannot recognise you the next day or follow you anywhere.</p>
+  <h3>How visits are counted, without cookies</h3>
+  <p>When a page opens, it tells our server which kind of page it is (for example "audience chat"), the name of the website that sent you if there was one (only the site's name, never the full address), and your screen width so we can tell a phone from a computer. When you leave the page, it tells us how long the page was on your screen and how far down you scrolled. Your browser type and system (for example "Safari on iOS") are worked out from what every browser sends anyway.</p>
+  <p>To count each visitor once a day, we make a one-way code from a random number that is replaced every day, a shortened version of your internet address (the last part removed) and your browser type. Yesterday's random number is thrown away, so the code can't be turned back into your address or linked to another day. Your internet address itself is never stored. Nothing is stored on your device for this.</p>
+  <p>If your browser sends "Global Privacy Control" or "Do Not Track", none of this is sent and the server ignores you entirely. The counts are kept for <span data-keep-counts>365</span> days, are seen only by the team running Auto Q&amp;A, and are never shared or combined with anything else. Speakers testing their own talk are left out of all counts.</p>
 
   <h2>Your rights</h2>
   <p>Under the GDPR you can ask us to: show you the personal data we hold about you, correct it, delete it, restrict how we use it, give it to you in a portable form, and stop using it where we rely on our legitimate interest. Where we rely on your consent you can withdraw it at any time. Write to the contact address above; we answer within one month. You can also complain to your data protection authority; in the Netherlands that is the Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).</p>
@@ -119,5 +123,6 @@
   <nav aria-label="More"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/how-answers-work">How answers work</a><a href="/">Home</a></nav>
 </div>
 <script type="module" src="/js/page-privacy.js"></script>
+<script src="/js/t.js" defer></script>
 </body>
 </html>

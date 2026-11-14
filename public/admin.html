@@ -6,14 +6,21 @@
 <link rel="stylesheet" href="/css/app.css">
 <script src="/js/theme.js"></script>
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
-<meta name="robots" content="noindex">
-<title>Numbers · Auto Q&amp;A</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Portal · Auto Q&amp;A</title>
 </head>
-<body>
-<div class="page">
-  <div class="top"><a class="mark" href="/"><img src="/logo.svg" alt="" width="30" height="30">Auto Q&amp;A</a><span class="small muted" id="range"></span></div>
+<body class="portal-body">
+<div class="portal">
+  <div class="top">
+    <a class="mark" href="/"><img src="/logo.svg" alt="" width="30" height="30">Auto Q&amp;A <span class="badge">Portal</span></a>
+    <div class="ranges" id="ranges" hidden></div>
+  </div>
+  <nav class="jump" id="jump" hidden>
+    <a href="#overview">Overview</a><a href="#traffic">Traffic</a><a href="#product">Product</a><a href="#speed">Speed and cost</a><a href="#health">Health</a><a href="#talks">Talks</a>
+  </nav>
   <main id="view"></main>
 </div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
 <script type="module" src="/js/page-admin.js"></script>
 </body>
 </html>
