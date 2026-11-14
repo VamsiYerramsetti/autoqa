@@ -1,5 +1,10 @@
 # Log (newest first)
 
+## 2026-11-14 (night): Vamsi's 14 November changes put live
+The Desktop session's work (new logo, new Home/Why/How it works pages, code styles and slide chooser, answer and feedback changes, founder portal, model-cost skills) was pushed to main and deployed.
+- It came as a git bundle in Desktop/AutoQA/handoff because that session could only read the repository. Reviewed (access checks and limits on the new routes, no secrets, no new packages), `npm test` 28/28, fast-forwarded onto main.
+- The live check then failed: with the real model, two people typing "Does it work on sloped tile roofs?" got two different rewordings for the speaker, so they were not merged ("someone already asked" missing). Fix: questions sent to the speaker are now also matched on what people typed (`typedBefore` in server.js; new optional `typed` field on a question, old ones keep working).
+
 ## 2026-11-14: Vamsi's list: logo, answers that write themselves in, marked slides, feedback, test-and-fix, portal, QR styles, new home page
 A new Q+A logo; answers now write themselves in word by word, show a slide only when the answer is on it, and mark the exact line on that slide.
 The audience can give anonymous feedback and ask the speaker when an answer didn't help; speakers can test their own code and fix answers; Vamsi has a full portal; the home, Why and a new How it works page were rewritten around the message.

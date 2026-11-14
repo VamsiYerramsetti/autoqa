@@ -233,9 +233,17 @@ function waitingList(talk, asker) {
 
 // An open question for the speaker that says the same thing. Compared in the speaker's language when we have it,
 // so the same question asked in two languages is still one card.
+// What the person typed just before this answer: the model rewords a question differently each time
+// ("the Rooftop Rain approach" vs "the 8 cm storage layer"), but people asking the same thing type alike.
+function typedBefore(msg) {
+  const mine = db.messages.filter((m) => m.askerId === msg.askerId);
+  return mine.slice(0, mine.indexOf(msg)).reverse().find((m) => m.role === 'user')?.text || '';
+}
 function twinOf(talk, msg) {
   const inTalkLanguage = (x) => x.translated || x.handoffForSpeaker || x.question || x.handoff;
-  return talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg))) >= 0.75);
+  const typed = typedBefore(msg);
+  return talkEscalations(talk).find((e) => e.status === 'open' && Math.max(overlap(e.question, msg.handoff), overlap(inTalkLanguage(e), inTalkLanguage(msg)),
+    e.typed && typed ? overlap(e.typed, typed) : 0) >= 0.75);
 }
 
 // Suggested questions for the audience: the ones written when the talk was prepared, topped up with one per slide
@@ -847,7 +855,7 @@ app.post('/api/handoff', (req, res) => {
       msg.escalationId = twin.id;
     } else {
       // shared: the form now says others here see the question (never the name), so the room can back it.
-      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], shared: true, status: 'open', createdAt: Date.now() };
+      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, typed: typedBefore(msg).slice(0, 600) || undefined, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], shared: true, status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
       // No line in the talk's language yet: add one in the background if the question needs it (lib/ai.js says why).
       if (!e.translated) toTalkLanguage(talk, e.question).then((t) => { if (t) { e.translated = t; save(); } });
