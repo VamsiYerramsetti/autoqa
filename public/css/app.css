@@ -79,7 +79,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
 .mark { font: 700 22px/1 var(--display); letter-spacing: -0.03em; text-decoration: none; display: inline-flex; align-items: center; gap: 9px; }
-.mark i { width: 14px; height: 14px; border-radius: 50%; background: var(--signal); box-shadow: 9px 0 0 var(--cobalt); margin-right: 9px; }
+.mark img { width: 30px; height: 30px; display: block; flex: none; }
 .muted { color: var(--muted); }
 /* The light/dark switch, at the end of the top bar (and in the audience header). */
 .top-end { display: flex; align-items: center; gap: 12px; }
