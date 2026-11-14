@@ -3,6 +3,7 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Security (2026-11-14): a speaker's fixes are capped at 20,000 characters in total and no longer override the answering rules; a flood of visit beacons can't push out question and cost records; legal pages have canonical links; privacy lists feedback and fixes.
 - [x] Vamsi's list (2026-11-14): Q+A logo; answers write themselves in; a slide only when the answer is on it, with the exact line marked (PDF and PowerPoint); "Not what you needed? Ask the speaker"; anonymous feedback; speaker test seat with "Fix this answer"; "How it went"; setup questions with a reason each and clearer buttons; five code styles, an animated GIF code and four slide designs; new home, Why and /how-it-works pages; cookie-free visit counts and a full founder portal; model cost tracking and FinOps skills.
 - [x] Security (2026-11-13): hostile PowerPoint files can't inject markup into slide drawings, stall the server with unclosed tags, or unpack into gigabytes by lying about sizes.
 - [x] Home page film: talk → scan → ask → slide answer → hand-off → speaker reply, looping, with pause and reduce-motion still (2026-11-13). Covers audit A01.
@@ -42,6 +43,9 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] A slide label written at the end of an answer, or with a made-up file name, is put right so the slide still shows.
 
 ## Next
+- [ ] Security: pin the founder portal to one account id (`ADMIN_USER_ID`), not only the email, because sign-up does not prove someone owns an address (pull request: touches sign-in).
+- [ ] Security: send the speaker's private key and `ADMIN_KEY` in a header, not in the address (`qr.svg?inbox=1&key=`, `/admin?key=`), so they don't land in logs and browser history.
+- [ ] Security: fake visit beacons can still inflate the portal's visitor counts (no harm to data any more); consider a per-address daily cap on beacons.
 - [ ] Security: keep slide drawings small in storage (cap a deck's drawings at ~40 MB, or store each picture once instead of copying it into every slide).
 - [ ] Security: Word files are unzipped by mammoth without our byte cap; check the real size first (`lib/zip.js`) or unzip them ourselves.
 - [ ] Security: clamp the slide size a PowerPoint file states (very tall or thin decks can crash the speaker's own tab).

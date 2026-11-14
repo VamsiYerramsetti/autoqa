@@ -19,14 +19,16 @@ How to run the check: `.claude/skills/security-audit/SKILL.md`.
 | Uploads | 50 MB per file, 3 files, only PDF/PowerPoint/Word/text; zip parts capped by the bytes that really come out, not the size the file claims; XML and slide text read in one pass so a hostile file can't stall the server | `lib/parse.js`, `lib/zip.js`, `lib/pptx-render.js` |
 | PowerPoint drawings | Theme colours must be plain six-digit colours before they reach the SVG; text is escaped; outside links dropped; a drawn slide is served sandboxed, with no scripts, forms or framing | `lib/pptx-render.js`, `sendSvg` in `server.js` |
 | Database | TLS with certificate checking (Neon) | `lib/store.js` |
-| Dependencies | `npm audit`: 0 known vulnerabilities (13 Nov 2026); multer 2.5.0 is past the Aug 2026 fixes (2.3.0) | `package.json` |
+| Dependencies | `npm audit`: 0 known vulnerabilities (14 Nov 2026); multer 2.5.0 is past the Aug and Sep 2026 fixes (2.3.0, 2.4.0 for CVE-2026-88932) | `package.json` |
+| Speaker fixes ("Teach it") | Only the owner or the private key can add them; 20,000 characters in total per talk (they are sent uncached with every question); they override the material, never the answering rules (automated label, no guessing) | `/api/talks/:id/corrections`, `lib/ai.js` |
+| Visit counts | Beacons need no sign-in, so when the event list is full the oldest beacons are dropped first; questions, answers and model costs are kept | `trimEvents` in `lib/store.js` |
 | Errors | No stack traces or debug output to visitors; one generic message | `server.js` |
 
 ## Privacy and legal checklist (EU first: the operator is in the Netherlands)
 | Item | Status |
 |---|---|
-| Privacy notice: who, what, why, legal basis, who receives it, transfers, how long, rights, complaint to Autoriteit Persoonsgegevens | Done, `/privacy` |
-| How answers work (automated, which model company, no training on your data, limits) — EU AI Act transparency | Done, `/how-answers-work`, plus a line on every audience screen |
+| Privacy notice: who, what, why, legal basis, who receives it, transfers, how long, rights, complaint to Autoriteit Persoonsgegevens | Done, `/privacy`; feedback and speaker fixes added to "How long" (14 Nov) |
+| How answers work (automated, which model company, no training on your data, limits) — EU AI Act transparency | Done, `/how-answers-work`, a line at the top of the chat before the first question, and "automated" under every answer. Matches the Commission's draft Art. 50 guidelines (clear, at first interaction, not hidden in terms; applies since 2 Aug 2026) |
 | Terms of use, incl. speaker responsibility for uploaded material and a takedown address | Done, `/terms` |
 | Minimum age: 16 (GDPR consent age in the Netherlands); stated at sign-up and in the notice | Done |
 | Ask for personal details only when needed and say who receives them | Done: only when sending a question to the speaker, anonymous by default option |
@@ -49,5 +51,6 @@ How to run the check: `.claude/skills/security-audit/SKILL.md`.
 - Pen-testing tools like Strix: only ever point them at a local copy, never at the live site, and read their code first.
 
 ## Findings log (newest first)
+- 2026-11-14: audit of the 14 Nov changes (test seat and fixes, feedback, "not what you needed", visit beacons, founder portal, QR styles) with the independent reviewer agent. No access-control holes: audience seats can't add fixes, feedback carries no seat id, user text is always put on pages as text. Fixed: speaker fixes had no total size (200 × 2,600 characters, sent uncached with every question, could push every answer past the 5× price step) and claimed to override "everything above", including the automated label; anyone could flood the visit beacon and push out the record of questions and model costs; legal pages had no canonical link; privacy notice did not say how long feedback and fixes are kept. Left (roadmap): portal trusts the account email alone (sign-up doesn't verify email), private keys in some addresses, fake beacons can still inflate visitor numbers.
 - 2026-11-13: audit of the new PowerPoint drawing, QR and home-page code (independent reviewer agent + own checks). Fixed: a deck's theme colour could put markup (a fake sign-in form) into a slide drawing served on our own address; unclosed `<!`/`<a:p`/`<p:sldId` made reading a file take minutes to hours (one upload could freeze the site); zip parts trusted the size the file claims. Left for later (roadmap): slide drawings can be big in storage (a picture repeated on every slide is copied into each); Word files go through mammoth's own unzip without our byte cap; slide size from the file is not clamped (only the uploader's own tab can crash); legal pages have no canonical link.
 - 2026-11-12: first full audit. Fixed: no CSP/HSTS, cross-site writes, uploads read before sign-in check, per-address limit that would block a whole venue, plain session tokens in the database, sign-in timing leak, unchecked database certificate, open-redirect edge in `next=`, zip-bomb guard, no retention. Voice input was blocked by our own `microphone=()` rule.

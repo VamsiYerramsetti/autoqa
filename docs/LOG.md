@@ -1,5 +1,25 @@
 # Log (newest first)
 
+## 2026-11-14 (night): Security
+Tonight's check went through everything added on 14 November (speaker test seats and fixes, audience feedback, the visit counter and the founder portal) and found no way for a stranger to read or change someone else's talk.
+Three small things were fixed: a speaker's fixes now have a size limit and can't switch off the "automated" label; fake page visits can no longer push real question records out of the numbers; the legal pages and privacy notice were tidied. Nothing risky is left open, but one sign-in hardening for the founder portal is waiting for a pull request.
+- **Fixes have limits** (`server.js`, `lib/ai.js`): all of a talk's "Teach it" fixes together are capped at 20,000 characters (before: 200 × 2,600, about 130k tokens sent uncached with every question, past Haiku's 5× price step). The prompt now says fixes override the material and notes, not the answering rules.
+- **Beacons can't crowd out records** (`lib/store.js` `trimEvents`): `/api/t` needs no sign-in; when the 50,000-event list is full, the oldest visit beacons go first, so questions, answers and model-cost records survive a flood.
+- **Pages**: canonical links on `/privacy`, `/terms`, `/how-answers-work` (13 Nov roadmap item); privacy "How long" now names feedback and speaker fixes (kept with the talk, deleted with it).
+- **Checked, fine**: `npm audit` 0 (multer 2.5.0 past CVE-2026-88932, fixed in 2.4.0); no secrets in code or the 11 new commits; local headers (CSP, frame-ancestors, nosniff, Permissions-Policy) unchanged; audience screen says "Automated answers" before the first question and "automated" under each answer, which matches the Commission's draft Article 50 guidance.
+- **Tested**: `npm test` 30/30 (three new checks: fix size limit and rule wording, beacon flood keeps question records, every public page has a canonical link).
+- **Left for later** (roadmap): pin `/admin` to an account id, not just the email (sign-up doesn't verify email; pull request because it touches sign-in); move private keys out of addresses; fake beacons can still inflate visitor numbers.
+
+### For Vamsi
+- Keep your own account on the `ADMIN_EMAIL` address; never delete it. Until the portal is pinned to an account id, anyone who signs up with that address first could read the portal.
+- Still open from before: rotate the Anthropic API key and the database password, set `CONTACT_EMAIL` and `OPERATOR_NAME` on Render.
+
+### Researched
+- [Commission draft guidelines on AI Act Article 50 (summary)](https://www.globalpolicywatch.com/2026/05/10-takeaways-european-commission-draft-guidelines-on-ai-transparency-under-the-eu-ai-act/): chatbots must say they are AI clearly at first interaction, not in terms; applies from 2 Aug 2026 → already done on the audience screen (no change).
+- [OSV: CVE-2026-88932 (multer)](https://osv.dev/vulnerability/CVE-2026-88932): multer 2.2.0–2.3.0 affected, fixed in 2.4.0 → we run 2.5.0 (no change).
+- [Stibbe on the Dutch DPA's enforcement policy](https://www.stibbe.com/publications-and-insights/the-dutch-dpas-new-enforcement-policy-and-what-it-means-for-companies): the AP now publishes its fines → another reason to keep the privacy notice exact (privacy page updated).
+- [OWASP Top 10 for LLM apps](https://neuraltrust.ai/blog/owasp-top-10-for-llm-applications): unbounded consumption and system-prompt override are top risks → capped speaker fixes and stopped them overriding the rules (built).
+
 ## 2026-11-14 (night): Vamsi's 14 November changes put live
 The Desktop session's work (new logo, new Home/Why/How it works pages, code styles and slide chooser, answer and feedback changes, founder portal, model-cost skills) was pushed to main and deployed.
 - It came as a git bundle in Desktop/AutoQA/handoff because that session could only read the repository. Reviewed (access checks and limits on the new routes, no secrets, no new packages), `npm test` 28/28, fast-forwarded onto main.
