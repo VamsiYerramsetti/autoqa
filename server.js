@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBlobs, hashPassword, checkPassword } from './lib/store.js';
 import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
 import { renderPptx } from './lib/pptx-render.js';
-import { brandedQr } from './lib/qr.js';
+import { qrSvg, qrJson, QR_STYLES } from './lib/qr.js';
 import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError, toTalkLanguage } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
@@ -510,7 +510,17 @@ app.get('/api/talks/:id/qr.svg', async (req, res) => {
     const svg = await QRCode.toString(`${baseUrl()}/s/${talk.id}#${talk.key}`, { type: 'svg', errorCorrectionLevel: 'M', margin: 4, color: { dark: '#000000', light: '#ffffff' } });
     return res.type('image/svg+xml').send(svg);
   }
-  res.set('Cache-Control', 'public, max-age=300').type('image/svg+xml').send(brandedQr(joinUrl(talk)));
+  // ?style= picks one of the Auto Q&A code styles (lib/qr.js); anything else gets the default.
+  const style = QR_STYLES.includes(req.query.style) ? req.query.style : 'autoqa';
+  res.set('Cache-Control', 'public, max-age=300').type('image/svg+xml').send(qrSvg(joinUrl(talk), style));
+});
+
+/* ---------- the Auto Q&A code as data (for the animated code drawn in the browser) ---------- */
+// Public, like qr.svg: which modules are dark, the corner and alignment squares, and the hole for the mark.
+app.get('/api/talks/:id/qr.json', (req, res) => {
+  const talk = db.talks.find((t) => t.id === req.params.id);
+  if (!talk) return res.sendStatus(404);
+  res.set('Cache-Control', 'public, max-age=300').json({ url: joinUrl(talk), ...qrJson(joinUrl(talk)) });
 });
 
 /* ---------- speaker: during and after the talk ---------- */

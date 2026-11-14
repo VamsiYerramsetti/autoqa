@@ -119,6 +119,30 @@ await step('PowerPoint slides become pictures; the audience code is the Auto Q&A
   const key = await call(`/api/talks/${talk.id}/files`, { method: 'POST', form });
   assert.match(key.data.problems.join(' '), /Export To → PowerPoint/);
 });
+await step('the Auto Q&A code comes in several styles, and as data for the moving one', async () => {
+  const plain = await (await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).text();
+  for (const style of ['autoqa', 'ink', 'frame', 'card', 'room']) {
+    const res = await call(`/api/talks/${talk.id}/qr.svg?style=${style}`, { raw: true });
+    assert.equal(res.status, 200, style); assert.match(res.headers.get('content-type'), /svg/, style);
+    const svg = await res.text();
+    assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 [\d.]+ [\d.]+"/, style);
+    assert.match(svg, /<\/svg>$/, style); assert.doesNotMatch(svg, /NaN|undefined/, style);
+    assert.match(svg, /#ffc83d/i, `${style}: the Q+A mark`);
+    if (style === 'autoqa') assert.equal(svg, plain, 'the default style is unchanged');
+  }
+  assert.match(await (await call(`/api/talks/${talk.id}/qr.svg?style=frame`, { raw: true })).text(), /Scan to ask/);
+  assert.equal(await (await call(`/api/talks/${talk.id}/qr.svg?style=<b>`, { raw: true })).text(), plain, 'unknown style → default');
+  const { status, data: q } = await call(`/api/talks/${talk.id}/qr.json`);
+  assert.equal(status, 200);
+  assert.equal(q.size, 17 + 4 * q.version); assert.equal(q.modules.length, q.size * q.size); assert.match(q.modules, /^[01]+$/);
+  assert.equal(q.quiet, 4); assert.equal(q.errorCorrection, 'H'); assert.equal(q.finders.length, 3);
+  assert.ok(Array.isArray(q.alignments)); assert.ok(q.url.endsWith('/j/' + talk.code));
+  assert.equal((await call('/api/talks/nope/qr.json')).status, 404);
+  // The chooser and the GIF writer are browser code: check their promises are in the scripts.
+  const chooser = (await call('/js/qrchooser.js')).data, gif = (await call('/js/gif.js')).data;
+  assert.match(chooser, /role: 'radiogroup'/); assert.match(chooser, /Download slide/); assert.match(chooser, /prefers-reduced-motion/);
+  assert.match(gif, /GIF89a/); assert.match(gif, /NETSCAPE2\.0/);
+});
 // Code-level: a speaker could upload a PowerPoint built to attack us. Local only: never sent to the live site,
 // and the live check runs without installed packages.
 if (!process.env.SITE) await step('a hostile PowerPoint file cannot inject markup, stall the server or unpack into gigabytes', async () => {
