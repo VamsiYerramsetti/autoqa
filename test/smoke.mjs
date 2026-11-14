@@ -35,15 +35,26 @@ const stamp = Date.now().toString(36), email = `test+${stamp}@autoqa.example`, p
 let talk, seat, seat2, seat4, w0, handoffMsg;
 
 await step('pages load', async () => {
-  for (const p of ['/', '/why', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
+  for (const p of ['/', '/why', '/how-it-works', '/signup', '/signin', '/privacy', '/terms', '/how-answers-work', '/healthz']) assert.equal((await call(p, { raw: true })).status, 200, p);
   assert.equal((await call('/no-such-page', { raw: true })).status, 404);
-  // The home page shows a piece of the real chat, and says plainly that answers are automated.
+  // The home page: the promise as the headline, a still of the real audience screen (marked automated).
   const home = await (await call('/', { raw: true })).text();
-  assert.match(home, /class="demo"/); assert.match(home, /Answers are automated/);
-  // The looping film of how it works, with a still example underneath for browsers without scripts.
+  assert.match(home, /<h1>Every question gets an answer\.<\/h1>/);
+  assert.match(home, /class="shot"/); assert.match(home, /automated/);
+  // "How it works" in the top bar scrolls to the film and its numbered steps; step 4 leads to the full page.
+  assert.match(home, /<nav class="nav">[^]*?href="#how">How it works</); assert.match(home, /id="how"/);
+  assert.equal((home.match(/<li data-step="\d">/g) || []).length, 4, 'four numbered steps');
+  assert.match(home, /href="\/how-it-works">See everything it does/);
+  // The looping film, seen from the audience: plays only on screen, can be paused, stands still under reduce motion.
   assert.match(home, /id="film"/); assert.match(home, /home-film\.js/);
   const film = await (await call('/js/home-film.js', { raw: true })).text();
-  assert.match(film, /prefers-reduced-motion/); assert.match(film, /Pause the film/);
+  assert.match(film, /prefers-reduced-motion/); assert.match(film, /Pause the film/); assert.match(film, /IntersectionObserver/);
+  // The detailed page covers before, during, after, and privacy; the Why page has its picture strip.
+  const deep = await (await call('/how-it-works', { raw: true })).text();
+  for (const id of ['before', 'during', 'after', 'trust']) assert.match(deep, new RegExp(`id="${id}"`), id);
+  const why = await (await call('/why', { raw: true })).text();
+  assert.match(why, /id="strip"/); assert.match(why, /page-why\.js/); assert.doesNotMatch(why, /Who it's for/);
+  assert.match((await call('/sitemap.xml', { raw: true }).then((r) => r.text())), /\/how-it-works</);
   // The audience's way in from the home page: a typed code goes straight to that talk.
   const go = await call('/j/?code=ab2cd', { raw: true });
   assert.equal(go.status, 302); assert.equal(go.headers.get('location'), '/j/AB2CD');
@@ -161,7 +172,7 @@ await step('protection: browser rules on every page, no cross-site writes, no up
   assert.equal(home.headers.get('x-content-type-options'), 'nosniff');
   assert.match(home.headers.get('permissions-policy'), /microphone=\(self\)/, 'the speaker may use the microphone');
   // No page carries script text of its own: everything is loaded from our files, as the policy demands.
-  for (const p of ['/', '/signup', '/privacy', '/terms', '/how-answers-work', `/present/${talk.id}`, '/admin']) {
+  for (const p of ['/', '/why', '/how-it-works', '/signup', '/privacy', '/terms', '/how-answers-work', `/present/${talk.id}`, '/admin']) {
     const html = await (await call(p, { raw: true })).text();
     assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>\s*\S/, `inline script on ${p}`);
   }

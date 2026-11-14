@@ -6,33 +6,142 @@
 <link rel="stylesheet" href="/css/app.css">
 <script src="/js/theme.js"></script>
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
-<title>Why Auto Q&amp;A · who it is for and what it does</title>
-<meta name="description" content="Most questions at a talk never get asked. Auto Q&amp;A lets everyone ask from their phone, answers from the slides, and saves the rest for the speaker.">
+<title>Why Auto Q&amp;A</title>
+<meta name="description" content="Most questions at a talk never get asked. Auto Q&amp;A lets everyone ask from their phone, answers from the slides, and keeps the conversation going after the talk.">
 <meta property="og:title" content="Why Auto Q&amp;A">
-<meta property="og:description" content="Most questions at a talk never get asked. Auto Q&amp;A lets everyone ask from their phone, answers from the slides, and saves the rest for the speaker.">
+<meta property="og:description" content="Most questions at a talk never get asked. Auto Q&amp;A lets everyone ask from their phone, answers from the slides, and keeps the conversation going after the talk.">
 <link rel="canonical" href="https://autoqa-jcol.onrender.com/why">
 </head>
 <body>
 <div class="why">
-  <div class="top"><a class="mark" href="/"><img src="/logo.svg" alt="" width="30" height="30">Auto Q&amp;A</a><a class="btn quiet" href="/new">Start a talk</a></div>
+  <div class="top"><a class="mark" href="/"><img src="/logo.svg" alt="" width="30" height="30">Auto Q&amp;A</a><nav class="nav"><a class="btn plain hide-s" href="/how-it-works">How it works</a><a class="btn quiet" href="/new">Start a talk</a></nav></div>
 
-  <h1>Why Auto Q&amp;A</h1>
-  <p class="lede">A talk ends. Ten hands go up, there is time for three. Everyone else leaves with their question.</p>
+  <h1>A talk should start a conversation.</h1>
+  <p class="lede">Most end with a few rushed questions. Here is what gets lost.</p>
 
-  <ol class="whys">
-    <li><span class="dot" style="--c:var(--ink)"></span><h2>Most questions never get asked</h2><p>No time, no microphone, too shy, wrong language.</p><p class="fix">Everyone asks from their phone, with or without their name.</p></li>
-    <li><span class="dot" style="--c:var(--cobalt)"></span><h2>Many are already in your slides</h2><p>"What was that number?" "Which study?"</p><p class="fix">Answered straight away, with the slide shown.</p></li>
-    <li><span class="dot" style="--c:var(--signal)"></span><h2>The best ones need you</h2><p>The slides can't know what you think, or what comes next.</p><p class="fix">They wait on your phone. Reply when you can; everyone who asked sees it.</p></li>
-  </ol>
+  <!-- Six pictures, one short line each. The person moves through them: swipe, scroll, the arrows, or the
+       arrow keys. Nothing moves by itself. (public/js/page-why.js) -->
+  <section class="strip-wrap" aria-label="What happens at a talk today">
+    <div class="strip" id="strip" tabindex="0">
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <rect class="k" x="96" y="26" width="128" height="66" rx="14"/>
+          <text class="yt" x="160" y="75" text-anchor="middle" font-size="38">0:00</text>
+          <g class="s"><path d="M30 200V168q0-16 22-16t22 16V200z"/><circle cx="52" cy="136" r="12"/></g>
+          <g class="m"><path d="M96 200V170q0-16 22-16t22 16V200z"/><circle cx="118" cy="138" r="12"/><rect x="132" y="104" width="8" height="46" rx="4"/></g>
+          <g class="s"><path d="M162 200V168q0-16 22-16t22 16V200z"/><circle cx="184" cy="136" r="12"/></g>
+          <g class="m"><path d="M228 200V170q0-16 22-16t22 16V200z"/><circle cx="250" cy="138" r="12"/><rect x="264" y="104" width="8" height="46" rx="4"/></g>
+        </svg>
+        <figcaption>Q&amp;A time is up.</figcaption>
+      </figure>
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <rect class="s" x="7" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="22" cy="95" r="9"/><path d="M5 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="s" x="47" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="62" cy="95" r="9"/><path d="M45 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="c" x="87" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="102" cy="95" r="9"/><path d="M85 200V112q0-14 17-14t17 14V200z"/></g>
+          <g class="s"><circle cx="142" cy="95" r="9"/><path d="M125 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="s" x="167" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="182" cy="95" r="9"/><path d="M165 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="c" x="207" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="222" cy="95" r="9"/><path d="M205 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="s" x="247" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="262" cy="95" r="9"/><path d="M245 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="s" x="287" y="71" width="6" height="32" rx="3"/>
+          <g class="s"><circle cx="302" cy="95" r="9"/><path d="M285 200V112q0-14 17-14t17 14V200z"/></g>
+          <rect class="m" x="20" y="110" width="8" height="47" rx="4"/>
+          <g class="m"><circle cx="42" cy="145" r="13"/><path d="M17 200V170q0-21 25-21t25 21V200z"/></g>
+          <g class="m"><circle cx="101" cy="145" r="13"/><path d="M76 200V170q0-21 25-21t25 21V200z"/></g>
+          <rect class="m" x="138" y="110" width="8" height="47" rx="4"/>
+          <g class="m"><circle cx="160" cy="145" r="13"/><path d="M135 200V170q0-21 25-21t25 21V200z"/></g>
+          <rect class="c" x="232" y="110" width="8" height="47" rx="4"/>
+          <g class="m"><circle cx="219" cy="145" r="13"/><path d="M194 200V170q0-21 25-21t25 21V200z"/></g>
+          <rect class="m" x="291" y="110" width="8" height="47" rx="4"/>
+          <g class="m"><circle cx="278" cy="145" r="13"/><path d="M253 200V170q0-21 25-21t25 21V200z"/></g>
+          </svg>
+        <figcaption>Fifty hands. Time for three.</figcaption>
+      </figure>
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <g class="r"><circle cx="48" cy="120" r="14"/><path d="M20 200v-36q0-20 28-20t28 20v36z"/><circle cx="272" cy="120" r="14"/><path d="M244 200v-36q0-20 28-20t28 20v36z"/></g>
+          <circle class="t" cx="208" cy="50" r="30"/><circle class="t" cx="178" cy="92" r="8"/><circle class="t" cx="168" cy="110" r="5"/>
+          <text class="ct" x="208" y="63" text-anchor="middle" font-size="38">?</text>
+          <circle class="k" cx="150" cy="114" r="18"/>
+          <path class="k" d="M112 200v-40q0-24 38-24t38 24v40z"/>
+          <rect class="c" x="138" y="168" width="24" height="16" rx="3"/>
+        </svg>
+        <figcaption>The best questions stay unasked.</figcaption>
+      </figure>
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <g class="m"><circle cx="96" cy="128" r="16"/><path d="M62 200v-28q0-22 34-22t34 22v28z"/></g>
+          <g class="k"><circle cx="224" cy="128" r="16"/><path d="M190 200v-28q0-22 34-22t34 22v28z"/></g>
+          <g class="t"><rect x="66" y="90" width="60" height="16" rx="8"/><rect x="66" y="69" width="60" height="16" rx="8"/></g>
+          <g class="c"><rect x="194" y="90" width="60" height="16" rx="8"/><rect x="194" y="69" width="60" height="16" rx="8"/><rect x="194" y="48" width="60" height="16" rx="8"/><rect x="194" y="27" width="60" height="16" rx="8"/><rect x="194" y="6" width="60" height="16" rx="8"/></g>
+        </svg>
+        <figcaption>At seminars, men are 2.5&times; more likely to ask than women.<small>Carter et al., <a href="https://www.cam.ac.uk/research/news/women-much-less-likely-to-ask-questions-in-academic-seminars-than-men">PLOS ONE, 2018</a></small></figcaption>
+      </figure>
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <rect class="k" x="0" y="150" width="140" height="6" rx="3"/>
+          <g class="k"><circle cx="62" cy="64" r="15"/><path d="M42 150V104q0-22 20-22t20 22v46z"/></g>
+          <g class="s"><circle cx="196" cy="150" r="13"/><path d="M174 200v-16q0-16 22-16t22 16v16z"/><circle cx="270" cy="150" r="13"/><path d="M248 200v-16q0-16 22-16t22 16v16z"/></g>
+          <g class="o"><rect x="160" y="70" width="60" height="38" rx="14"/><rect x="236" y="54" width="60" height="38" rx="14"/></g>
+          <text class="mt" x="190" y="97" text-anchor="middle" font-size="24">?</text><text class="mt" x="266" y="81" text-anchor="middle" font-size="24">?</text>
+        </svg>
+        <figcaption>You never learn what they didn't get.</figcaption>
+      </figure>
+      <figure class="frame">
+        <svg class="pic" viewBox="0 0 320 200" aria-hidden="true">
+          <g class="seat"><rect x="20" y="92" width="36" height="30" rx="9"/><rect x="66" y="92" width="36" height="30" rx="9"/><rect x="112" y="92" width="36" height="30" rx="9"/><rect x="158" y="92" width="36" height="30" rx="9"/>
+            <rect x="20" y="144" width="36" height="30" rx="9"/><rect x="66" y="144" width="36" height="30" rx="9"/><rect x="112" y="144" width="36" height="30" rx="9"/><rect x="158" y="144" width="36" height="30" rx="9"/></g>
+          <rect class="t" x="236" y="40" width="64" height="134" rx="6"/>
+          <g class="m"><circle cx="276" cy="92" r="11"/><path d="M262 174v-50q0-18 14-18t14 18v50z"/></g>
+          <rect class="k" x="228" y="174" width="80" height="5" rx="2.5"/>
+        </svg>
+        <figcaption>The room empties. The connection ends.</figcaption>
+      </figure>
+    </div>
+    <div class="strip-ctl">
+      <button class="arrow" type="button" id="prev" aria-label="Previous picture" aria-controls="strip"><span aria-hidden="true">←</span></button>
+      <span class="count small muted" id="count" aria-live="polite">1 of 6</span>
+      <button class="arrow" type="button" id="next" aria-label="Next picture" aria-controls="strip"><span aria-hidden="true">→</span></button>
+    </div>
+  </section>
 
-  <h2 class="sec">Who it's for</h2>
-  <ul class="for">
-    <li><b>Conference speakers</b><span>Papers, keynotes, panels</span></li>
-    <li><b>Lecturers</b><span>Big rooms, quiet students</span></li>
-    <li><b>Researchers</b><span>Talks, defences, posters</span></li>
-    <li><b>Meetups and trainings</b><span>Mixed levels, many languages</span></li>
-    <li><b>Public meetings</b><span>Plans, consultations, town halls</span></li>
-  </ul>
+  <section class="turnover">
+    <h2 class="turn-h">Auto Q&amp;A keeps the conversation going.</h2>
+    <ul class="gains">
+      <li>
+        <div class="ui" aria-hidden="true"><div class="ui-box">What did the pilot cost?</div><div class="ui-switch"><i></i>Ask anonymously</div></div>
+        <h3>Everyone can ask</h3><p>From their phone, in their own words. With their name or without.</p>
+      </li>
+      <li>
+        <div class="ui" aria-hidden="true"><div class="f-slide in"><b>Pilot results</b><span>6 teams, 12 weeks</span><span class="hl on">Review time down 41%</span><small>Slide 7</small></div></div>
+        <h3>Answers in seconds</h3><p>From your slides and notes, with the exact line shown.</p>
+      </li>
+      <li>
+        <div class="ui" aria-hidden="true"><div class="f-card"><b>Does it work with GitLab?</b><span class="f-who">4 people asked</span></div></div>
+        <h3>The rest comes to you</h3><p>Reply when you can. Everyone who asked gets it.</p>
+      </li>
+      <li>
+        <div class="ui" aria-hidden="true"><div class="ui-box">¿Cuánto más rápidas fueron las revisiones?</div><div class="ui-note ui-gap">Un 41% más rápidas, en seis equipos piloto.</div></div>
+        <h3>In their own language</h3><p>People ask in the language they think in. Answers come back in it.</p>
+      </li>
+      <li>
+        <div class="ui" aria-hidden="true"><div class="f-reply in"><small>Maya replied</small>Yes, setup notes are on my site.<span class="f-connect">Connect with Maya</span></div></div>
+        <h3>People can reach you after</h3><p>Your LinkedIn, one tap away, long after the room empties.</p>
+      </li>
+      <li>
+        <div class="ui" aria-hidden="true"><div class="ui-note">“The demo made it click. More on cost, please.”<small>Anonymous feedback</small></div></div>
+        <h3>You learn what landed</h3><p>Honest feedback, and what the room wanted to know.</p>
+      </li>
+    </ul>
+    <p class="impact">Nobody leaves with a question. You leave knowing what they wanted to know.</p>
+    <p><a class="deeper" href="/how-it-works">See everything it does <span aria-hidden="true">→</span></a></p>
+  </section>
 
   <h2 class="sec">What it isn't</h2>
   <ul class="isnt">
@@ -43,16 +152,17 @@
 
   <h2 class="sec">Questions</h2>
   <div class="faq">
-    <details><summary>Does the audience need an account?</summary><p>No. They scan the code and ask. Only you, the speaker, have an account.</p></details>
-    <details><summary>Which files can I use?</summary><p>PowerPoint, PDF and Word, plus notes you type or say. Keynote and Google Slides: export as PowerPoint first. Your slides are shown as pictures in the answers.</p></details>
-    <details><summary>What does it read?</summary><p>The words on your slides, your speaker notes and your answers to a few setup questions. It doesn't read charts or photos, so say what a chart shows in your notes.</p></details>
-    <details><summary>Is it anonymous?</summary><p>Asking is. If someone sends a question to you, they choose whether to add their name, email or LinkedIn. Other people in the room never see those.</p></details>
-    <details><summary>What if an answer is wrong?</summary><p>Answers are automated and can be wrong; each one shows the slide it comes from so people can check. Try your talk as the audience before you present, and add a note where it slips.</p></details>
+    <details><summary>Does the audience need an account?</summary><p>No. They scan the code and ask. Only the speaker has an account.</p></details>
+    <details><summary>Which files can I use?</summary><p>PowerPoint, PDF and Word, plus notes you type or say. From Keynote or Google Slides, export as PowerPoint first.</p></details>
+    <details><summary>What does it read?</summary><p>The words on your slides, your speaker notes and your answers to a few setup questions. Not charts or photos, so say what a chart shows in your notes.</p></details>
+    <details><summary>Is it anonymous?</summary><p>Asking is. Sending a question to the speaker, people choose whether to add their name, email or LinkedIn. Others in the room never see those.</p></details>
+    <details><summary>What if an answer is wrong?</summary><p>Answers are automated and can be wrong; each shows the slide it comes from so people can check. Try your own code first and fix any answer that slips.</p></details>
     <details><summary>What does it cost?</summary><p>Nothing while we're testing. If that changes, you'll be told before anything is charged.</p></details>
   </div>
 
   <p class="end"><a class="btn big" href="/new">Start a talk</a></p>
-  <footer class="foot small muted"><span>Auto Q&amp;A</span><span><a href="/how-answers-work">How answers work</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span></footer>
+  <footer class="foot small muted"><span>Auto Q&amp;A</span><span><a href="/how-it-works">How it works</a> · <a href="/how-answers-work">How answers work</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span></footer>
 </div>
+<script type="module" src="/js/page-why.js"></script>
 </body>
 </html>

@@ -61,7 +61,7 @@ app.use(express.json({ limit: '200kb' }));
 
 // Page views, counted without cookies: a visitor is a one-way hash that changes every day.
 if (!db.salt) { db.salt = id(12); save(); }
-const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy'], [/^\/terms$/, 'terms'], [/^\/how-answers-work$/, 'how'], [/^\/why$/, 'why']];
+const PAGES = [[/^\/$/, 'home'], [/^\/signup$/, 'signup'], [/^\/signin$/, 'signin'], [/^\/talks$/, 'talks'], [/^\/new$/, 'setup'], [/^\/s\//, 'speaker'], [/^\/present\//, 'present'], [/^\/j\//, 'audience'], [/^\/privacy$/, 'privacy'], [/^\/terms$/, 'terms'], [/^\/how-answers-work$/, 'how'], [/^\/why$/, 'why'], [/^\/how-it-works$/, 'howitworks']];
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.includes('/slide/')) {
     const hit = PAGES.find(([re]) => re.test(req.path));
@@ -799,7 +799,7 @@ tidyUp(); setInterval(tidyUp, 6 * 3_600_000).unref();
 app.get('/api/site', (req, res) => res.json({ contact: process.env.CONTACT_EMAIL || '', operator: process.env.OPERATOR_NAME || '', keepDetailsDays: KEEP_DETAILS_DAYS, keepCountsDays: KEEP_COUNTS_DAYS }));
 app.get('/sitemap.xml', (req, res) => {
   const base = baseUrl();
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/why', '/how-answers-work', '/privacy', '/terms'].map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/why', '/how-it-works', '/how-answers-work', '/privacy', '/terms'].map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
 });
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /s/\nDisallow: /j/\nDisallow: /present/\nDisallow: /api/\nDisallow: /admin\nDisallow: /talks\nDisallow: /new\n\nSitemap: ${baseUrl()}/sitemap.xml\n`));
 // A standard place for security researchers to find out how to report a problem.
@@ -815,6 +815,7 @@ app.get('/signin', page('account.html'));
 app.get('/talks', page('talks.html'));
 app.get('/terms', page('terms.html'));
 app.get('/why', page('why.html'));
+app.get('/how-it-works', page('how-it-works.html'));
 app.get('/how-answers-work', page('how-answers-work.html'));
 app.get('/s/:id', page('speaker.html'));
 app.get('/present/:id', page('present.html'));
