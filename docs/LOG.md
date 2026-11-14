@@ -1,5 +1,24 @@
 # Log (newest first)
 
+## 2026-11-14 (morning): the octopus, private questions, slides on the phone, pictures read (Vamsi's requests)
+Auto Q&A has a new face: an octopus whose glasses are a Q and an A. It is the logo, it swims around the public pages, and it sits in every QR code.
+Questions sent to the speaker are now private, the audience can flick through the deck on their phone, and the answers now also use what the pictures and charts on the slides show.
+- Logo and mascot: `public/js/octopus.js` (one drawing; `logo.svg` is generated from it), `mascot.js` (blinks, swims down the empty left margin and home; tap sends it home; off under reduce motion). Tagline: "Elevating the Q&A experience."
+- QR: octopus in the middle of every style; new "Octopus" style where it holds on to the code with two arms as half a frame. Outside the white card every style is transparent. Scan-tested (jsQR): 6 styles × 4 addresses × 3 sizes × 2 backgrounds, 0 misses. Wording: "Put your QR code on a slide".
+- Home: the phone screenshot is replaced by a picture of the problem (`home-worry.js`): three people, four worries, then briefly the fix. Film people have necks, ears, collars, skin tones and five hairstyles; the circles over heads are gone (phones go up instead). The example slide looks like a company slide (title band, chart). Step texts rewritten.
+- Light mode: darker page, stronger text/lines/outlines, soft shadows on cards. Dark mode: deeper page, surfaces catch light on their top edge, cobalt text lightened. axe: 0 issues on 11 pages in both themes.
+- Pictures as context: `seeSlides` (lib/ai.js) shows each slide picture to the model once at "prepare" (5 per request, max 80 slides) and keeps one or two sentences on what charts/photos/diagrams show (`unit.visual`), read with the slide's text for every answer. Slides with no text are kept now. Needs the real model, so it is not covered by `npm test`: the first real deck uploaded is the test.
+- Highlight: labels with curly quotes or no quote are understood; a short quote inside a long line matches; with no quote at all the line the answer rests on is found from the answer (`findLoose`).
+- Audience: "Slides" button → swipeable deck with "Ask about this slide"; a slide in the chat folds to its label; the yellow card has a close (×); feedback has a bigger box, "Please keep it constructive", and an optional name.
+- Privacy: a question sent to the speaker is shown to nobody else in the room ("Me too" is gone with it). Privacy page, How it works and How answers work say so.
+- Speaker: "Context" list with + (file, note) and − (remove) at any time, without closing the talk; the role line under "Your profile" is gone; "How it went" is three tiles, a chart, and two short lists.
+
+**Tested.** `npm test` 31/31 (new: private questions, deck, named feedback, late context, highlight without a quote). Browser walk-through at 1280 and iPhone 14 of all of the above, no console errors.
+
+### For Vamsi
+- "Me too" was removed because questions are now private. Say if you want a public wall as an option the speaker can switch on.
+- Reading pictures costs one extra model request per five slides, once per deck.
+
 ## 2026-11-14 (night): Security
 Tonight's check went through everything added on 14 November (speaker test seats and fixes, audience feedback, the visit counter and the founder portal) and found no way for a stranger to read or change someone else's talk.
 Three small things were fixed: a speaker's fixes now have a size limit and can't switch off the "automated" label; fake page visits can no longer push real question records out of the numbers; the legal pages and privacy notice were tidied. Nothing risky is left open, but one sign-in hardening for the founder portal is waiting for a pull request.

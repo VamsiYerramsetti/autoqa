@@ -1,7 +1,8 @@
 // The Auto Q&A code and slides, drawn in the browser: the moving (GIF) code, and ready-made 1920x1080 slides
-// that carry whichever code style the speaker picked. Used by the "Put it on a slide" chooser (qrchooser.js).
+// that carry whichever code style the speaker picked. Used by the "Put your QR code on a slide" chooser (qrchooser.js).
 // The still code styles themselves are drawn on the server (lib/qr.js) and fetched as SVG.
 import { Gif } from '/js/gif.js';
+import { octopusSvg } from '/js/octopus.js';
 
 const C = { paper: '#fbfbf8', ink: '#1d1b2e', cobalt: '#2f3ced', yellow: '#ffc83d', muted: '#6b6a7b', line: '#e2e1ea' };
 const D = "'Bricolage Grotesque', 'Avenir Next', system-ui, sans-serif";
@@ -11,6 +12,7 @@ const B = "'Instrument Sans', 'Helvetica Neue', system-ui, sans-serif";
 // so a slide shows them as they are instead of on a white card.
 export const CODE_STYLES = [
   { id: 'autoqa', name: 'Auto Q&A', note: 'Cobalt dots' },
+  { id: 'octopus', name: 'Octopus', note: 'Holding on to your code', framed: true },
   { id: 'ink', name: 'Ink', note: 'Most contrast' },
   { id: 'frame', name: 'Ask frame', note: '"Scan to ask"', framed: true },
   { id: 'card', name: 'Cobalt card', note: '"Ask me anything"', framed: true },
@@ -48,17 +50,13 @@ const PALETTE = ['#ffffff', C.ink, C.cobalt, mix(C.cobalt, C.ink, 1 / 3), mix(C.
   mix(C.cobalt, '#ffffff', 0.12), mix(C.ink, C.cobalt, 0.5)]
   .map((c) => (c.startsWith('#') ? hex(c) : c.match(/\d+/g).map(Number)));
 
-const LOGO_RING = new Path2D('M26 15a11 11 0 1 1-22 0a11 11 0 1 1 22 0');
-const LOGO_A = new Path2D('M9.5 24.5 15 4l13 25.6'), LOGO_BAR = new Path2D('M12.2 16.6h6.8');
-
-// The Q+A mark centred at cx,cy, sized to a disc of radius r (same proportions as lib/qr.js).
+// The octopus mark, drawn from the same picture as the logo. Loaded once; it is there long before a GIF is made.
+const OCTO = new Image();
+OCTO.src = 'data:image/svg+xml,' + encodeURIComponent(octopusSvg({ size: 256 }));
+// Centred at cx,cy, sized to a white disc of radius r (same proportions as lib/qr.js).
 function logo(g, cx, cy, r) {
-  const s = (r * 0.78) / 13;
-  g.save(); g.translate(cx - 15.6 * s, cy - 16 * s); g.scale(s, s);
-  g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.cobalt; g.lineWidth = 3.6;
-  g.stroke(LOGO_RING); g.stroke(LOGO_A);
-  g.strokeStyle = C.yellow; g.lineWidth = 3.2; g.stroke(LOGO_BAR);
-  g.restore();
+  const size = r * 1.72;
+  if (OCTO.complete && OCTO.naturalWidth) g.drawImage(OCTO, cx - size / 2, cy - size / 2 + r * 0.04, size, size);
 }
 
 // Draws the code (quiet margin included) in the Auto Q&A look at x,y, `side` px wide, at moment t (0..1).

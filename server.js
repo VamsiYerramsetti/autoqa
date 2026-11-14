@@ -8,11 +8,11 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db, { save, flush, id, joinCode, track, durable, putBlob, getBlob, dropBlobs, hashPassword, checkPassword } from './lib/store.js';
-import { parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
-import { svgLines, findLines } from './lib/slidetext.js';
+import { NO_TEXT, parseFile, ACCEPTED, labelOf, tagSource, tagAll } from './lib/parse.js';
+import { svgLines, findLines, findLoose } from './lib/slidetext.js';
 import { renderPptx } from './lib/pptx-render.js';
 import { qrSvg, qrJson, QR_STYLES } from './lib/qr.js';
-import { prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError, toTalkLanguage } from './lib/ai.js';
+import { seeSlides, prepare, answer, nextQuestion, hasKey, overlap, lastModelError, noteError, toTalkLanguage } from './lib/ai.js';
 
 const PORT = +process.env.PORT || 4321;
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -223,10 +223,11 @@ const talkEscalations = (talk) => db.escalations.filter((e) => e.talkId === talk
 // Everyone who wants an answer to a question for the speaker: those who sent it, and those who tapped "Me too".
 const demand = (e) => e.askers.length + (e.backers || []).length;
 
-// The questions still waiting for the speaker that the room may see and back with "Me too".
-// Only ones sent since the room could see them (shared): older ones were sent without that being said.
+// This person's own questions that are still waiting for the speaker. A question sent to the speaker is between
+// the asker and the speaker: nobody else in the room is shown it (Vamsi, 14 Nov; before that the room could see
+// and back waiting questions).
 function waitingList(talk, asker) {
-  return talkEscalations(talk).filter((e) => e.status === 'open' && e.shared)
+  return talkEscalations(talk).filter((e) => e.status === 'open' && (e.askers.includes(asker.id) || (e.backers || []).includes(asker.id)))
     .sort((a, b) => demand(b) - demand(a) || b.createdAt - a.createdAt)
     .map((e) => ({ id: e.id, question: e.translated || e.question, people: demand(e),
       mine: e.askers.includes(asker.id), backed: (e.backers || []).includes(asker.id) }));
@@ -423,7 +424,8 @@ app.post('/api/talks/:id/files', ownTalkFirst, upload.array('files'), async (req
     }
   }
   // A file that couldn't be read changes nothing: a talk that is already open stays open.
-  if (talk.sources.length !== before) talk.status = 'draft';
+  // New material during setup goes back to the questions step; a talk that is already open stays open.
+  if (talk.sources.length !== before && talk.status !== 'ready') talk.status = 'draft';
   save();
   res.json({ ...speakerView(talk), problems });
 });
@@ -497,10 +499,46 @@ app.delete('/api/talks/:id/files/:sid', async (req, res) => {
   save(); res.json(speakerView(talk));
 });
 
+// Look at the slide pictures (once each) and keep what they show with the slide, for the answers. At most 80
+// slides a talk; five pictures per request to the model, three requests at a time.
+const seeing = new Map();
+function seeTalk(talk) {
+  if (seeing.has(talk.id)) return seeing.get(talk.id);
+  const job = (async () => {
+    const todo = [];
+    let done = talk.sources.reduce((n, s) => n + s.units.filter((u) => u.seen).length, 0);
+    for (const s of talk.sources) for (const u of s.units) {
+      if (u.seen || !(s.images || []).includes(u.n) || done + todo.length >= 80) continue;
+      todo.push({ s, u });
+    }
+    const batches = [];
+    for (let i = 0; i < todo.length; i += 5) batches.push(todo.slice(i, i + 5));
+    const run = async (batch) => {
+      const slides = [];
+      for (const { s, u } of batch) { const jpeg = await getBlob(slideKey(talk, s.id, u.n)); if (jpeg && jpeg.length > 2000 && jpeg.length < 3_000_000) slides.push({ label: labelOf(s, u), text: u.text === NO_TEXT ? '' : u.text, jpeg, u }); }
+      const out = await seeSlides(slides);
+      out.forEach((o, i) => { slides[i].u.seen = true; if (o.visual) slides[i].u.visual = o.visual; if (o.usage) track('model_call', talk.id, { kind: 'see', ...o.usage }); });
+    };
+    for (let i = 0; i < batches.length; i += 3) await Promise.all(batches.slice(i, i + 3).map(run));
+    if (todo.length) save();
+  })().catch((e) => console.error('seeing slides failed:', e.message)).finally(() => seeing.delete(talk.id));
+  seeing.set(talk.id, job);
+  return job;
+}
+// Called by the talk page after pictures of newly added material have arrived.
+app.post('/api/talks/:id/see', (req, res) => {
+  const talk = speakerTalk(req, res); if (!talk) return;
+  if (over('see', talk.id, 6, 3_600_000)) return fail(res, 429, 'Try again later.');
+  seeTalk(talk); res.json({ ok: true });
+});
+
 app.post('/api/talks/:id/prepare', async (req, res) => {
   const talk = speakerTalk(req, res); if (!talk) return;
   if (!talk.sources.length) return fail(res, 400, 'Add your slides first.');
   try {
+    // First look at the pictures, so the summary and the questions know what the charts and photos show.
+    // A long deck carries on in the background after half a minute; answers pick the rest up as it lands.
+    await Promise.race([seeTalk(talk), new Promise((r) => setTimeout(r, 30000))]);
     const prep = await prepare(talk);
     talk.summary = prep.summary;
     // The questions for the speaker now come one at a time from /interview; keep any real answers already given.
@@ -596,7 +634,7 @@ app.get('/api/talks/:id/inbox', (req, res) => {
       feedback: feedback.length,
     },
     trend: trendOf(mine, escalations),
-    feedback: feedback.reverse().map((m) => ({ id: m.id, text: m.text, createdAt: m.createdAt })),
+    feedback: feedback.reverse().map((m) => ({ id: m.id, text: m.text, from: m.from || '', createdAt: m.createdAt })),
     top: [...tally.values()].sort((a, b) => b.n - a.n).slice(0, 5),
     seats: askers.map((a) => (waiting.has(a.id) ? 'waiting' : heard.has(a.id) ? 'replied' : asked.has(a.id) ? 'answered' : 'here')),
     items: escalations.sort((a, b) => b.createdAt - a.createdAt).map((e) => ({
@@ -701,7 +739,7 @@ app.get('/api/join/:code', (req, res) => {
   });
 });
 
-const publicMessage = (m) => ({ id: m.id, role: m.role, text: m.text, about: m.about, replyTo: m.replyTo, handoff: m.handoff, alsoAnswered: m.alsoAnswered, sent: m.sent, unhappy: m.unhappy, missing: m.missing, fixed: m.fixed, createdAt: m.createdAt });
+const publicMessage = (m) => ({ id: m.id, role: m.role, text: m.text, about: m.about, replyTo: m.replyTo, handoff: m.handoff, alsoAnswered: m.alsoAnswered, sent: m.sent, unhappy: m.unhappy, missing: m.missing, fixed: m.fixed, from: m.role === 'feedback' ? m.from : undefined, createdAt: m.createdAt });
 
 app.get('/api/thread', (req, res) => {
   const { asker, talk } = askerFrom(req.get('x-token'));
@@ -723,11 +761,27 @@ app.post('/api/metoo', (req, res) => {
 });
 
 // What a "Slide 4" reference shows: the real slide picture when we have one, otherwise its text laid out as a slide.
+// The whole deck, for the audience's slide viewer: every slide in order, with its picture when there is one.
+app.get('/api/deck', (req, res) => {
+  const { talk } = askerFrom(req.get('x-token'));
+  if (!talk) return fail(res, 404, 'Scan the code again to rejoin.');
+  if (tagAll(talk)) save();
+  const slides = [];
+  for (const s of talk.sources) for (const u of s.units) {
+    if (!/^(Slide|Page) /.test(u.label) || slides.length >= 300) continue;
+    const lines = u.text.split('\n\nSpeaker notes:')[0].split('\n').map((l) => l.replace(/^[•\-–\s]+/, '').trim()).filter(Boolean);
+    slides.push({ label: labelOf(s, u), image: [...(s.images || []), ...(s.drawn || [])].includes(u.n) ? `/j/${talk.code}/slide/${s.id}/${u.n}` : null,
+      title: lines[0]?.slice(0, 120) || u.label, lines: lines.slice(1, 7).map((l) => l.slice(0, 160)) });
+  }
+  res.json({ slides });
+});
+
 app.get('/api/source', (req, res) => {
   const { talk } = askerFrom(req.get('x-token'));
   if (!talk) return fail(res, 404, 'Scan the code again to rejoin.');
   const want = String(req.query.label).replace(/\s+/g, ' ').trim().toLowerCase();
   const quote = String(req.query.quote || '').slice(0, 300); // the words the answer rests on, to mark on the slide
+  const hint = quote ? '' : String(req.query.hint || '').slice(0, 400); // no quote given: the answer itself, to find its line
   if (tagAll(talk)) save();
   for (const s of talk.sources) {
     const u = s.units.find((x) => labelOf(s, x).toLowerCase() === want);
@@ -739,12 +793,14 @@ app.get('/api/source', (req, res) => {
     let marks = [], mark = [];
     if (quote && image && u.boxes?.length) marks = findLines(u.boxes.map((b) => b.t), quote).map((i) => { const { x, y, w, h } = u.boxes[i]; return { x, y, w, h }; });
     else if (quote) mark = findLines([lines[0] || '', ...shown], quote).map((i) => i - 1);
+    else if (hint && image && u.boxes?.length) marks = findLoose(u.boxes.map((b) => b.t), hint).map((i) => { const { x, y, w, h } = u.boxes[i]; return { x, y, w, h }; });
+    else if (hint) mark = findLoose([lines[0] || '', ...shown], hint).map((i) => i - 1);
     return res.json({ label: labelOf(s, u), image, title: lines[0]?.slice(0, 120) || u.label, lines: shown, marks, mark });
   }
   fail(res, 404, 'Not found.');
 });
 
-const CLIENT_EVENTS = new Set(['slide_opened', 'connect_tapped', 'suggestion_tapped', 'email_tapped', 'website_tapped', 'profile_opened', 'feedback_opened']);
+const CLIENT_EVENTS = new Set(['slide_opened', 'connect_tapped', 'suggestion_tapped', 'email_tapped', 'website_tapped', 'profile_opened', 'feedback_opened', 'deck_opened']);
 app.post('/api/event', (req, res) => {
   const { talk } = askerFrom(req.get('x-token'));
   if (talk && CLIENT_EVENTS.has(req.body.name)) track(req.body.name, talk.id);
@@ -826,7 +882,9 @@ app.post('/api/feedback', (req, res) => {
   if (body.length < 3) return fail(res, 400, 'Write a little more first.');
   if (over('feedback', asker.id, 5)) return fail(res, 429, 'Too much at once. Give it a minute.');
   if (db.messages.filter((m) => m.askerId === asker.id && m.role === 'feedback').length >= 10) return fail(res, 429, "That's plenty of feedback. Thank you!");
-  const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'feedback', text: body, createdAt: Date.now() };
+  // Without a name unless the person chose to add one.
+  const from = text(req.body.name, 80);
+  const msg = { id: id(8), talkId: talk.id, askerId: asker.id, role: 'feedback', text: body, from: from || undefined, createdAt: Date.now() };
   db.messages.push(msg); save();
   track('feedback_sent', talk.id, asker.test ? { test: true } : {});
   res.json({ message: publicMessage(msg) });
@@ -858,8 +916,7 @@ app.post('/api/handoff', (req, res) => {
       if (twin.backers) twin.backers = twin.backers.filter((a) => a !== asker.id); // sent it themselves now
       msg.escalationId = twin.id;
     } else {
-      // shared: the form now says others here see the question (never the name), so the room can back it.
-      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, typed: typedBefore(msg).slice(0, 600) || undefined, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], shared: true, status: 'open', createdAt: Date.now() };
+      const e = { id: id(8), talkId: talk.id, question: msg.handoff, translated: msg.handoffForSpeaker, typed: typedBefore(msg).slice(0, 600) || undefined, askers: [asker.id], anonymous: anonymous ? [asker.id] : [], backers: [], status: 'open', createdAt: Date.now() };
       db.escalations.push(e); msg.escalationId = e.id;
       // No line in the talk's language yet: add one in the background if the question needs it (lib/ai.js says why).
       if (!e.translated) toTalkLanguage(talk, e.question).then((t) => { if (t) { e.translated = t; save(); } });

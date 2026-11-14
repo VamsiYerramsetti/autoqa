@@ -77,11 +77,11 @@ view.append(el('div', { class: 'desk' },
       waitingBox),
     el('div', { class: 'actions' },
       el('a', { class: 'btn', href: '/present/' + id, target: '_blank' }, 'Show QR code'),
-      el('button', { class: 'btn quiet', type: 'button', onclick: share }, 'Put it on a slide'),
+      el('button', { class: 'btn quiet', type: 'button', onclick: share }, 'Put QR code on a slide'),
       el('button', { class: 'btn quiet', onclick: phone }, 'Open on my phone'),
       el('a', { class: 'btn quiet', href: '/j/' + talk.code, target: '_blank' }, 'Test it yourself')),
     summary,
-    el('div', { class: 'connect' }, el('button', { class: 'btn quiet', type: 'button', onclick: editProfile }, 'Your profile'), profileLine),
+    el('div', { class: 'connect' }, el('button', { class: 'btn quiet', type: 'button', onclick: editProfile }, 'Your profile')),
     !talk.fullAnswers && el('p', { class: 'note' }, 'Practice mode: answers are simple word matches. Add your key to the .env file for real answers.'),
   ),
   el('div', { class: 'main' }, el('section', { class: 'inbox' }, el('h2', {}, 'Questions for you'), cards), feedbackBox, knows),
@@ -168,26 +168,32 @@ function drawTrends(data) {
   if (!t) return;
   const peak = Math.max(1, ...t.buckets.map((b) => b.asked));
   const chart = t.buckets.length > 1; // one bar is not a trend: then only the facts
+  const tile = (big, small, c) => el('div', { class: 'tile', style: c ? `--c:${c}` : '' }, el('b', {}, big), el('span', {}, small));
   summary.replaceChildren(...[
     el('h3', {}, 'How it went'),
-    chart && el('div', { class: 'spark', role: 'img', 'aria-label': `Questions every ${t.step} minutes` },
-      t.buckets.map((b) => el('div', { title: `${clock(b.t)}: ${b.asked} asked, ${b.straight} answered straight away` },
-        el('i', { class: 'need', style: `height:${((b.asked - Math.min(b.straight, b.asked)) / peak) * 100}%` }),
-        el('i', { style: `height:${(Math.min(b.straight, b.asked) / peak) * 100}%` })))),
-    chart && el('div', { class: 'axis small muted' }, el('span', {}, clock(t.buckets[0].t)), el('span', {}, `every ${t.step} min`), el('span', {}, clock(t.buckets.at(-1).t))),
-    chart && el('div', { class: 'key' }, el('b', { style: '--c:var(--cobalt)' }, 'Answered straight away'), el('b', { style: '--c:var(--signal)' }, 'Needed you')),
-    el('ul', { class: 'facts' },
-      s.straightAway != null && el('li', {}, el('b', {}, s.straightAway + '%'), ' answered straight away'),
-      data.items.length > 0 && el('li', {}, el('b', {}, String(t.replied)), ` of ${data.items.length} sent to you replied`),
-      t.slides[0] && el('li', {}, 'Most shown: ', el('b', {}, t.slides[0].label), t.slides[0].n > 1 ? ` (${t.slides[0].n}×)` : ''),
-      t.notSatisfied > 0 && el('li', {}, el('b', {}, String(t.notSatisfied)), ' wanted you instead of the answer'),
-      s.feedback > 0 && el('li', {}, el('b', {}, String(s.feedback)), ' left feedback')),
-    data.top.length > 0 && el('div', {}, el('span', { class: 'small muted' }, 'Asked most'),
-      el('ol', {}, data.top.slice(0, 3).map((q) => el('li', {}, el('span', { class: 't' }, q.text, q.n > 1 && el('span', { class: 'n' }, ' ×' + q.n)))))),
+    // The three numbers that matter, side by side.
+    el('div', { class: 'tiles' },
+      tile(s.straightAway != null ? s.straightAway + '%' : '–', 'answered straight away', 'var(--cobalt)'),
+      tile(data.items.length ? `${t.replied}/${data.items.length}` : '0', 'sent to you, replied', 'var(--signal)'),
+      tile(String(s.feedback || 0), 'left feedback')),
+    // When the questions came.
+    chart && el('div', { class: 'went-block' }, el('span', { class: 'went-label' }, `Questions over time, every ${t.step} min`),
+      el('div', { class: 'spark', role: 'img', 'aria-label': `Questions every ${t.step} minutes` },
+        t.buckets.map((b) => el('div', { title: `${clock(b.t)}: ${b.asked} asked, ${b.straight} answered straight away` },
+          el('i', { class: 'need', style: `height:${((b.asked - Math.min(b.straight, b.asked)) / peak) * 100}%` }),
+          el('i', { style: `height:${(Math.min(b.straight, b.asked) / peak) * 100}%` })))),
+      el('div', { class: 'axis small muted' }, el('span', {}, clock(t.buckets[0].t)), el('span', {}, clock(t.buckets.at(-1).t))),
+      el('div', { class: 'key' }, el('b', { style: '--c:var(--cobalt)' }, 'Answered straight away'), el('b', { style: '--c:var(--signal)' }, 'Needed you'))),
+    data.top.length > 0 && el('div', { class: 'went-block' }, el('span', { class: 'went-label' }, 'Asked most'),
+      el('ol', {}, data.top.slice(0, 3).map((q) => el('li', {}, el('span', { class: 't' }, q.text), q.n > 1 && el('span', { class: 'n' }, '×' + q.n))))),
+    (t.slides[0] || t.notSatisfied > 0) && el('div', { class: 'went-block' }, el('span', { class: 'went-label' }, 'Also'),
+      el('ul', { class: 'facts' },
+        t.slides[0] && el('li', {}, 'Most shown: ', el('b', {}, t.slides[0].label), t.slides[0].n > 1 ? ` (${t.slides[0].n}×)` : ''),
+        t.notSatisfied > 0 && el('li', {}, el('b', {}, String(t.notSatisfied)), ' wanted you instead of the answer'))),
   ].filter(Boolean));
 }
 
-/* ---------- Feedback from the audience (anonymous) ---------- */
+/* ---------- Feedback from the audience (anonymous unless they added their name) ---------- */
 const ago = (t) => { const m = Math.round((Date.now() - t) / 60e3); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
 function drawFeedback(list) {
   const sig = list.map((f) => f.id).join();
@@ -195,28 +201,62 @@ function drawFeedback(list) {
   lastFb = sig;
   feedbackBox.hidden = !list.length;
   feedbackBox.replaceChildren(el('h2', {}, 'Feedback', el('span', { class: 'count-pill' }, String(list.length))),
-    el('div', { class: 'fbs' }, list.map((f) => el('blockquote', {}, f.text, el('cite', {}, ago(f.createdAt))))));
+    el('div', { class: 'fbs' }, list.map((f) => el('blockquote', {}, f.text, el('cite', {}, (f.from ? f.from + ' · ' : '') + ago(f.createdAt))))));
 }
 
-/* ---------- Teach it: fixes made while testing, and extra notes ---------- */
+/* ---------- Context: everything the answers draw on. Add more with +, take something out with − ---------- */
+const picker = el('input', { type: 'file', multiple: true, hidden: true, accept: '.pdf,.pptx,.key,.ppt,.odp,.docx,.txt,.md' });
+document.body.append(picker);
+let ctxNote = '';
 function drawKnows() {
   const fixes = talk.corrections || [];
-  const box = el('textarea', { placeholder: 'Anything else it should know: a result, a price, a link, how to get in touch.', 'aria-label': 'Add a note' });
-  const add = el('button', { class: 'btn quiet', type: 'button', onclick: async () => {
-    if (!box.value.trim()) return box.focus();
-    add.disabled = true;
-    try { await api(`/api/talks/${id}/notes`, { method: 'POST', headers: auth, body: { text: box.value } }); box.value = ''; add.textContent = 'Added'; setTimeout(() => { add.textContent = 'Add'; add.disabled = false; }, 1500); }
-    catch (x) { add.disabled = false; box.setCustomValidity(x.message); box.reportValidity(); }
-  } }, 'Add');
+  const say = el('p', { class: 'small', role: 'status' }, ctxNote);
+  const minus = (label, fn) => el('button', { class: 'pm minus', type: 'button', 'aria-label': label, title: label, onclick: fn }, '−');
+  const noteBox = el('textarea', { placeholder: 'A result, a price, a link, how to get in touch…', 'aria-label': 'A note to add' });
+  const noteForm = el('div', { class: 'addnote', hidden: true }, noteBox, el('button', { class: 'btn quiet', type: 'button', onclick: async () => {
+    if (!noteBox.value.trim()) return noteBox.focus();
+    try { talk = await api(`/api/talks/${id}/notes`, { method: 'POST', headers: auth, body: { text: noteBox.value } }); ctxNote = 'Note added.'; drawKnows(); }
+    catch (x) { say.textContent = x.message; }
+  } }, 'Add'));
   knows.replaceChildren(...[
-    el('h2', {}, 'Teach it'),
-    el('p', { class: 'small muted' }, 'Test it yourself. When an answer is wrong, tap "Fix this answer" under it. Your fix is used for everyone from then on.'),
+    el('div', { class: 'ctx-head' }, el('h2', {}, 'Context'),
+      el('button', { class: 'pm plus', type: 'button', 'aria-label': 'Add a file', title: 'Add a file', onclick: () => picker.click() }, '+')),
+    el('p', { class: 'small muted' }, 'Everything the answers draw on. Add slides, papers or notes at any time, or take something out.'),
+    el('ul', { class: 'taught ctx' }, talk.sources.map((src) => el('li', {},
+      el('div', {}, el('b', {}, src.name), el('p', {}, src.kind === 'Notes' ? 'A note' : `${src.count} ${src.kind.toLowerCase()}${src.count === 1 ? '' : 's'}`)),
+      minus(`Remove ${src.name}`, async () => {
+        if (talk.sources.length === 1) { say.textContent = 'Keep at least one thing: the answers need something to draw on.'; return; }
+        talk = await api(`/api/talks/${id}/files/${src.id}`, { method: 'DELETE', headers: auth }); ctxNote = `Removed ${src.name}.`; drawKnows();
+      })))),
+    el('div', { class: 'ctx-add' },
+      el('button', { class: 'btn quiet', type: 'button', onclick: () => picker.click() }, '+ File'),
+      el('button', { class: 'btn quiet', type: 'button', onclick: () => { noteForm.hidden = false; noteBox.focus(); } }, '+ Note')),
+    noteForm, say,
+    fixes.length > 0 && el('h3', { class: 'ctx-sub' }, 'Your fixes'),
     fixes.length > 0 && el('ul', { class: 'taught' }, fixes.map((c) => el('li', {},
       el('div', {}, el('b', {}, c.q), el('p', {}, c.fix)),
-      el('button', { class: 'x', type: 'button', 'aria-label': 'Remove this fix', onclick: async () => { talk = await api(`/api/talks/${id}/corrections/${c.id}`, { method: 'DELETE', headers: auth }); drawKnows(); } }, '×')))),
-    el('div', { class: 'addnote' }, box, add),
+      minus('Remove this fix', async () => { talk = await api(`/api/talks/${id}/corrections/${c.id}`, { method: 'DELETE', headers: auth }); drawKnows(); })))),
+    el('p', { class: 'small muted' }, 'Wrong answer? Test it yourself and tap "Fix this answer" under it.'),
   ].filter(Boolean));
 }
+picker.addEventListener('change', async () => {
+  const { makePictures } = await import('/js/pictures.js');
+  for (const file of picker.files) {
+    if (file.size > 50 * 1024 * 1024) { ctxNote = `${file.name} is too big. The limit is 50 MB.`; drawKnows(); continue; }
+    ctxNote = `Reading ${file.name}…`; drawKnows();
+    const form = new FormData(); form.append('files', file);
+    try {
+      const before = new Set(talk.sources.map((x) => x.id));
+      const out = await api(`/api/talks/${id}/files`, { method: 'POST', headers: auth, form });
+      talk = out;
+      const added = talk.sources.find((x) => !before.has(x.id));
+      ctxNote = out.problems?.length ? out.problems.join(' ') : `Added ${file.name}.`;
+      drawKnows();
+      if (added) makePictures(id, auth, file, added).then(() => api(`/api/talks/${id}/see`, { method: 'POST', headers: auth }).catch(() => {}));
+    } catch (x) { ctxNote = x.message; drawKnows(); }
+  }
+  picker.value = '';
+});
 drawKnows();
 // Coming back from testing in another tab: show the new fixes.
 addEventListener('focus', async () => { try { talk = await api('/api/talks/' + id, { headers: auth }); if (!knows.contains(document.activeElement)) drawKnows(); } catch {} });

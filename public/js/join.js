@@ -46,9 +46,10 @@ const sendBtn = el('button', { class: 'send', 'aria-label': 'Ask', disabled: tru
 sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 18V4m0 0-6 6m6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const form = el('form', { onsubmit: (e) => { e.preventDefault(); submit(); } }, input, sendBtn);
 // Feedback for the speaker: the same box, switched by a button in the header. Anonymous, and a short nudge to be kind.
-const HINT = 'Anonymous. Kind and specific helps most.';
+const HINT = 'Please keep it constructive.';
 const hintText = el('span', {}, HINT);
-const hint = el('div', { class: 'hint', hidden: true }, el('div', {}, el('b', {}, `Feedback for ${speaker}`), hintText),
+const fbName = el('input', { class: 'fbname', maxlength: 80, autocomplete: 'name', placeholder: 'Your name (optional)', 'aria-label': 'Your name, optional. Leave empty to stay anonymous' });
+const hint = el('div', { class: 'hint', hidden: true }, el('div', {}, el('b', {}, `Feedback for ${speaker}`), hintText, fbName),
   el('button', { type: 'button', class: 'x', 'aria-label': 'Back to questions', onclick: () => setMode('ask') }, '×'));
 const fbBtn = el('button', { class: 'fbbtn', type: 'button', 'aria-pressed': 'false', onclick: () => setMode(mode === 'ask' ? 'feedback' : 'ask') }, 'Feedback');
 // A question being typed survives a reload or a dropped connection (this tab only).
@@ -56,12 +57,42 @@ const DRAFT = 'autoqa:draft:' + location.pathname;
 try { input.value = sessionStorage.getItem(DRAFT) || ''; sendBtn.disabled = !input.value.trim(); } catch {}
 input.addEventListener('input', () => { try { sessionStorage.setItem(DRAFT, input.value); } catch {} });
 
+// The whole deck, to flick through while listening: swipe sideways, or use the arrows. "Ask about this slide"
+// puts the slide in the question box. Opened from one small button in the header, so the chat stays uncluttered.
+const deckBtn = el('button', { class: 'fbbtn deckbtn', type: 'button', 'aria-haspopup': 'dialog', onclick: () => openDeck() }, 'Slides');
+let deckData = null;
+async function openDeck(startLabel) {
+  deckData ||= (await api('/api/deck', { headers: auth }).catch(() => ({ slides: [] }))).slides;
+  if (!deckData.length) { deckBtn.hidden = true; return; }
+  tell('deck_opened');
+  const count = el('span', { class: 'deck-count' });
+  const strip = el('div', { class: 'deck-strip', tabindex: '0', 'aria-label': 'Slides. Swipe or use the arrow keys' }, deckData.map((d) => el('figure', { class: 'deck-slide' },
+    d.image ? el('img', { src: d.image, alt: `${d.label}: ${d.title}`, loading: 'lazy' })
+      : el('div', { class: 'frame text ready' }, el('strong', {}, d.title), el('ul', {}, d.lines.map((l) => el('li', {}, el('span', {}, l))))))));
+  const at = () => Math.round(strip.scrollLeft / strip.clientWidth);
+  const go = (i) => strip.scrollTo({ left: Math.max(0, Math.min(deckData.length - 1, i)) * strip.clientWidth, behavior: 'smooth' });
+  const paint = () => { const i = at(); count.textContent = `${deckData[i]?.label || ''} · ${i + 1} of ${deckData.length}`; prev.disabled = i === 0; next.disabled = i === deckData.length - 1; };
+  const prev = el('button', { class: 'deck-nav', type: 'button', 'aria-label': 'Previous slide', onclick: () => go(at() - 1) }, '‹');
+  const next = el('button', { class: 'deck-nav', type: 'button', 'aria-label': 'Next slide', onclick: () => go(at() + 1) }, '›');
+  const close = () => { wrap.remove(); removeEventListener('keydown', keys); deckBtn.focus({ preventScroll: true }); };
+  const keys = (e) => { if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft') go(at() - 1); if (e.key === 'ArrowRight') go(at() + 1); };
+  const askIt = el('button', { class: 'btn', type: 'button', onclick: () => { const d = deckData[at()]; close(); setMode('ask'); input.value = `About ${d.label.toLowerCase()}: `; input.dispatchEvent(new Event('input')); input.focus(); } }, 'Ask about this slide');
+  const wrap = el('div', { class: 'deck-view', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Slides' },
+    el('div', { class: 'deck-top' }, count, el('button', { class: 'x', type: 'button', 'aria-label': 'Close slides', onclick: close }, '×')),
+    strip, el('div', { class: 'deck-foot' }, prev, askIt, next));
+  strip.addEventListener('scroll', () => requestAnimationFrame(paint), { passive: true });
+  addEventListener('keydown', keys);
+  document.body.append(wrap);
+  const start = Math.max(0, deckData.findIndex((d) => d.label === startLabel));
+  strip.scrollLeft = start * strip.clientWidth; paint(); strip.focus({ preventScroll: true });
+}
+
 // Questions others sent to the speaker that are still waiting. Yellow, like every raised hand in the product.
 const waitBtn = el('button', { class: 'waits', type: 'button', hidden: true, 'aria-haspopup': 'dialog', onclick: () => openWaiting() });
 let waiting = [];
 
 app.append(el('div', { class: 'ask' },
-  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, whoButton(), testing && el('span', { class: 'tag' }, 'Test seat'), waitBtn, testing ? null : fbBtn, window.themeSwitch?.())),
+  el('header', {}, el('h1', { title: talk.title }, talk.title), el('div', { class: 'by' }, whoButton(), testing && el('span', { class: 'tag' }, 'Test seat'), waitBtn, deckBtn, testing ? null : fbBtn, window.themeSwitch?.())),
   thread,
   el('div', { class: 'composer' }, suggest, hint, form)));
 thread.append(welcome);
@@ -70,7 +101,9 @@ reveal(welcomeTitle, 'Ask about this talk.', { gap: 70 });
 function setMode(m) {
   mode = m;
   fbBtn.setAttribute('aria-pressed', String(m === 'feedback'));
-  input.placeholder = m === 'ask' ? 'Your question' : 'Your feedback';
+  input.placeholder = m === 'ask' ? 'Your question' : 'Some constructive feedback';
+  form.classList.toggle('roomy', m === 'feedback');
+  if (m === 'feedback' && !fbName.value && me?.name) fbName.value = me.name;
   input.setAttribute('aria-label', input.placeholder);
   hint.hidden = m === 'ask';
   suggest.hidden = m !== 'ask' || !chips.length;
@@ -128,7 +161,8 @@ drawChips();
 // An answer that rests on a slide opens with it, and with the words on it that answer the question:
 // [Slide 4: "Peak runoff reduced by 62%"]. We show that slide with those words marked, then the answer.
 // General answers have no label and no slide.
-const LEAD = /^\s*\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n:"]{1,40})?)(?::\s*"([^"\]\n]*)"?)?\]\s*/;
+// The quoted words may come in straight or curly quotation marks, or none.
+const LEAD = /^\s*\[((?:Slide|Page|Part|Notes)(?: \d+)?(?: · [^\[\]\n:"“”]{1,40})?)(?::\s*["“”'‘]?([^\]\n]*?)["“”'’]?)?\]\s*/;
 function split(text) {
   const labels = [], quotes = [];
   let rest = text;
@@ -146,6 +180,7 @@ function split(text) {
 function fill(parts, text, final = false) {
   const { labels, quotes, rest } = split(text);
   labels.slice(0, 2).forEach((l, i) => slide(parts, l, false, quotes[i]));
+  if (final) labels.slice(0, 2).forEach((l, i) => { if (!quotes[i]) lateMark(parts, l, rest); });
   return parts.w.set(rest, final);
 }
 
@@ -166,6 +201,18 @@ function source(label, quote = '') {
   return sources.get(k);
 }
 
+// A slide named without quoted words: once the answer is complete, ask which line it rests on and mark that.
+async function lateMark(parts, label, answer) {
+  const src = await api('/api/source?label=' + encodeURIComponent(label) + '&hint=' + encodeURIComponent(answer.slice(0, 400)), { headers: auth }).catch(() => null);
+  const fig = [...parts.deck.children].find((f) => f.dataset.label === label), frame = fig?.firstElementChild;
+  if (!src || !frame || frame.querySelector('.marks, .hit')) return;
+  const put = () => {
+    if (src.marks?.length && frame.querySelector('img')) { frame.append(marks(src.marks, 200)); if (frame.src) frame.src.marks = src.marks; }
+    else if (src.mark?.length) { const rows = [frame.querySelector('strong'), ...frame.querySelectorAll('li')]; src.mark.forEach((i) => rows[i + 1]?.classList.add('hit')); }
+  };
+  if (frame.classList.contains('ready')) put(); else setTimeout(put, 1500);
+}
+
 // The words the answer rests on, marked on the slide picture: a soft cobalt marker that sweeps across them
 // once the slide is in focus. Boxes are fractions of the slide, so they sit right at any size.
 function marks(boxes, delay) {
@@ -180,7 +227,9 @@ function marks(boxes, delay) {
 function slide(parts, label, reveal, quote = '') {
   let fig = [...parts.deck.children].find((f) => f.dataset.label === label);
   if (!fig) {
-    fig = el('figure', { class: 'slide', 'data-label': label }, el('div', { class: 'frame' }), el('figcaption', {}, label));
+    // The label under a slide is a button: tap it to fold the slide away (and again to bring it back).
+    const cap = el('button', { class: 'cap', type: 'button', 'aria-expanded': 'true', title: 'Hide or show this slide', onclick: () => { const min = fig.classList.toggle('min'); cap.setAttribute('aria-expanded', String(!min)); } }, label);
+    fig = el('figure', { class: 'slide', 'data-label': label }, el('div', { class: 'frame' }), el('figcaption', {}, cap));
     parts.deck.append(fig);
     parts.deck.hidden = false;
     parts.deck.classList.toggle('many', parts.deck.children.length > 1);
@@ -365,7 +414,7 @@ function fix(parts, msg) {
 function feedbackNote(msg, quiet) {
   welcome.remove();
   const words = el('p', {});
-  const node = el('section', { class: 'turn fb' }, el('b', {}, `Feedback for ${speaker}`), words, el('span', { class: 'sentline' }, 'Sent, without your name.'));
+  const node = el('section', { class: 'turn fb' }, el('b', {}, `Feedback for ${speaker}`), words, el('span', { class: 'sentline' }, msg.from ? `Sent, from ${msg.from}.` : 'Sent, without your name.'));
   thread.append(node);
   writer(words, { instant: quiet }).set(msg.text, true);
   if (!quiet) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -375,7 +424,7 @@ async function feedback(text) {
   if (!text || busy) return;
   busy = true; sendBtn.disabled = true;
   try {
-    const { message } = await api('/api/feedback', { method: 'POST', headers: auth, body: { text } });
+    const { message } = await api('/api/feedback', { method: 'POST', headers: auth, body: { text, name: fbName.value.trim() } });
     input.value = ''; input.style.height = 'auto';
     try { sessionStorage.removeItem(DRAFT); } catch {}
     shown.add(message.id);
@@ -443,8 +492,8 @@ function handoff(node, msg, others = 0, open = false) {
   const paint = () => {
     details.hidden = anon.checked || known;
     fine.replaceChildren(anon.checked
-      ? `${speaker} sees the question, not who asked. The reply still shows up here. `
-      : known ? '' : `${speaker} gets your name, email and question, so they can reply. Others here see the question, never your name. `,
+      ? `Only ${speaker} sees the question, not who asked. The reply still shows up here. `
+      : known ? '' : `Only ${speaker} gets your name, email and question, so they can reply. Nobody else here sees it. `,
       (anon.checked || !known) ? el('a', { href: '/privacy', target: '_blank' }, 'Privacy') : '');
   };
   // A problem with a name or email no longer applies once the person asks without them.
@@ -476,6 +525,7 @@ function handoff(node, msg, others = 0, open = false) {
     }
   } },
     // Already answered in general terms: the card is an extra, not a dead end.
+    el('button', { class: 'x close', type: 'button', 'aria-label': 'Not now', title: 'Not now', onclick: () => foldCard() }, '×'),
     el('h3', {}, msg.alsoAnswered ? `Ask ${speaker} too?` : `Send this to ${speaker}?`),
     others > 0 && el('p', { class: 'others' }, others === 1 ? 'Someone here already asked this.' : `${others} people here already asked this.`),
     el('label', { class: 'anon' }, anon, el('span', {}, 'Ask anonymously')),

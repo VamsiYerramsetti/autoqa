@@ -44,7 +44,7 @@ await step('pages load', async () => {
   // The home page: the promise as the headline, a still of the real audience screen (marked automated).
   const home = await (await call('/', { raw: true })).text();
   assert.match(home, /<h1>Every question gets an answer\.<\/h1>/);
-  assert.match(home, /class="shot"/); assert.match(home, /automated/);
+  assert.match(home, /id="worry"/); assert.match(home, /automated/);
   // "How it works" in the top bar scrolls to the film and its numbered steps; step 4 leads to the full page.
   assert.match(home, /<nav class="nav">[^]*?href="#how">How it works</); assert.match(home, /id="how"/);
   assert.equal((home.match(/<li data-step="\d">/g) || []).length, 4, 'four numbered steps');
@@ -126,7 +126,7 @@ await step('PowerPoint slides become pictures; the audience code is the Auto Q&A
   const now = (await call(`/api/talks/${talk.id}`)).data.sources[0];
   assert.equal(now.images, 1); assert.ok(!now.drawn.includes(1));
   const code = await (await call(`/api/talks/${talk.id}/qr.svg`, { raw: true })).text();
-  assert.match(code, /#2f3ced/i, 'cobalt dots'); assert.match(code, /#ffc83d/i, 'the two-dot mark');
+  assert.match(code, /#2f3ced/i, 'cobalt dots'); assert.match(code, /#ffc83d/i, 'the octopus with its glasses in the middle');
   const own = await (await call(`/api/talks/${talk.id}/qr.svg?inbox=1&key=${encodeURIComponent(talk.key)}`, { raw: true })).text();
   assert.doesNotMatch(own, /#2f3ced/i, 'the private code looks different');
   // A Keynote file gets a one-step way out instead of a dead end.
@@ -271,21 +271,22 @@ await step('a question the slides cannot answer is handed to the speaker, merged
   const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
   assert.equal(inbox.items.length, 1); assert.equal(inbox.items[0].people.length, 2); assert.equal(inbox.stats.waiting, 1);
 });
-await step('the room sees the waiting question and can back it with "Me too", no name needed', async () => {
+await step('a question sent to the speaker is private: nobody else in the room is shown it', async () => {
   const mine = jar; jar = '';
   seat4 = (await call('/api/join/' + talk.code)).data;
-  assert.equal(seat4.waiting.length, 1); const w = seat4.waiting[0]; w0 = w.question;
-  assert.match(w.question, /slop|tile|pitch/i); assert.equal(w.people, 2); assert.equal(w.mine, false);
-  assert.ok(!JSON.stringify(seat4.waiting).includes('Jonas'), 'names never shown to the room');
-  const h = { 'x-token': seat4.token };
-  assert.equal((await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id } })).data.waiting[0].people, 3);
-  assert.equal((await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id, on: false } })).data.waiting[0].people, 2);
-  const on = (await call('/api/metoo', { method: 'POST', headers: h, body: { id: w.id } })).data.waiting[0];
-  assert.equal(on.backed, true);
-  assert.equal((await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.waiting[0].mine, true);
+  assert.equal(seat4.waiting.length, 0, 'a stranger in the room sees no waiting questions');
+  assert.ok(!JSON.stringify(seat4).match(/slop|tile|Jonas/i), 'neither the question nor the name');
+  const own = (await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.waiting;
+  assert.equal(own.length, 1); assert.equal(own[0].mine, true); w0 = own[0].question;
+  // And nobody can back a question they were never shown.
+  assert.equal((await call('/api/metoo', { method: 'POST', headers: { 'x-token': seat4.token }, body: { id: own[0].id } })).status, 404);
+  // The deck is there to flick through.
+  const deck = (await call('/api/deck', { headers: { 'x-token': seat4.token } })).data.slides;
+  assert.equal(deck.length, 6); assert.match(deck[3].title, /Pilot results/); assert.ok(deck[3].image);
+  assert.equal((await call('/api/deck')).status, 404);
   jar = mine;
   const card = (await call(`/api/talks/${talk.id}/inbox`)).data.items[0];
-  assert.equal(card.backers, 1); assert.equal(card.people.length, 2);
+  assert.equal(card.people.length, 2);
 });
 await step('speaker replies; askers see it; the next person gets it straight away', async () => {
   const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
@@ -293,9 +294,9 @@ await step('speaker replies; askers see it; the next person gets it straight awa
   const mine = jar; jar = '';
   const thread = (await call('/api/thread?since=0', { headers: { 'x-token': seat.token } })).data.messages;
   assert.ok(thread.some((m) => m.role === 'speaker' && /flat roof/.test(m.text)));
-  const backer = (await call('/api/thread?since=0', { headers: { 'x-token': seat4.token } })).data;
-  assert.ok(backer.messages.some((m) => m.role === 'speaker' && /flat roof/.test(m.text) && m.about === w0), 'Me too gets the reply');
-  assert.equal(backer.waiting.length, 0);
+  // Someone who never asked gets nothing pushed to them.
+  const other = (await call('/api/thread?since=0', { headers: { 'x-token': seat4.token } })).data;
+  assert.ok(!other.messages.some((m) => m.role === 'speaker')); assert.equal(other.waiting.length, 0);
   const seat3 = (await call('/api/join/' + talk.code)).data;
   const again = await ask(seat3.token, 'Can it work on sloped tile roofs?');
   assert.match(again.text, /flat/i); assert.ok(!again.handoff);
@@ -399,7 +400,7 @@ await step('"Not what you needed?" turns an answer into a question for the speak
   assert.ok(inbox.items.some((i) => /peak runoff/.test(i.question)));
   assert.ok(inbox.trend?.buckets?.length >= 1 && inbox.trend.notSatisfied >= 1, 'how it went counts it');
 });
-await step('feedback reaches the speaker without a name', async () => {
+await step('feedback reaches the speaker without a name, or with one if the person adds it', async () => {
   const mine = jar; jar = '';
   const s = (await call('/api/join/' + talk.code)).data;
   assert.equal((await call('/api/feedback', { method: 'POST', headers: { 'x-token': s.token }, body: { text: 'x' } })).status, 400);
@@ -409,7 +410,12 @@ await step('feedback reaches the speaker without a name', async () => {
   jar = mine;
   const inbox = (await call(`/api/talks/${talk.id}/inbox`)).data;
   const fb = inbox.feedback.find((f) => /slide on cost/.test(f.text));
-  assert.ok(fb); assert.deepEqual(Object.keys(fb).sort(), ['createdAt', 'id', 'text'], 'no name, email or seat');
+  assert.ok(fb); assert.deepEqual(Object.keys(fb).sort(), ['createdAt', 'from', 'id', 'text'], 'no email or seat'); assert.equal(fb.from, '', 'no name unless they add one');
+  // A name is passed on only when the person adds it.
+  jar = '';
+  await call('/api/feedback', { method: 'POST', headers: { 'x-token': s.token }, body: { text: 'Loved the pilot numbers.', name: 'Aisha Rahman' } });
+  jar = mine;
+  assert.equal((await call(`/api/talks/${talk.id}/inbox`)).data.feedback.find((f) => /Loved the pilot/.test(f.text)).from, 'Aisha Rahman');
   assert.ok(inbox.stats.feedback >= 1);
 });
 await step("the speaker's own test seat: not counted, can't send to themselves, and a fix teaches every seat", async () => {
@@ -468,6 +474,18 @@ if (server) await step('a slide label keeps the words it rests on', async () => 
   assert.equal(tidyLabels('[Slide 4: "Peak runoff reduced by 62%"] Down 62%.', deck), '[Slide 4: "Peak runoff reduced by 62%"] Down 62%.');
   assert.equal(tidyLabels('[Slide 4 · deck.pdf: "62%"] Down.', deck), '[Slide 4: "62%"] Down.');
   assert.equal(tidyLabels('[Slide 9: "nope"] Hi.', deck), 'Hi.');
+});
+await step('added later: more context keeps the talk open and can be removed; a slide named without a quote still gets its line marked', async () => {
+  const form = new FormData(); form.append('files', new Blob([Buffer.from('Maintenance costs 4 euros per square metre a year.')]), 'costs.txt');
+  const up = await call(`/api/talks/${talk.id}/files`, { method: 'POST', form });
+  assert.equal(up.data.status, 'ready', 'still open to the audience'); assert.equal(up.data.sources.length, 2);
+  const gone = await call(`/api/talks/${talk.id}/files/${up.data.sources[1].id}`, { method: 'DELETE' });
+  assert.equal(gone.data.sources.length, 1);
+  const mine = jar; jar = '';
+  const s = (await call('/api/join/' + talk.code)).data;
+  const src = (await call('/api/source?label=' + encodeURIComponent('Slide 4') + '&hint=' + encodeURIComponent('Peak runoff dropped by 62% in the pilot.'), { headers: { 'x-token': s.token } })).data;
+  assert.ok((src.marks?.length || 0) + (src.mark?.length || 0) > 0, 'a line is marked from the answer itself');
+  jar = mine;
 });
 await step('close the account and everything in it', async () => {
   assert.equal((await call('/api/me', { method: 'DELETE', body: { password: 'wrong-wrong' } })).status, 401);

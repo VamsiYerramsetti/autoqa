@@ -59,7 +59,7 @@ function files(problems = [], busy = []) {
     drop,
     // What happens to the file, said where the decision is made.
     el('ul', { class: 'fine' },
-      el('li', {}, 'Answers use the words and speaker notes. Describe key charts in a note.'),
+      el('li', {}, 'Answers use the words, the speaker notes and what the pictures and charts on each slide show.'),
       el('li', {}, 'Sent to Anthropic to write answers, never used for training. ', el('a', { href: '/privacy', target: '_blank' }, 'Privacy'))),
     list,
     problems.map((p) => el('p', { class: 'error', role: 'alert', style: 'margin-top:12px' }, p)),

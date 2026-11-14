@@ -24,33 +24,19 @@
 
   <section class="hero">
     <div>
-      <p class="slogan">The Q&amp;A that doesn't end when the talk does.</p>
+      <p class="slogan">Elevating the Q&amp;A experience.</p>
       <h1>Every question gets an answer.</h1>
       <p class="lede">Your audience scans a code and asks. Answers come from your slides, with the exact line shown. Anything else comes to you.</p>
       <div class="cta"><a class="btn big" href="/new">Start a talk</a><a class="btn plain" href="#how">How it works</a></div>
-      <p class="trust">No app · No sign-up · Ask anonymously</p>
+      <p class="trust">No app · No sign-up · Ask anonymously · Answers are automated</p>
       <form class="joinbox" action="/j/" method="get" id="joinbox">
         <label for="joincode">At a talk? Enter its code</label>
         <span><input id="joincode" name="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="4EPHX" inputmode="text"><button class="btn" type="submit">Join</button></span>
       </form>
     </div>
-    <!-- A still of the real audience screen, with a made-up talk: the product shown, not described. -->
-    <div class="shot" role="img" aria-label="What your audience sees: a question, the slide it is answered from with the line highlighted, and the answer. A question the slides don't cover is sent to the speaker.">
-      <div class="f-phone still" aria-hidden="true">
-        <div class="f-head"><b>Shipping faster with AI code review</b><span>Maya Okafor</span></div>
-        <div class="f-thread">
-          <div class="f-turn in"><b>How much faster were reviews?</b>
-            <div class="f-slide in"><b>Pilot results</b><span>6 teams, 12 weeks</span><span class="hl on">Review time down 41%</span><span>Bugs caught before merge +18%</span><small>Slide 7</small></div>
-            <p>41% faster. Across six pilot teams over twelve weeks, reviews took 41% less time.</p>
-            <small class="f-tag"><i></i>From slide 7 · automated</small>
-          </div>
-          <div class="f-turn in"><b>Does it work with our GitLab setup?</b>
-            <p>The talk doesn't say.</p>
-            <div class="f-hand sent"><i></i>Sent to Maya. Her reply will show up here.</div>
-          </div>
-        </div>
-        <div class="f-compose"><div class="f-row"><div class="f-box">Ask a question</div><span class="f-send"></span></div></div>
-      </div>
+    <!-- Why this exists: the questions people never ask (public/js/home-worry.js). Without scripts, the list says it. -->
+    <div class="worry" id="worry" role="img" aria-label="Three people in an audience, each with a question they don't ask: is this a stupid question; time's up and my hand was still raised; that slide went by too fast; how do I reach the speaker afterwards. With Auto Q&A they ask from their phones, and every question gets an answer.">
+      <ul class="w-plain"><li>Is this a stupid question?</li><li>Time's up. My hand was still raised.</li><li>That slide went by too fast…</li><li>How do I reach the speaker afterwards?</li></ul>
     </div>
   </section>
 
@@ -59,10 +45,10 @@
     <div class="how-grid">
       <div class="how-steps">
         <ol class="ways">
-          <li data-step="1"><span class="n" aria-hidden="true">1</span><div><h3>Upload your slides</h3><p>PDF, PowerPoint or Word. Then a few quick questions.</p></div></li>
-          <li data-step="2"><span class="n" aria-hidden="true">2</span><div><h3>Show the QR code</h3><p>People scan it and ask. No app, no sign-up.</p></div></li>
-          <li data-step="3"><span class="n" aria-hidden="true">3</span><div><h3>They ask, it answers</h3><p>In seconds, with the slide and the exact line.</p></div></li>
-          <li data-step="4"><span class="n" aria-hidden="true">4</span><div><h3>You answer the rest</h3><p>They wait on your phone. Reply when you can.</p></div></li>
+          <li data-step="1"><span class="n" aria-hidden="true">1</span><div><h3>Add your material</h3><p>Add all your material and answer a few clarifying questions, so our AI has the best context on your topic.</p></div></li>
+          <li data-step="2"><span class="n" aria-hidden="true">2</span><div><h3>Show your QR code</h3><p>Put it on a slide. People scan it and ask from their phones: no app, no sign-up.</p></div></li>
+          <li data-step="3"><span class="n" aria-hidden="true">3</span><div><h3>They ask, it answers</h3><p>In seconds, from your material, with the slide and the exact line shown.</p></div></li>
+          <li data-step="4"><span class="n" aria-hidden="true">4</span><div><h3>You answer the rest</h3><p>Anything your material can't answer waits on your phone. Reply when you can.</p></div></li>
         </ol>
         <a class="deeper" href="/how-it-works">See everything it does <span aria-hidden="true">→</span></a>
       </div>
@@ -78,7 +64,9 @@
   </footer>
 </div>
 <script type="module" src="/js/page-index.js"></script>
+<script type="module" src="/js/home-worry.js"></script>
 <script type="module" src="/js/home-film.js"></script>
+<script type="module" src="/js/mascot.js"></script>
 <script src="/js/t.js" defer></script>
 </body>
 </html>

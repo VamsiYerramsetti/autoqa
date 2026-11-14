@@ -3,6 +3,10 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Octopus logo, roaming mascot, octopus QR codes and the "holding on" style (2026-11-14).
+- [x] Slide pictures are read: charts, photos and diagrams described once per slide and used in answers.
+- [x] Audience: deck viewer with swipe, folding slides, close on the yellow card, named or anonymous feedback; questions to the speaker are private.
+- [x] Speaker: add/remove context at any time; tidier "How it went".
 - [x] Security (2026-11-14): a speaker's fixes are capped at 20,000 characters in total and no longer override the answering rules; a flood of visit beacons can't push out question and cost records; legal pages have canonical links; privacy lists feedback and fixes.
 - [x] Vamsi's list (2026-11-14): Q+A logo; answers write themselves in; a slide only when the answer is on it, with the exact line marked (PDF and PowerPoint); "Not what you needed? Ask the speaker"; anonymous feedback; speaker test seat with "Fix this answer"; "How it went"; setup questions with a reason each and clearer buttons; five code styles, an animated GIF code and four slide designs; new home, Why and /how-it-works pages; cookie-free visit counts and a full founder portal; model cost tracking and FinOps skills.
 - [x] Security (2026-11-13): hostile PowerPoint files can't inject markup into slide drawings, stall the server with unclosed tags, or unpack into gigabytes by lying about sizes.
@@ -43,6 +47,8 @@ Work top to bottom. Tick items off and note them in LOG.md.
 - [x] A slide label written at the end of an answer, or with a made-up file name, is put right so the slide still shows.
 
 ## Next
+- [ ] Check picture reading on three real picture-heavy decks with the live model; tune the wording of `seeSlides` if descriptions are vague.
+- [ ] Optional public question wall the speaker can switch on ("Me too" was removed when questions became private).
 - [ ] Security: pin the founder portal to one account id (`ADMIN_USER_ID`), not only the email, because sign-up does not prove someone owns an address (pull request: touches sign-in).
 - [ ] Security: send the speaker's private key and `ADMIN_KEY` in a header, not in the address (`qr.svg?inbox=1&key=`, `/admin?key=`), so they don't land in logs and browser history.
 - [ ] Security: fake visit beacons can still inflate the portal's visitor counts (no harm to data any more); consider a per-address daily cap on beacons.

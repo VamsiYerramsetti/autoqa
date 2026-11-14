@@ -52,7 +52,10 @@ function build() {
   const caption = el('p', { class: 'f-caption', 'aria-live': 'off' });
   const pause = el('button', { class: 'f-pause', type: 'button', 'aria-label': 'Pause the film' });
   const stage = el('div', { class: 'f-stage' }, phone, inbox, ripple, cursor);
-  film.replaceChildren(stage, el('div', { class: 'f-foot' }, caption, pause));
+  // Described once in hidden text; the moving picture is hidden from screen readers, the pause button is not.
+  const say = film.getAttribute('aria-label'); film.removeAttribute('role'); film.removeAttribute('aria-label');
+  stage.setAttribute('aria-hidden', 'true'); caption.setAttribute('aria-hidden', 'true');
+  film.replaceChildren(el('p', { class: 'sr' }, say), stage, el('div', { class: 'f-foot' }, caption, pause));
   film.classList.add('ready');
 
   /* ---------- The room, drawn to the stage's own shape ---------- */
@@ -143,33 +146,47 @@ function build() {
     g.append(S('circle', { cx: x + 5.5 * u, cy: y + 5.5 * u, r: u * 0.75, class: 'q-yellow' }));
     return g;
   }
-  // Maya: a standing figure, one arm towards her slide.
+  // Maya: a standing figure facing the room, one arm towards her slide.
   function drawSpeaker(x, floor) {
     const g = S('g', { class: 'speaker' });
     g.append(S('rect', { x: x - 9, y: floor - 46, width: 7, height: 46, rx: 3.5, class: 'legs' }));
     g.append(S('rect', { x: x + 2, y: floor - 46, width: 7, height: 46, rx: 3.5, class: 'legs' }));
+    g.append(S('rect', { x: x - 11, y: floor - 5, width: 11, height: 5, rx: 2.5, class: 'legs' }), S('rect', { x: x + 1, y: floor - 5, width: 11, height: 5, rx: 2.5, class: 'legs' }));
     g.append(S('path', { d: `M${x - 15} ${floor - 40}V${floor - 72}q0 -12 15 -12t15 12V${floor - 40}z`, class: 'shirt' }));
     g.append(S('rect', { x: x + 8, y: floor - 80, width: 28, height: 8, rx: 4, class: 'shirt arm' }));
+    g.append(S('rect', { x: x - 4, y: floor - 90, width: 8, height: 8, class: 'skin' }));
     g.append(S('circle', { cx: x, cy: floor - 97, r: 11, class: 'skin' }));
-    g.append(S('path', { d: `M${x - 11} ${floor - 97}a11 11 0 0 1 22 0q-6 -5 -11 -4t-11 4z`, class: 'hair' }));
+    g.append(S('path', { d: `M${x - 12} ${floor - 92}q-3 -18 12 -18t12 18q-3 -9 -12 -9t-12 9z`, class: 'hair' }));
+    g.append(S('circle', { cx: x - 4, cy: floor - 96, r: 1.3, class: 'face' }), S('circle', { cx: x + 4, cy: floor - 96, r: 1.3, class: 'face' }));
+    g.append(S('path', { d: `M${x - 4} ${floor - 91}q4 3.5 8 0`, class: 'smile' }));
     return g;
   }
-  // One person seen from behind: hair, head, shoulders. Small differences so it reads as a crowd, not a pattern.
+  // One person seen from behind: shoulders and collar, neck, ears, and one of five hairstyles.
+  // Small differences in size, clothes, skin and hair so it reads as a crowd of people, not a pattern.
   function drawPerson(x, y, s) {
     const g = S('g', { class: 'person' });
-    const tone = ['p1', 'p2', 'p3', 'p4'][Math.floor(rand() * 4)];
-    const hair = ['h1', 'h2', 'h3'][Math.floor(rand() * 3)];
-    const w = (17 + rand() * 4) * s, hr = (8.5 + rand() * 1.5) * s, top = y - 17 * s;
+    const tone = ['p1', 'p2', 'p3', 'p4', 'p5'][Math.floor(rand() * 5)];
+    const hair = ['h1', 'h2', 'h3', 'h4'][Math.floor(rand() * 4)];
+    const skin = ['s1', 's2', 's3'][Math.floor(rand() * 3)];
+    const w = (17 + rand() * 4) * s, hr = (8.5 + rand() * 1.5) * s, top = y - 17 * s, cy = top - hr * 0.9;
     g.append(S('path', { d: `M${x - w} ${y + 30 * s}V${y}Q${x - w} ${top} ${x} ${top}Q${x + w} ${top} ${x + w} ${y}V${y + 30 * s}z`, class: 'shoulders ' + tone }));
-    g.append(S('circle', { cx: x, cy: top - hr * 0.7, r: hr, class: 'head ' + hair }));
-    // Some wear their hair up, some long; long hair falls over the shoulders, so it goes under the head.
+    g.append(S('path', { d: `M${x - hr * 0.75} ${top + 1.5 * s}q${hr * 0.75} ${4 * s} ${hr * 1.5} 0`, class: 'collar' }));
+    g.append(S('rect', { x: x - hr * 0.42, y: cy + hr * 0.5, width: hr * 0.84, height: hr * 0.9, class: 'flat ' + skin }));
+    g.append(S('ellipse', { cx: x - hr * 0.98, cy: cy + hr * 0.1, rx: hr * 0.2, ry: hr * 0.3, class: 'flat ' + skin }), S('ellipse', { cx: x + hr * 0.98, cy: cy + hr * 0.1, rx: hr * 0.2, ry: hr * 0.3, class: 'flat ' + skin }));
     const look = rand();
-    if (look < 0.2) g.append(S('circle', { cx: x + hr * 0.1, cy: top - hr * 1.75, r: hr * 0.45, class: 'head ' + hair }));
-    else if (look < 0.38) g.insertBefore(S('rect', { x: x - hr * 1.05, y: top - hr * 0.7, width: hr * 2.1, height: hr * 2.1, rx: hr * 0.9, class: 'head ' + hair }), g.lastChild), g.lastChild.classList.add('flat');
+    if (look < 0.22) { // long hair, over the shoulders
+      g.append(S('path', { d: `M${x - hr * 1.08} ${cy}a${hr * 1.08} ${hr * 1.08} 0 0 1 ${hr * 2.16} 0v${hr * 1.9}q${-hr * 1.08} ${hr * 0.6} ${-hr * 2.16} 0z`, class: 'head ' + hair }));
+    } else if (look < 0.4) { // a bun
+      g.append(S('circle', { cx: x, cy, r: hr, class: 'head ' + hair }), S('circle', { cx: x + hr * 0.1, cy: cy - hr * 1.15, r: hr * 0.46, class: 'head ' + hair }));
+    } else if (look < 0.52) { // short back and sides: skin shows below the hairline
+      g.append(S('circle', { cx: x, cy, r: hr, class: 'flat ' + skin }), S('path', { d: `M${x - hr} ${cy + hr * 0.15}a${hr} ${hr} 0 0 1 ${hr * 2} 0q${-hr} ${hr * 0.5} ${-hr * 2} 0z`, class: 'head ' + hair }));
+    } else if (look < 0.62) { // a ponytail
+      g.append(S('circle', { cx: x, cy, r: hr, class: 'head ' + hair }), S('rect', { x: x - hr * 0.26, y: cy + hr * 0.3, width: hr * 0.52, height: hr * 1.7, rx: hr * 0.26, class: 'flat tail ' + hair }));
+    } else g.append(S('circle', { cx: x, cy, r: hr, class: 'head ' + hair }));
     room.append(g);
-    // A dot above the head, shown at the end: cobalt when answered, yellow when waiting for the speaker.
-    // The dots sit in their own layer, so the row behind never hides them.
-    const dot = S('circle', { cx: x, cy: top - hr * 2.5, r: 5.5 * s, class: 'mark-dot' });
+    // At the end, people hold their phones up: cobalt screen when answered, yellow when waiting for the speaker.
+    const dot = S('g', { class: 'mark-phone' });
+    dot.append(S('rect', { x: x + w * 0.55, y: top - 6 * s, width: 9 * s, height: 15 * s, rx: 2.4 * s, class: 'ph-body' }), S('rect', { x: x + w * 0.55 + 1.4 * s, y: top - 4.4 * s, width: 6.2 * s, height: 11.8 * s, rx: 1.2 * s, class: 'ph-screen' }));
     return { g, dot };
   }
 
@@ -215,8 +232,13 @@ function build() {
   }
   const chip = (text) => el('span', { class: 'f-chip' }, text);
   const turn = (q) => { const n = el('div', { class: 'f-turn' }, el('b', {}, q)); thread.append(n); requestAnimationFrame(() => n.classList.add('in')); return n; };
-  const slideCard = () => el('div', { class: 'f-slide' }, el('b', {}, 'Pilot results'),
-    el('span', {}, '6 teams, 12 weeks'), el('span', { class: 'hl' }, 'Review time down 41%'), el('span', {}, 'Bugs caught before merge +18%'), el('small', {}, 'Slide 7'));
+  // The slide in the answer: a corporate-looking results slide with a title band, three lines and a small chart.
+  const slideCard = () => el('div', { class: 'f-slide corp' },
+    el('div', { class: 'cs-top' }, el('b', {}, 'Pilot results'), el('em', {}, 'Engineering · Q3')),
+    el('div', { class: 'cs-body' },
+      el('div', { class: 'cs-lines' }, el('span', {}, '6 teams, 12 weeks'), el('span', { class: 'hl' }, 'Review time down 41%'), el('span', {}, 'Bugs caught before merge +18%')),
+      el('div', { class: 'cs-chart' }, ...[100, 84, 71, 59].map((h, i) => el('i', { class: i === 3 ? 'now' : '', style: `--h:${h}%` })))),
+    el('small', {}, 'Slide 7'));
   const ANSWER = '41% faster. Across six pilot teams over twelve weeks, reviews took 41% less time.';
   const ASK = 'Does it work with our GitLab setup?';
   const REPLY = 'Yes, we run it on self-hosted GitLab. Setup notes are on my site.';
@@ -227,7 +249,7 @@ function build() {
     chips.replaceChildren(chip('How much faster were reviews?'), chip('Does it miss bugs?'), chip('Which tools?'));
     box.querySelector('.f-typed').textContent = ''; reply.querySelector('.f-typed').textContent = '';
     card.classList.remove('done'); cursor.classList.remove('show'); ripple.classList.remove('go');
-    people.forEach((p) => p.dot.setAttribute('class', 'mark-dot'));
+    people.forEach((p) => p.dot.setAttribute('class', 'mark-phone'));
     room.classList.remove('up', 'scanned'); stage.classList.remove('zoom');
   }
 
@@ -312,7 +334,7 @@ function build() {
       step(0, 'Every question gets an answer.');
       await wait(700, token);
       const order = people.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, Math.round(people.length * 0.55));
-      for (const [k, i] of order.entries()) { people[i].dot.setAttribute('class', 'mark-dot ' + (k % 7 === 3 ? 'waiting' : 'answered')); if (k % 2) await wait(30, token); }
+      for (const [k, i] of order.entries()) { people[i].dot.setAttribute('class', 'mark-phone ' + (k % 7 === 3 ? 'waiting' : 'answered')); if (k % 2) await wait(30, token); }
       await wait(2600, token);
       // Out, and round again.
       film.classList.add('fade'); await wait(500, token); film.classList.remove('fade');

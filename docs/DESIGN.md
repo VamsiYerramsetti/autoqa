@@ -121,6 +121,12 @@ The design session may evolve colour, type, logo and motion, but:
   in the Room style (too light to read as dark).
 - Next: try each style on two or three real phones from 5 m; a moving preview on the full-screen code page.
 
+### 2026-11-14: the octopus identity and a contrast pass (Vamsi's request)
+- Logo: a cobalt octopus with glasses, left lens a Q (ring + tail), right lens an A (rounded triangle, yellow crossbar). Replaces the Q+A monogram everywhere, including the centre of the QR codes. Small pink cheeks are the one colour outside the palette.
+- Motion: the logo octopus blinks and takes a short swim down the page margin; never over text.
+- Light theme: paper `#f3f2ec`, text `#2a283d`, muted `#55546a`, line `#cfcedc`. Dark: paper `#0e0d16`, cobalt-as-text `#8f97ff`.
+- The slogan sits in a yellow pill.
+
 ### 2026-11-13 (night): the home page film (Vamsi's request)
 - Before: a still card with two example questions beside three steps.
 - After: a ~28 s looping film in flat product shapes: a speaker on stage with the code on screen, the room of dots

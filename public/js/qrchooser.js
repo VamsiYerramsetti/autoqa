@@ -1,4 +1,4 @@
-// "Put it on a slide": the speaker picks a code style and a slide design from two rows of previews, then downloads
+// "Put your QR code on a slide": the speaker picks a code style and a slide design from two rows of previews, then downloads
 // exactly what they picked. Nothing downloads on opening. Opened from the speaker page (speaker.js).
 import { el, sheet, icon } from '/js/common.js';
 import { CODE_STYLES, SLIDES, slideAssets, drawSlide, drawAnimatedFrame, animatedGif, GIF_FRAMES, GIF_DELAY } from '/js/qrkit.js';
@@ -107,7 +107,7 @@ export async function openChooser(talk) {
   copyLink.onclick = async () => { try { await navigator.clipboard.writeText(joinUrl.href); done(copyLink, 'Link copied'); } catch {} };
 
   const panel = sheet(
-    el('h3', {}, 'Put your code on a slide'),
+    el('h3', {}, 'Put your QR code on a slide'),
     el('p', { class: 'small muted' }, 'Pick a code and a slide, then download. People scan it and ask.'),
     el('h4', { id: 'pick-code' }, 'Code style'), codeRow.row,
     el('h4', { id: 'pick-slide' }, 'Slide'), slideRow.row,
