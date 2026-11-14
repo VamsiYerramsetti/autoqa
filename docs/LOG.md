@@ -7,7 +7,7 @@ Three small things were fixed: a speaker's fixes now have a size limit and can't
 - **Beacons can't crowd out records** (`lib/store.js` `trimEvents`): `/api/t` needs no sign-in; when the 50,000-event list is full, the oldest visit beacons go first, so questions, answers and model-cost records survive a flood.
 - **Pages**: canonical links on `/privacy`, `/terms`, `/how-answers-work` (13 Nov roadmap item); privacy "How long" now names feedback and speaker fixes (kept with the talk, deleted with it).
 - **Checked, fine**: `npm audit` 0 (multer 2.5.0 past CVE-2026-88932, fixed in 2.4.0); no secrets in code or the 11 new commits; local headers (CSP, frame-ancestors, nosniff, Permissions-Policy) unchanged; audience screen says "Automated answers" before the first question and "automated" under each answer, which matches the Commission's draft Article 50 guidance.
-- **Tested**: `npm test` 30/30 (three new checks: fix size limit and rule wording, beacon flood keeps question records, every public page has a canonical link).
+- **Tested**: `npm test` 30/30 (three new checks: fix size limit and rule wording, beacon flood keeps question records, every public page has a canonical link).  "Live site" passed for 76dace0.
 - **Left for later** (roadmap): pin `/admin` to an account id, not just the email (sign-up doesn't verify email; pull request because it touches sign-in); move private keys out of addresses; fake beacons can still inflate visitor numbers.
 
 ### For Vamsi
