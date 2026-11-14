@@ -23,6 +23,8 @@ doesn't cover is offered to the speaker, who replies later. Owner: Vamsi. Live s
 | Web server, every page and API route | `server.js` | Grouped by section comments: accounts, speaker setup, inbox, audience, numbers, pages |
 | Talking to the model | `lib/ai.js` | The answering instructions are the `systemBlocks` text. Change wording there to change answer behaviour |
 | Reading PDF, PowerPoint, Word, text | `lib/parse.js` | Turns files into labelled units ("Slide 4") |
+| Where text sits on a slide | `lib/slidetext.js` | Line boxes for PDFs and drawn PowerPoint slides; finds the quoted line to mark |
+| Model prices | `lib/prices.js` | Used by the portal's cost numbers and the FinOps skills |
 | Storage and passwords | `lib/store.js` | Postgres when `DATABASE_URL` is set, else a JSON file. One saved document + slide pictures |
 | Pages | `public/*.html` | One small HTML file per page |
 | Page behaviour | `public/js/*.js` | One script per page; shared helpers in `common.js` |
@@ -82,6 +84,7 @@ whose first lines are plain sentences, because the email quotes them.
 - `.claude/skills/persona-test/`: run a persona test (made-up talk and audience) on the live site.
 - `.claude/skills/design-pass/`: improve one part of the experience, with before/after proof.
 - `.claude/skills/security-audit/`: the security, privacy, legal and search-engine check.
+- `.claude/skills/model-spend/`, `prompt-cache-audit/`, `long-prompt-guard/`, `model-choice/`: FinOps, from the app's own records.
 - `.claude/agents/answer-judge.md`: an independent judge for persona transcripts.
 - `.claude/agents/security-reviewer.md`: an independent reader of code changes, looking for holes.
 Agents other than Claude can read these as plain Markdown instructions.

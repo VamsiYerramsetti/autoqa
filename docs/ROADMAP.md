@@ -3,6 +3,7 @@
 Work top to bottom. Tick items off and note them in LOG.md.
 
 ## Done
+- [x] Vamsi's list (2026-11-14): Q+A logo; answers write themselves in; a slide only when the answer is on it, with the exact line marked (PDF and PowerPoint); "Not what you needed? Ask the speaker"; anonymous feedback; speaker test seat with "Fix this answer"; "How it went"; setup questions with a reason each and clearer buttons; five code styles, an animated GIF code and four slide designs; new home, Why and /how-it-works pages; cookie-free visit counts and a full founder portal; model cost tracking and FinOps skills.
 - [x] Security (2026-11-13): hostile PowerPoint files can't inject markup into slide drawings, stall the server with unclosed tags, or unpack into gigabytes by lying about sizes.
 - [x] Home page film: talk → scan → ask → slide answer → hand-off → speaker reply, looping, with pause and reduce-motion still (2026-11-13). Covers audit A01.
 - [x] Morning email redesigned: status, four numbers, a card per session, score bars, what was learned online, needs you, quick links (`docs/email-template.html`).
@@ -112,3 +113,10 @@ From the UX/UI audit of 2026-11-12 (`docs/` has no copy; Vamsi shared it in chat
 - [ ] After-talk summary for the speaker: top questions, gaps in the deck.
 - [ ] Voice questions; more languages on the interface.
 - [ ] Pricing and payments.
+
+## New ideas (2026-11-14)
+- [ ] Persona run focused on the new slide rule: does the model show a slide only when it helps, and is the quoted line always on that slide?
+- [ ] Marks for slides inside grouped or rotated PowerPoint shapes (positions there are approximate today).
+- [ ] Moderation for feedback that is plainly abusive (today: a reminder only).
+- [ ] Portal: per-week cohort of speakers who come back for a second talk.
+

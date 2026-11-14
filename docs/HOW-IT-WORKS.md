@@ -63,6 +63,13 @@ answer didn't supply that second line, a small extra check adds it a moment afte
 **The speaker replies.** The reply appears in each asker's chat. It's also added to what the model knows, so the
 next person who asks gets the speaker's own answer straight away.
 
+## Since 2026-11-14
+- **A slide only when it helps.** The answer starts with `[Slide 4: "the exact words"]` only when those words on that slide answer the question. The chat then shows the slide and sweeps a marker over those words (positions come from `lib/slidetext.js`). General answers show no slide.
+- **"Not what you needed?"** under an answer sends the question to the speaker like any other.
+- **Feedback** goes to the speaker without a name.
+- **Test seat and fixes.** A speaker who opens their own code (signed in) gets a test seat: not counted, and "Fix this answer" saves a correction that is used for everyone from then on (`talk.corrections`, added to the answering instructions).
+- **Visits** are counted by a small beacon (`public/js/t.js`) without cookies; see the privacy page.
+
 ## There is no "training"
 The model isn't trained on anyone's slides. Each time, it's handed the material along with the question, and it
 forgets it afterwards. That's why answers can change the moment the speaker replies, and why one talk's slides never

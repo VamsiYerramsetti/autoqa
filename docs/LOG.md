@@ -1,5 +1,40 @@
 # Log (newest first)
 
+## 2026-11-14: Vamsi's list: logo, answers that write themselves in, marked slides, feedback, test-and-fix, portal, QR styles, new home page
+A new Q+A logo; answers now write themselves in word by word, show a slide only when the answer is on it, and mark the exact line on that slide.
+The audience can give anonymous feedback and ask the speaker when an answer didn't help; speakers can test their own code and fix answers; Vamsi has a full portal; the home, Why and a new How it works page were rewritten around the message.
+- **Logo.** A Q and an A merged (`public/logo.svg`), the one gradient in the product, on request. Every header, the tab icon, the middle of the code (scans at 90–600 px).
+- **Answers.** Words rise out of a cobalt blur into ink at an even pace (`writer()` in `common.js`); three breathing dots before the first word; the speaker's reply and the setup questions write in too. Reduce motion: text appears at once.
+- **Slides only when they help, with the line marked.** The answering rule now asks for `[Slide 4: "the exact words"]` only when the answer is on one slide; no label for the gist, explanations, notes, opinions, not covered. `lib/slidetext.js` keeps where each line sits (PDF from pdf.js, PowerPoint from our own drawing via `data-w`); `/api/source?quote=` returns boxes; the chat sweeps a cobalt marker across them after the slide unfolds and comes into focus. Old talks have no boxes and simply show no mark.
+- **Under every answer:** "Not what you needed? Ask Maya" (`/api/unhappy` → the usual card). **Feedback** button in the chat header: anonymous, with "Kind and specific helps most."; the speaker sees it on their page.
+- **Test and fix.** Opening your own code while signed in (or on a device with the talk's key) gives a "Test seat": not counted anywhere, never sends to yourself, "Fix this answer" under each answer. Fixes go into the answering instructions after the cached block (`talk.corrections`) and are listed under "Teach it" on the speaker page, with a note box.
+- **How it went** on the speaker page: questions over time (answered straight away vs needed you), the slide shown most, who wanted the speaker instead, feedback count, the three most asked.
+- **Setup questions.** Each has a one-line reason under it; buttons are "Skip this question" and "Done, open my talk".
+- **Code styles and slides** (helper session): five code styles (Auto Q&A, Ink, Ask frame, Cobalt card, Room), an animated GIF (16 frames, 2 s, ~400 KB, every frame scans), four slide designs, one chooser where nothing downloads until a button is pressed (`lib/qr.js`, `public/js/qrkit.js`, `gif.js`, `qrchooser.js`).
+- **Home, Why, How it works** (helper session): headline "Every question gets an answer.", slogan "The Q&A that doesn't end when the talk does.", a mechanism subhead; numbered steps 1–4 and a "How it works" tab; the film is now seen from a seat in the audience, about an AI code-review talk, with people drawn as people and an arrow cursor; Why is a picture strip the reader moves; a new `/how-it-works` page goes through every feature.
+- **Visits without cookies.** `public/js/t.js` sends page type, referring site name, screen width, time on screen and scroll; the server keeps a daily-salted hash of a shortened IP + browser (yesterday's salt deleted, no IP stored), skips Global Privacy Control / Do Not Track and bots. Replaces the server-side page counter.
+- **Founder portal** (`/admin`, ADMIN_EMAIL account as before): overview, visitors/questions/cost per day, pages with time on page and scroll, sources, devices, both funnels in people, answer quality, speed (first word and full answer, median and slowest 10%), model cost by model and talk with cache share and 100K-token warnings, health, talks.
+- **Model cost.** Every model call records its token counts (`model_call` events, no text); `lib/prices.js` holds Anthropic's prices. FinOps skills in `.claude/skills/`: `model-spend`, `prompt-cache-audit`, `long-prompt-guard`, `model-choice`. `MAX_MATERIAL` lowered to 300,000 characters so prompts stay under Haiku 5.5's 100K-token price step.
+- **Privacy page** describes the new counting in full.
+
+**Tested.** `npm test` 28/28 (six new checks: marked slide words and no slide for the gist, ask-instead, anonymous feedback, test seat + fix teaching other seats, cookie-free counts with GPC and the portal sums, labels keeping their words). Walked every changed screen in a browser at 1280x860 and iPhone 13, light and dark, practice mode: no script errors. The real-answer check could not run: the API key in Vamsi's local `.env` is refused ("invalid x-api-key"); the live key on Render is separate and was not touched.
+
+**Unfinished.** Real-model behaviour of the new slide rule (when to show a slide, quote accuracy) is untested: tomorrow's persona run should look at it. The film and Why pictures were judged from stills only.
+
+### For Vamsi
+- The API key in your Desktop `.env` is rejected; if it is the same as on Render, rotate it (the security log already asked).
+- Pushing needs GitHub write access for this session; see the chat if it didn't go out.
+
+### Researched
+- [NN/g: how long users stay on pages](https://www.nngroup.com/articles/how-long-do-users-stay-on-web-pages/): the first 10 seconds decide → headline + mechanism subhead + one picture above the fold (built).
+- [NN/g: carousels / auto-forwarding](https://www.nngroup.com/articles/auto-forwarding/), [Silktide](https://silktide.com/blog/stop-using-carousels-on-websites/): auto-rotating carousels are ignored → Why strip moves only when the reader moves it (built).
+- [April Dunford on categories](https://aprildunford.substack.com/p/understanding-the-job-of-a-market/comments): anchor to a known category → "Q&A" kept in the slogan (built).
+- [Carter et al. via Cambridge](https://www.cam.ac.uk/research/news/women-much-less-likely-to-ask-questions-in-academic-seminars-than-men): women 2.5× less likely to ask at seminars → on the Why page with its source (built).
+- [QR code design rules](https://www.qr-code-generator.com/blog/qr-code-design-rules/): quiet zone, level H with a logo, ~10× distance → all code styles follow them (built).
+- [CNIL sheet 16, audience measurement](https://www.cnil.fr/en/sheet-ndeg16-use-analytics-your-websites-and-applications): consent-free counting needs a narrow purpose, shortened IPs, no cross-site, a way to opt out → shortened IP, daily salt, GPC/DNT respected, no storage on the device (built).
+- [Plausible metric definitions](https://plausible.io/docs/metrics-definitions): visit = 30 minutes without action; bounce; time on page excludes hidden tabs → same definitions in the portal (built).
+- [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing): Haiku 5.5 $0.10/$0.50, cache read $0.01, 5× above 100K tokens → `lib/prices.js`, `MAX_MATERIAL` 300K (built).
+
 ## 2026-11-13 (morning): Test and improve
 Today's made-up talk was a machine-learning workshop paper on spotting unknown animals in camera-trap photos, with five very different listeners; answers scored 90% before and 90% after the fix, judged more strictly the second time.
 The worst fault was ours, not the model's: a cleanup rule turned a correct "1.5 hours" into "5 hours" in front of the audience; that is fixed, answers no longer promise to pass questions on, and the speaker's card now always gets a line in the talk's language.
